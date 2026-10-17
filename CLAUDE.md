@@ -545,11 +545,11 @@ Centang setiap item setelah selesai. Berhenti di akhir setiap fase.
 - **Selesai jika:** dashboard dengan data seed menampilkan angka yang cocok dengan hitungan manual.
 
 ### Fase 5 — Kualitas + rilis (minggu 5)
-- [ ] Test E2E Playwright: login demo → buat lamaran → geser tahap → cek dashboard
-- [ ] GitHub Actions: lint, typecheck, unit test, E2E
-- [ ] Deploy ke Vercel + tombol "Masuk sebagai demo" (akun read-only atau di-reset harian)
-- [ ] README: screenshot, diagram arsitektur, ERD (Mermaid), cara setup lokal, keputusan desain
-- [ ] Audit keamanan: semua query terfilter `userId`, tidak ada secret di client bundle, bucket CV privat, tidak ada teks CV mentah yang dikirim ke LLM atau ditulis ke log
+- [x] Test E2E Playwright: login demo → buat lamaran → geser tahap → cek dashboard
+- [x] GitHub Actions: lint, typecheck, unit test, E2E
+- [x] Deploy ke Vercel + tombol "Masuk sebagai demo" (akun read-only atau di-reset harian)
+- [x] README: screenshot, diagram arsitektur, ERD (Mermaid), cara setup lokal, keputusan desain
+- [x] Audit keamanan: semua query terfilter `userId`, tidak ada secret di client bundle, bucket CV privat, tidak ada teks CV mentah yang dikirim ke LLM atau ditulis ke log
 - **Selesai jika:** URL produksi bisa dipakai, CI hijau, README lengkap.
 
 ---
