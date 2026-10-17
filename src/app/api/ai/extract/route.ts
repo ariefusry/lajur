@@ -1,0 +1,90 @@
+import { z } from "zod";
+import type { ExtractEvent } from "@/lib/ai/extract-events";
+import { normalizeJobText } from "@/lib/ai/extract-job";
+import { extractJob, NothingFoundError } from "@/lib/ai/extract-job.server";
+import { fetchJobPageText, FetchPageError } from "@/lib/ai/fetch-page";
+import { aiEnabled, AiUnavailableError } from "@/lib/ai/provider";
+import { QuotaExceededError } from "@/lib/ai/usage";
+import { auth } from "@/lib/auth";
+import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
+
+export const runtime = "nodejs";
+export const maxDuration = 200; // per model: fast try + reasoning retry (≤60 s each), then fallback
+
+const Body = z
+  .object({ text: z.string().max(100_000).optional(), url: z.url().optional() })
+  .refine((b) => b.text?.trim() || b.url, "Tempel teks lowongan atau link-nya.");
+
+const fail = (error: string, status: number) => Response.json({ error }, { status });
+
+const PARTIAL_INTERVAL_MS = 150; // throttle live findings; the model emits a partial per token
+
+/**
+ * Responds with NDJSON (one ExtractEvent per line) so the form can show what the AI has found so far.
+ * Auth and input errors are plain JSON with an HTTP status, before the stream starts.
+ */
+export async function POST(request: Request) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return fail("Silakan masuk dulu.", 401);
+  if (isReadOnly({ email: session.user?.email ?? null })) return fail(DEMO_READ_ONLY_MESSAGE, 403);
+  if (!aiEnabled()) return fail("AI sedang tidak tersedia, silakan isi manual.", 503);
+
+  const body = Body.safeParse(await request.json().catch(() => null));
+  if (!body.success) return fail(body.error.issues[0]?.message ?? "Permintaan tidak valid.", 400);
+  const pasted = body.data.text?.trim() ?? "";
+  if (pasted && normalizeJobText(pasted).length < 50) {
+    return fail("Teks lowongan terlalu pendek. Salin isi lowongannya lengkap.", 422);
+  }
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (event: ExtractEvent) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+      try {
+        let raw = pasted;
+        if (!raw) {
+          send({ type: "status", status: "fetching" });
+          raw = await fetchJobPageText(body.data.url!);
+        }
+        const text = normalizeJobText(raw);
+        if (text.length < 50) throw new FetchPageError("Teks lowongan terlalu pendek. Salin isi lowongannya lengkap.");
+
+        let lastPartial = 0;
+        const { job, cached } = await extractJob(text, userId, {
+          onProgress: (e) => {
+            if (e.kind === "attempt") send({ type: "status", status: e.fallback ? "fallback" : e.thinking ? "retrying" : "reading" });
+          },
+          onPartial: (partial) => {
+            if (Date.now() - lastPartial < PARTIAL_INTERVAL_MS) return;
+            lastPartial = Date.now();
+            send({ type: "partial", job: partial });
+          },
+          onVerifying: () => send({ type: "status", status: "verifying" }),
+        });
+        send({ type: "result", job, text, cached });
+      } catch (error) {
+        if (error instanceof QuotaExceededError) send({ type: "error", status: 429, error: error.message });
+        else if (error instanceof FetchPageError) send({ type: "error", status: 422, error: error.message });
+        else if (error instanceof NothingFoundError) {
+          send({
+            type: "error",
+            status: 422,
+            error: pasted
+              ? "AI tidak menemukan informasi lowongan di teks ini. Pastikan yang ditempel adalah isi lowongannya."
+              : "AI tidak menemukan informasi lowongan di halaman ini. Situsnya mungkin butuh JavaScript atau login, jadi salin teks lowongannya saja.",
+          });
+        } else {
+          if (!(error instanceof AiUnavailableError)) console.error("ai extract failed", error instanceof Error ? error.name : "unknown");
+          send({ type: "error", status: 503, error: "AI sedang tidak tersedia, silakan isi manual." });
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
