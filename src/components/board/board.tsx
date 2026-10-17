@@ -2,17 +2,20 @@
 
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useDraggable,
   useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import { CalendarClock } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState, useTransition, type RefObject } from "react";
+import { useRef, useState, useSyncExternalStore, useTransition, type RefObject } from "react";
 import { toast } from "sonner";
 import { moveApplication } from "@/actions/applications";
 import { EligibilityBadge } from "@/components/eligibility-badge";
@@ -33,18 +36,44 @@ type Card = {
   eligibility: EligibilityStatus | null;
 };
 
+// Cards are narrow: long source names get a short form.
+const SHORT_SOURCE: Partial<Record<JobSource, string>> = { BUMN_PORTAL: "Portal BUMN", COMPANY_SITE: "Situs perusahaan" };
+
+const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia(reducedMotionQuery);
+      mq.addEventListener("change", cb);
+      return () => mq.removeEventListener("change", cb);
+    },
+    () => window.matchMedia(reducedMotionQuery).matches,
+    () => false,
+  );
+}
+
 export function Board({ stages, initialApplications }: { stages: Stage[]; initialApplications: Card[] }) {
   const [cards, setCards] = useState(initialApplications);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const reducedMotion = usePrefersReducedMotion();
   // The click that ends a drag must not open the card link.
   const justDragged = useRef(false);
   const sensors = useSensors(
-    // Small distance so a plain click still opens the card link.
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    // Mouse: a small distance so a plain click still opens the card.
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    // Touch: press-and-hold, so a normal swipe keeps scrolling the board.
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor),
   );
 
+  function onDragStart({ active }: DragStartEvent) {
+    justDragged.current = true;
+    setActiveId(String(active.id));
+  }
+
   function onDragEnd({ active, over }: DragEndEvent) {
+    setActiveId(null);
     setTimeout(() => (justDragged.current = false), 0);
     if (!over) return;
     const id = String(active.id);
@@ -63,13 +92,33 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
     });
   }
 
+  const activeCard = activeId ? cards.find((c) => c.id === activeId) : undefined;
+
   return (
-    <DndContext id="board" sensors={sensors} onDragStart={() => (justDragged.current = true)} onDragEnd={onDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-4">
+    <DndContext
+      id="board"
+      sensors={sensors}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => {
+        setActiveId(null);
+        setTimeout(() => (justDragged.current = false), 0);
+      }}
+    >
+      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:snap-none md:px-0">
         {stages.map((stage) => (
           <Column key={stage.id} stage={stage} cards={cards.filter((c) => c.currentStageId === stage.id)} justDragged={justDragged} />
         ))}
       </div>
+      {/* The lifted copy follows the pointer above everything (never clipped by the scroll area),
+          then glides into the card's new slot on drop. */}
+      <DragOverlay dropAnimation={reducedMotion ? null : { duration: 220, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" }}>
+        {activeCard && (
+          <div className="scale-[1.03] rotate-1 cursor-grabbing rounded-lg border bg-card p-3 text-sm shadow-xl motion-reduce:scale-100 motion-reduce:rotate-0">
+            <CardBody card={activeCard} />
+          </div>
+        )}
+      </DragOverlay>
     </DndContext>
   );
 }
@@ -81,13 +130,13 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
       ref={setNodeRef}
       aria-label={stage.name}
       className={cn(
-        "flex w-64 shrink-0 flex-col gap-2 rounded-xl bg-muted/50 p-2 transition-colors",
+        "flex w-[min(16rem,80vw)] shrink-0 snap-start flex-col gap-2 rounded-xl bg-muted/50 p-2 transition-colors",
         isOver && "bg-muted ring-2 ring-ring/40",
       )}
     >
       <h2 className="flex items-center justify-between px-1 text-sm font-medium">
         {stage.name}
-        <span className="text-xs text-muted-foreground">{cards.length}</span>
+        <span className="text-xs text-muted-foreground tabular-nums">{cards.length}</span>
       </h2>
       {cards.map((card) => (
         <ApplicationCard key={card.id} card={card} justDragged={justDragged} />
@@ -103,8 +152,7 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
 }
 
 function ApplicationCard({ card, justDragged }: { card: Card; justDragged: RefObject<boolean> }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id });
-  const days = card.deadline ? daysUntil(card.deadline) : null;
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: card.id });
 
   return (
     <div
@@ -114,32 +162,38 @@ function ApplicationCard({ card, justDragged }: { card: Card; justDragged: RefOb
       onClickCapture={(e) => {
         if (justDragged.current) e.preventDefault();
       }}
-      style={transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined}
       className={cn(
-        "touch-none rounded-lg border bg-card p-3 text-sm shadow-xs",
-        isDragging && "relative z-10 opacity-80 shadow-lg",
+        "cursor-grab rounded-lg border bg-card p-3 text-sm shadow-xs transition-[border-color,box-shadow] select-none [-webkit-touch-callout:none] hover:border-foreground/20 hover:shadow-sm",
+        // The original stays in place as a faint placeholder while its lifted copy moves.
+        isDragging && "opacity-40 shadow-none",
       )}
     >
-      <Link href={`/applications/${card.id}`} className="block space-y-1" draggable={false}>
-        <p className="font-medium">{card.company}</p>
-        <p className="text-muted-foreground">{card.position}</p>
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <Badge variant="secondary">{JOB_SOURCE_LABELS[card.source]}</Badge>
-          {card.eligibility && <EligibilityBadge status={card.eligibility} />}
-          {card.deadline && days !== null && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 text-xs",
-                days <= 3 ? "font-medium text-destructive" : "text-muted-foreground",
-              )}
-              title={days < 0 ? "Deadline sudah lewat" : `${days} hari lagi`}
-            >
-              <CalendarClock className="size-3" />
-              {formatDate(card.deadline)}
-            </span>
-          )}
-        </div>
+      <Link href={`/applications/${card.id}`} className="block" draggable={false}>
+        <CardBody card={card} />
       </Link>
+    </div>
+  );
+}
+
+function CardBody({ card }: { card: Card }) {
+  const days = card.deadline ? daysUntil(card.deadline) : null;
+  return (
+    <div className="space-y-1">
+      <p className="font-medium">{card.company}</p>
+      <p className="text-muted-foreground">{card.position}</p>
+      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        <Badge variant="secondary">{SHORT_SOURCE[card.source] ?? JOB_SOURCE_LABELS[card.source]}</Badge>
+        {card.eligibility && <EligibilityBadge status={card.eligibility} />}
+        {card.deadline && days !== null && (
+          <span
+            className={cn("inline-flex items-center gap-1 text-xs", days <= 3 ? "font-medium text-destructive" : "text-muted-foreground")}
+            title={days < 0 ? "Deadline sudah lewat" : `${days} hari lagi`}
+          >
+            <CalendarClock className="size-3" />
+            {formatDate(card.deadline)}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

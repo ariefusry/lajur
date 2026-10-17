@@ -133,10 +133,15 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           <ul className="max-w-2xl divide-y rounded-xl border">
             {items.map((it) => (
               <li key={it.key}>
-                <Link href={`/applications/${it.applicationId}`} className="flex gap-3 p-3 text-sm hover:bg-muted/50">
-                  <span className={cn("w-40 shrink-0", it.isDeadline && "text-destructive")}>{it.label}</span>
-                  <span className="min-w-0 flex-1 truncate font-medium">{it.company}</span>
-                  <span className="hidden text-muted-foreground sm:inline">{formatDateTime(it.at)}</span>
+                <Link
+                  href={`/applications/${it.applicationId}`}
+                  className="grid gap-x-3 gap-y-0.5 p-3 text-sm hover:bg-muted/50 sm:grid-cols-[10rem_1fr_auto] sm:items-center"
+                >
+                  <span className="min-w-0 truncate font-medium sm:order-2">{it.company}</span>
+                  <span className={cn("text-xs sm:order-1 sm:text-sm", it.isDeadline ? "text-destructive" : "text-muted-foreground sm:text-foreground")}>
+                    {it.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground sm:order-3 sm:text-sm">{formatDateTime(it.at)}</span>
                 </Link>
               </li>
             ))}

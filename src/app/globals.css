@@ -128,3 +128,10 @@
     @apply font-sans;
   }
 }
+/* Translucent chrome (phone header/tab bar): solid when the user asks for less transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop-blur-xl {
+    backdrop-filter: none;
+    background-color: var(--background);
+  }
+}
