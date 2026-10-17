@@ -98,10 +98,9 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
       <SkillGapSection
         applicationId={app.id}
         gaps={app.skillGaps}
+        readOnly={isReadOnly(user)}
         blocker={
-          isReadOnly(user)
-            ? "Analisis skill tidak tersedia di mode demo."
-            : !app.jobPostingText
+          !app.jobPostingText
             ? "Analisis skill butuh teks lowongan. Lamaran yang dibuat lewat \"Tempel lowongan\" otomatis menyimpannya."
             : !app.resume
               ? "Pilih CV yang dikirim di bagian Data lamaran di bawah, lalu simpan."

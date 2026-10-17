@@ -12,11 +12,14 @@ export function SkillGapSection({
   applicationId,
   gaps,
   blocker,
+  readOnly = false,
 }: {
   applicationId: string;
   gaps: Gap[];
   /** Why analysis can't run yet (no posting text / no CV), or null. */
   blocker: string | null;
+  /** Read-only demo: show existing results, no (re)analysis. */
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -53,7 +56,7 @@ export function SkillGapSection({
             Hanya bagian keahlian dan pengalaman (tanpa nama dan kontak) yang dikirim ke AI.
           </p>
         </div>
-        {!blocker && (
+        {!blocker && !readOnly && (
           <Button type="button" variant="outline" size="sm" onClick={analyze} disabled={pending}>
             {pending ? <LoaderCircle className="animate-spin motion-reduce:animate-none" /> : <Sparkles />}
             {pending ? "Mencocokkan skill dengan CV…" : gaps.length ? "Analisis ulang" : "Analisis skill"}
@@ -61,11 +64,12 @@ export function SkillGapSection({
         )}
       </div>
 
-      {blocker ? (
-        <p className="text-sm text-muted-foreground">{blocker}</p>
-      ) : gaps.length === 0 ? (
+      {gaps.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Belum dianalisis. Skill yang tertulis di CV dicocokkan langsung; sisanya dicek AI untuk istilah setara.
+          {blocker ??
+            (readOnly
+              ? "Analisis skill tidak tersedia di mode demo."
+              : "Belum dianalisis. Skill yang tertulis di CV dicocokkan langsung; sisanya dicek AI untuk istilah setara.")}
         </p>
       ) : (
         <>

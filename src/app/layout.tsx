@@ -24,8 +24,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    // Font variables on <html>: globals.css applies font-sans to html, which must see --font-sans.
+    <html lang="id" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased">
         {children}
         <Toaster richColors position="bottom-right" />
       </body>
