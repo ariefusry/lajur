@@ -126,7 +126,7 @@ export function RequirementsEditor({
               </Badge>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">Analisis skill vs CV menyusul di halaman detail (Fase 4).</p>
+          <p className="text-xs text-muted-foreground">Setelah disimpan, cocokkan skill ini dengan CV-mu di halaman detail lamaran.</p>
         </div>
       )}
     </div>
