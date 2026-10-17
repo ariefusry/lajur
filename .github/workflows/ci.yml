@@ -53,8 +53,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Fresh AUTH_SECRET for this run
-        run: echo "AUTH_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      - name: Fresh AUTH_SECRET for this run (masked in logs)
+        run: |
+          secret="$(openssl rand -base64 32)"
+          echo "::add-mask::$secret"
+          echo "AUTH_SECRET=$secret" >> "$GITHUB_ENV"
       - run: pnpm exec prisma migrate deploy
       - run: pnpm db:seed
       - run: pnpm build
