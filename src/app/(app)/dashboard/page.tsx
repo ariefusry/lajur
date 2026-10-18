@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { Button } from "@/components/ui/button";
 import type { JobSource } from "@/generated/prisma/enums";
@@ -106,7 +107,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     return (
       <div className="max-w-xl space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <div className="space-y-3 rounded-xl border bg-card p-6">
+        <div className="bg-card space-y-3 rounded-xl border p-6">
           <p className="font-medium">Belum ada data untuk dianalisis.</p>
           <p className="text-muted-foreground text-sm">
             Setelah kamu mencatat beberapa lamaran dan menggesernya antar tahap, di sini akan muncul: tahap mana yang
@@ -153,7 +154,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ];
 
   return (
-    <div className="max-w-7xl space-y-8">
+    <div className="max-w-7xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <nav aria-label="Periode" className="bg-foreground/5 inline-flex rounded-lg p-0.5">
@@ -184,38 +185,108 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         />
       </section>
 
-      <section className="space-y-2" aria-label="Status lamaran">
-        <div className="bg-muted flex h-3 overflow-hidden rounded-full">
-          {status
-            .filter((x) => x.count > 0)
-            .map((x) => (
-              <span
-                key={x.label}
-                className={cn("h-full", x.color)}
-                style={{ width: `${(x.count / Math.max(1, d.totals.applications)) * 100}%` }}
-                title={`${x.label}: ${x.count}`}
-              />
-            ))}
-        </div>
-        <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
-          {status.map((x) => (
-            <li key={x.label} className="flex items-center gap-1.5">
-              <span className={cn("size-2 rounded-full", x.color)} aria-hidden />
-              {x.label} <span className="text-foreground font-medium tabular-nums">{x.count}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section className="space-y-3">
-          <div>
-            <h2 className="font-medium">Funnel seleksi</h2>
-            <p className="text-muted-foreground text-xs">
-              Jumlah lamaran yang pernah mencapai tiap tahap, dan persentase yang lanjut dari tahap sebelumnya.
+      {/* What needs attention first: dates coming up, and applications that went quiet. */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card
+          title="Segera tiba"
+          description="Jadwal dan deadline terdekat."
+          action={
+            <Link href="/calendar" className="text-primary text-sm font-medium hover:underline">
+              Kalender
+            </Link>
+          }
+        >
+          {upcoming.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              Belum ada jadwal atau deadline mendatang. Tambahkan di halaman detail lamaran.
             </p>
-          </div>
-          <ol className="space-y-2">
+          ) : (
+            <ul className="-mx-5 -mb-5 divide-y border-t">
+              {upcoming.map((u) => {
+                const days = daysUntil(u.at);
+                return (
+                  <li key={u.key} className="flex items-center pr-3">
+                    <Link
+                      href={`/applications/${u.appId}`}
+                      className="hover:bg-foreground/5 flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{u.title}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {u.what} · {u.withTime ? formatDateTime(u.at) : formatDate(u.at)}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+                          days <= 3 ? "bg-destructive/10 text-destructive" : "bg-foreground/5 text-muted-foreground",
+                        )}
+                      >
+                        {days <= 0 ? "Hari ini" : `${days} hari lagi`}
+                      </span>
+                    </Link>
+                    <AddToCalendar
+                      title={`${u.what} · ${u.title}`}
+                      start={u.at}
+                      allDay={!u.withTime}
+                      location={u.location}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+
+        <Card
+          title="Belum ada kabar"
+          description={`Berjalan tanpa pindah tahap ${STALE_DAYS} hari atau lebih. Follow-up, atau pindahkan ke Ditolak.`}
+          action={
+            stale.length > 0 && (
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
+                {stale.length}
+              </span>
+            )
+          }
+        >
+          {stale.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Semua lamaran yang berjalan masih bergerak.</p>
+          ) : (
+            <ul className="-mx-5 -mb-5 divide-y border-t">
+              {stale.slice(0, 5).map((a) => (
+                <li key={a.id}>
+                  <Link
+                    href={`/applications/${a.id}`}
+                    className="hover:bg-foreground/5 flex items-center gap-3 px-5 py-3 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{a.company}</p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {stageById.get(a.currentStageId)?.name} · {a.position}
+                      </p>
+                    </div>
+                    <span className="text-muted-foreground text-xs whitespace-nowrap tabular-nums">
+                      {a.idleDays} hari
+                    </span>
+                  </Link>
+                </li>
+              ))}
+              {stale.length > 5 && (
+                <li className="text-muted-foreground px-5 py-3 text-xs">+{stale.length - 5} lamaran lain</li>
+              )}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      {/* Analysis: the funnel is the main chart; status and weekly activity sit beside it. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card
+          title="Funnel seleksi"
+          description="Jumlah lamaran yang pernah mencapai tiap tahap, dan persentase yang lanjut dari tahap sebelumnya."
+          className="lg:col-span-2 lg:row-span-2"
+        >
+          <ol className="flex flex-1 flex-col justify-around gap-1.5">
             {d.funnel.map((f) => (
               <li
                 key={f.stage}
@@ -223,31 +294,75 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 title={`${f.stage}: ${f.count} lamaran${f.conversion === null ? "" : `, ${pct(f.conversion)} dari tahap sebelumnya`}`}
               >
                 <span className="truncate">{f.stage}</span>
-                <span className="bg-muted h-5 rounded-sm" aria-hidden>
+                <span className="bg-muted h-5 rounded-md" aria-hidden>
                   <span
-                    className="bg-primary block h-full origin-left rounded-sm motion-safe:animate-[bar-grow_700ms_cubic-bezier(0.2,0.8,0.2,1)_both]"
+                    className="bg-primary block h-full origin-left rounded-md motion-safe:animate-[bar-grow_700ms_cubic-bezier(0.2,0.8,0.2,1)_both]"
                     style={{ width: `${(f.count / maxFunnel) * 100}%` }}
                   />
                 </span>
-                <span className="w-24 text-right tabular-nums">
+                <span className="w-20 text-right tabular-nums">
                   <span className="font-medium">{f.count}</span>
                   {f.conversion !== null && <span className="text-muted-foreground"> · {pct(f.conversion)}</span>}
                 </span>
               </li>
             ))}
           </ol>
+        </Card>
 
-          <div className="space-y-3 pt-6">
-            <div>
-              <h2 className="font-medium">Paling sering gagal di</h2>
-              <p className="text-muted-foreground text-xs">Tahap terakhir yang dicapai lamaran yang ditolak.</p>
-            </div>
+        <Card title="Status lamaran" description="Posisi semua lamaran saat ini.">
+          <div className="bg-muted flex h-2.5 overflow-hidden rounded-full">
+            {status
+              .filter((x) => x.count > 0)
+              .map((x) => (
+                <span
+                  key={x.label}
+                  className={cn("h-full", x.color)}
+                  style={{ width: `${(x.count / Math.max(1, d.totals.applications)) * 100}%` }}
+                  title={`${x.label}: ${x.count}`}
+                />
+              ))}
+          </div>
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-3">
+            {status.map((x) => (
+              <li key={x.label}>
+                <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                  <span className={cn("size-2 shrink-0 rounded-full", x.color)} aria-hidden />
+                  {x.label}
+                </p>
+                <p className="text-lg font-semibold tabular-nums">{x.count}</p>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <Card title="Aktivitas melamar" description={`${last4} lamaran dalam 4 minggu terakhir.`}>
+          <div className="flex h-24 items-end gap-1" role="img" aria-label={`Lamaran per minggu: ${weekly.join(", ")}`}>
+            {weekly.map((n, i) => (
+              <span
+                key={i}
+                className={cn("min-h-1 flex-1 rounded-t-sm", n ? "bg-primary" : "bg-muted")}
+                style={{ height: `${(n / maxWeekly) * 100}%` }}
+                title={`${i === WEEKS - 1 ? "Minggu ini" : `${WEEKS - 1 - i} minggu lalu`}: ${n} lamaran`}
+              />
+            ))}
+          </div>
+          <div className="text-muted-foreground -mt-2 flex justify-between text-xs">
+            <span>{WEEKS} minggu lalu</span>
+            <span>Minggu ini</span>
+          </div>
+        </Card>
+      </div>
+
+      {/* Where things go wrong, and what works better (source, CV version). */}
+      <div className="grid items-start gap-4 lg:grid-cols-3">
+        <div className="flex flex-col gap-4 lg:col-start-3 lg:row-start-1">
+          <Card title="Paling sering gagal di" description="Tahap terakhir yang dicapai lamaran yang ditolak.">
             {d.failedAt.length === 0 ? (
               <p className="text-muted-foreground text-sm">Belum ada lamaran yang ditolak pada periode ini.</p>
             ) : (
-              <ol className="space-y-2">
+              <ol className="space-y-2.5">
                 {d.failedAt.map((f) => (
-                  <li key={f.stage} className="grid grid-cols-[minmax(6rem,9rem)_1fr_auto] items-center gap-3 text-sm">
+                  <li key={f.stage} className="grid grid-cols-[minmax(5rem,8rem)_1fr_auto] items-center gap-3 text-sm">
                     <span className="truncate">{f.stage}</span>
                     <span className="bg-muted h-2 rounded-full" aria-hidden>
                       <span
@@ -255,130 +370,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                         style={{ width: `${(f.count / maxFailed) * 100}%` }}
                       />
                     </span>
-                    <span className="w-8 text-right font-medium tabular-nums">{f.count}</span>
+                    <span className="w-6 text-right font-medium tabular-nums">{f.count}</span>
                   </li>
                 ))}
               </ol>
             )}
-          </div>
-
-          <div className="space-y-3 pt-6">
-            <h2 className="font-medium">Segera tiba</h2>
-            {upcoming.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Belum ada jadwal atau deadline mendatang. Tambahkan di halaman detail lamaran.
-              </p>
-            ) : (
-              <ul className="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-                {upcoming.map((u) => {
-                  const days = daysUntil(u.at);
-                  return (
-                    <li key={u.key} className="flex items-center pr-2">
-                      <Link
-                        href={`/applications/${u.appId}`}
-                        className="hover:bg-foreground/5 flex min-w-0 flex-1 items-center gap-3 p-3 transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{u.title}</p>
-                          <p className="text-muted-foreground text-xs">
-                            {u.what} · {u.withTime ? formatDateTime(u.at) : formatDate(u.at)}
-                          </p>
-                        </div>
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-                            days <= 3 ? "bg-destructive/10 text-destructive" : "bg-foreground/5 text-muted-foreground",
-                          )}
-                        >
-                          {days <= 0 ? "Hari ini" : `${days} hari lagi`}
-                        </span>
-                      </Link>
-                      <AddToCalendar
-                        title={`${u.what} · ${u.title}`}
-                        start={u.at}
-                        allDay={!u.withTime}
-                        location={u.location}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </section>
-
-        <div className="space-y-8">
-          <section className="space-y-3">
-            <div>
-              <h2 className="font-medium">Aktivitas melamar</h2>
-              <p className="text-muted-foreground text-xs">
-                Lamaran per minggu, {WEEKS} minggu terakhir · {last4} lamaran dalam 4 minggu terakhir.
-              </p>
-            </div>
-            <div className="flex h-24 items-end gap-1" role="img" aria-label={`Lamaran per minggu: ${weekly.join(", ")}`}>
-              {weekly.map((n, i) => (
-                <span
-                  key={i}
-                  className={cn("min-h-1 flex-1 rounded-t-sm", n ? "bg-primary" : "bg-muted")}
-                  style={{ height: `${(n / maxWeekly) * 100}%` }}
-                  title={`${i === WEEKS - 1 ? "Minggu ini" : `${WEEKS - 1 - i} minggu lalu`}: ${n} lamaran`}
-                />
-              ))}
-            </div>
-            <div className="text-muted-foreground flex justify-between text-xs">
-              <span>{WEEKS - 1} minggu lalu</span>
-              <span>Minggu ini</span>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div>
-              <h2 className="font-medium">Belum ada kabar</h2>
-              <p className="text-muted-foreground text-xs">
-                Lamaran berjalan tanpa perpindahan tahap selama {STALE_DAYS} hari atau lebih. Saatnya follow-up, atau
-                pindahkan ke Ditolak kalau sudah tidak ada harapan.
-              </p>
-            </div>
-            {stale.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Semua lamaran yang berjalan masih bergerak.</p>
-            ) : (
-              <ul className="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-                {stale.slice(0, 5).map((a) => (
-                  <li key={a.id}>
-                    <Link
-                      href={`/applications/${a.id}`}
-                      className="hover:bg-foreground/5 flex items-center gap-3 p-3 transition-colors"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{a.company}</p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {stageById.get(a.currentStageId)?.name} · {a.position}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-amber-700 dark:text-amber-300">
-                        {a.idleDays} hari
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-                {stale.length > 5 && (
-                  <li className="text-muted-foreground p-3 text-xs">+{stale.length - 5} lamaran lain</li>
-                )}
-              </ul>
-            )}
-          </section>
-
-          <PassTable
-            title="Per sumber lowongan"
-            empty="Belum ada data."
-            adminStage={d.adminStage}
-            rows={d.bySource.map((r) => ({
-              ...r,
-              label: JOB_SOURCE_LABELS[r.key as JobSource],
-            }))}
-          />
+          </Card>
           <PassTable
             title="Per versi CV"
+            column="Versi CV"
             empty="Belum ada lamaran yang ditautkan ke CV. Pilih CV di form lamaran supaya bisa dibandingkan."
             adminStage={d.adminStage}
             rows={d.byResume.map((r) => ({
@@ -387,8 +387,48 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             }))}
           />
         </div>
+
+        <PassTable
+          title="Per sumber lowongan"
+          column="Sumber"
+          empty="Belum ada data."
+          adminStage={d.adminStage}
+          className="lg:col-span-2 lg:col-start-1 lg:row-start-1"
+          rows={d.bySource.map((r) => ({
+            ...r,
+            label: JOB_SOURCE_LABELS[r.key as JobSource],
+          }))}
+        />
       </div>
     </div>
+  );
+}
+
+/** One dashboard tile: title, short description, optional header action, then content. */
+function Card({
+  title,
+  description,
+  action,
+  className,
+  children,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className={cn("bg-card flex flex-col gap-4 overflow-hidden rounded-2xl border p-5 shadow-sm", className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="font-semibold tracking-tight">{title}</h2>
+          {description && <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -415,50 +455,51 @@ function Stat({ label, value, note, href }: { label: string; value: number | str
 
 function PassTable({
   title,
+  column,
   empty,
   adminStage,
+  className,
   rows,
 }: {
   title: string;
+  column: string;
   empty: string;
   adminStage: string | null;
+  className?: string;
   rows: (PassRate & { label: string })[];
 }) {
   return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="font-medium">{title}</h2>
-        <p className="text-muted-foreground text-xs">
-          Lolos administrasi = sudah melewati tahap {adminStage ?? "pertama"}, dihitung dari lamaran yang sudah sampai
-          tahap itu.
-        </p>
-      </div>
+    <Card
+      title={title}
+      description={`Lolos administrasi = melewati tahap ${adminStage ?? "pertama"}, dari lamaran yang sudah sampai tahap itu.`}
+      className={className}
+    >
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">{empty}</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div className="-mx-5 -mb-5 overflow-x-auto border-t">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-muted-foreground text-left text-xs">
+            <thead className="text-muted-foreground text-left text-xs">
               <tr>
-                <th className="p-2 font-medium">{title.replace("Per ", "").replace(/^./, (c) => c.toUpperCase())}</th>
+                <th className="py-2 pl-5 font-medium">{column}</th>
                 <th className="p-2 text-right font-medium">Lamaran</th>
-                <th className="p-2 font-medium">Lolos administrasi</th>
+                <th className="py-2 pr-5 pl-2 font-medium">Lolos administrasi</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y border-t">
               {rows.map((r) => (
                 <tr key={r.label}>
-                  <td className="p-2">{r.label}</td>
-                  <td className="p-2 text-right tabular-nums">{r.total}</td>
-                  <td className="p-2">
+                  <td className="py-2.5 pl-5">{r.label}</td>
+                  <td className="p-2.5 text-right tabular-nums">{r.total}</td>
+                  <td className="py-2.5 pr-5 pl-2">
                     <div className="flex items-center gap-2" title={`${r.passedAdmin} dari ${r.reachedAdmin} lolos`}>
-                      <span className="bg-muted h-2 w-24 shrink-0 rounded-full" aria-hidden>
+                      <span className="bg-muted h-2 w-16 shrink-0 rounded-full sm:w-24" aria-hidden>
                         <span
                           className="bg-primary block h-full rounded-full"
                           style={{ width: `${(r.rate ?? 0) * 100}%` }}
                         />
                       </span>
-                      <span className="tabular-nums">
+                      <span className="whitespace-nowrap tabular-nums">
                         {pct(r.rate)}
                         <span className="text-muted-foreground">
                           {" "}
@@ -473,6 +514,6 @@ function PassTable({
           </table>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
