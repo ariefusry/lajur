@@ -74,6 +74,17 @@ describe("verifyQuotes", () => {
     const r = verifyQuotes({ ...modelAnswer, skills: [{ name: "X", quote: "  " }] }, text);
     expect(r.skills).toHaveLength(0);
   });
+  it("keeps a skill with a paraphrased quote when the skill itself is in the posting, citing its line", () => {
+    const posting = "Kualifikasi:\n- Menguasai React, TypeScript, dan Tailwind CSS\n- Paham REST API dan Git";
+    const r = verifyQuotes(
+      { ...modelAnswer, skills: [{ name: "TypeScript", quote: "Menguasai TypeScript" }, { name: "Git", quote: "Paham Git" }, { name: "Docker", quote: "Paham Docker" }] },
+      posting,
+    );
+    expect(r.skills).toEqual([
+      { name: "TypeScript", quote: "- Menguasai React, TypeScript, dan Tailwind CSS" },
+      { name: "Git", quote: "- Paham REST API dan Git" },
+    ]);
+  });
 });
 
 describe("ExtractedJob schema", () => {

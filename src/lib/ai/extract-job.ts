@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { findSkillInText } from "./skill-aliases.ts";
 
 // ~3.5K tokens: with the prompt and the answer this stays inside Groq's free 8K tokens/minute.
 export const MAX_JOB_TEXT = 12_000;
@@ -70,9 +71,13 @@ export function normalizeJobText(text: string) {
     .slice(0, MAX_JOB_TEXT);
 }
 
+// Bump when verifyQuotes changes: the cache holds verified results, so old entries keep the old verdicts.
+// 2: paraphrased skill quotes are kept via the skill's own line (2026-10-19).
+const CACHE_VERSION = "2";
+
 /** Cache key. The prompt is part of it, so editing EXTRACT_SYSTEM invalidates old extractions automatically. */
 export function hashJobText(normalized: string) {
-  return createHash("sha256").update(EXTRACT_SYSTEM).update("\0").update(normalized).digest("hex");
+  return createHash("sha256").update(CACHE_VERSION).update("\0").update(EXTRACT_SYSTEM).update("\0").update(normalized).digest("hex");
 }
 
 // Quotes must be exact substrings; whitespace differences (line breaks vs spaces) are forgiven.
@@ -80,11 +85,17 @@ const squash = (s: string) => s.replace(/\s+/g, " ").trim();
 
 /**
  * Drops skills/requirements whose quote isn't in the posting; nulls unverifiable scalar quotes, and a salary
- * or link that isn't written in the posting (the easiest fields to make up).
+ * or link that isn't written in the posting (the easiest fields to make up). A skill whose quote was
+ * paraphrased ("Menguasai TypeScript" from "Menguasai React, TypeScript, dan Tailwind CSS") is kept when the
+ * skill itself is in the posting, with that line as its evidence.
  */
 export function verifyQuotes(job: ExtractedJob, text: string): ExtractedJob {
   const haystack = squash(text);
   const found = (q: string | null) => !!q && squash(q).length > 0 && haystack.includes(squash(q));
+  const skills = job.skills.flatMap((s) => {
+    const quote = found(s.quote) ? s.quote : findSkillInText(s.name, text);
+    return quote ? [{ name: s.name, quote }] : [];
+  });
   return {
     ...job,
     salaryRange: found(job.salaryRange) ? job.salaryRange : null,
@@ -95,7 +106,7 @@ export function verifyQuotes(job: ExtractedJob, text: string): ExtractedJob {
       location: found(job.quotes.location) ? job.quotes.location : null,
       deadline: found(job.quotes.deadline) ? job.quotes.deadline : null,
     },
-    skills: job.skills.filter((s) => found(s.quote)),
+    skills,
     requirements: job.requirements.filter((r) => found(r.quote)),
   };
 }
