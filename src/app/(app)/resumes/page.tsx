@@ -23,7 +23,7 @@ export default async function ResumesPage() {
   return (
     <div className="max-w-6xl space-y-8">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Versi CV</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Versi CV</h1>
         <p className="text-muted-foreground text-sm">
           Simpan setiap versi CV, lalu tautkan ke lamaran supaya ingat versi mana yang dikirim ke mana.
         </p>
@@ -35,7 +35,7 @@ export default async function ResumesPage() {
         {resumes.length === 0 ? (
           <p className="text-muted-foreground text-sm">Belum ada CV yang diunggah.</p>
         ) : (
-          <ul className="divide-y rounded-xl border">
+          <ul className="divide-y rounded-xl border bg-card">
             {resumes.map((r) => (
               <li key={r.id} className="flex items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">

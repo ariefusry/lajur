@@ -68,7 +68,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold capitalize">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight capitalize">{title}</h1>
         <div className="flex gap-1">
           <Button asChild variant="outline" size="icon-sm" aria-label="Bulan sebelumnya">
             <Link href={`/calendar?month=${prev}`}>
@@ -86,7 +86,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      <div className="grid grid-cols-7 overflow-hidden rounded-xl border text-xs">
+      <div className="grid grid-cols-7 overflow-hidden rounded-xl border bg-card text-xs">
         {WEEKDAYS.map((d) => (
           <div key={d} className="border-b bg-muted/50 p-2 text-center font-medium">
             {d}
@@ -130,7 +130,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             Tidak ada jadwal. Tambahkan jadwal tes atau interview dari halaman detail lamaran.
           </p>
         ) : (
-          <ul className="max-w-2xl divide-y rounded-xl border">
+          <ul className="max-w-2xl divide-y rounded-xl border bg-card">
             {items.map((it) => (
               <li key={it.key}>
                 <Link

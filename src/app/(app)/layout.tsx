@@ -17,8 +17,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-svh flex-col md:flex-row">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-svh w-56 shrink-0 flex-col gap-4 border-r bg-muted/30 p-4 md:flex">
-        <Link href="/dashboard" className="text-lg font-semibold tracking-tight">
+      <aside className="sticky top-0 hidden h-svh w-56 shrink-0 flex-col gap-4 border-r bg-sidebar p-4 backdrop-blur-xl backdrop-saturate-150 md:flex">
+        <Link href="/dashboard" className="text-2xl font-semibold tracking-tight">
           Lamarin
         </Link>
         <NavLinks />

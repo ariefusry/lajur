@@ -130,20 +130,20 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
       ref={setNodeRef}
       aria-label={stage.name}
       className={cn(
-        "flex w-[min(16rem,80vw)] shrink-0 snap-start flex-col gap-2 rounded-xl bg-muted/50 p-2 transition-colors",
-        isOver && "bg-muted ring-2 ring-ring/40",
+        "flex w-[min(17rem,82vw)] shrink-0 snap-start flex-col gap-2.5 rounded-2xl bg-foreground/[0.04] p-2.5 transition-colors",
+        isOver && "bg-primary/10 ring-2 ring-primary/30",
       )}
     >
-      <h2 className="flex items-center justify-between px-1 text-sm font-medium">
+      <h2 className="flex items-center justify-between px-1.5 pt-0.5 text-sm font-semibold">
         {stage.name}
-        <span className="text-xs text-muted-foreground tabular-nums">{cards.length}</span>
+        <span className="rounded-full bg-foreground/8 px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">{cards.length}</span>
       </h2>
       {cards.map((card) => (
         <ApplicationCard key={card.id} card={card} justDragged={justDragged} />
       ))}
       <Link
         href={`/applications/new?stage=${stage.id}`}
-        className="rounded-md px-1 py-1 text-xs text-muted-foreground hover:bg-background hover:text-foreground"
+        className="rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
       >
         + Tambah
       </Link>
@@ -163,7 +163,7 @@ function ApplicationCard({ card, justDragged }: { card: Card; justDragged: RefOb
         if (justDragged.current) e.preventDefault();
       }}
       className={cn(
-        "cursor-grab rounded-lg border bg-card p-3 text-sm shadow-xs transition-[border-color,box-shadow] select-none [-webkit-touch-callout:none] hover:border-foreground/20 hover:shadow-sm",
+        "cursor-grab rounded-xl border-0 bg-card p-3.5 text-sm shadow-sm ring-1 ring-foreground/5 transition-shadow select-none [-webkit-touch-callout:none] hover:shadow-md",
         // The original stays in place as a faint placeholder while its lifted copy moves.
         isDragging && "opacity-40 shadow-none",
       )}
@@ -179,7 +179,7 @@ function CardBody({ card }: { card: Card }) {
   const days = card.deadline ? daysUntil(card.deadline) : null;
   return (
     <div className="space-y-1">
-      <p className="font-medium">{card.company}</p>
+      <p className="leading-snug font-semibold">{card.company}</p>
       <p className="text-muted-foreground">{card.position}</p>
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
         <Badge variant="secondary">{SHORT_SOURCE[card.source] ?? JOB_SOURCE_LABELS[card.source]}</Badge>

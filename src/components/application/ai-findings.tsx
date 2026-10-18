@@ -41,7 +41,7 @@ export function findingLines(job: DeepPartial<ExtractedJob>): string[] {
 export function AiFindings({ status, job, elapsed }: { status: Status; job: DeepPartial<ExtractedJob> | null; elapsed: number }) {
   const lines = job ? findingLines(job) : [];
   return (
-    <div className="space-y-2 rounded-lg border bg-background p-3" aria-live="polite">
+    <div className="space-y-2 rounded-lg border bg-card p-3" aria-live="polite">
       <p className="flex items-center gap-2 text-sm font-medium">
         <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
         {HEADLINE[status]}

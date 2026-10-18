@@ -28,8 +28,8 @@ export function NavLinks() {
           href={href}
           aria-current={isActive(pathname, href) ? "page" : undefined}
           className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted",
-            isActive(pathname, href) && "bg-muted font-medium",
+            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground",
+            isActive(pathname, href) && "bg-primary/10 font-medium text-primary hover:bg-primary/10 hover:text-primary",
           )}
         >
           <Icon className="size-4" /> {label}
@@ -59,7 +59,7 @@ export function TabBar() {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground transition-transform active:scale-95",
-                  active && "font-medium text-foreground",
+                  active && "font-medium text-primary",
                 )}
               >
                 {primary ? (

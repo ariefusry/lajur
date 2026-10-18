@@ -36,8 +36,8 @@ export default async function DashboardPage() {
   if (apps.length === 0) {
     return (
       <div className="max-w-xl space-y-4">
-        <h1 className="text-xl font-semibold">Dashboard</h1>
-        <div className="space-y-3 rounded-xl border p-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <div className="space-y-3 rounded-xl border bg-card p-6">
           <p className="font-medium">Belum ada data untuk dianalisis.</p>
           <p className="text-muted-foreground text-sm">
             Setelah kamu mencatat beberapa lamaran dan menggesernya antar tahap, di sini akan muncul: tahap mana yang
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl space-y-8">
-      <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Ringkasan">
         <Stat label="Total lamaran" value={d.totals.applications} />
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
 
 function Stat({ label, value, note }: { label: string; value: number | string; note?: string }) {
   return (
-    <div className="rounded-xl border p-4">
+    <div className="rounded-2xl border bg-card p-4 shadow-sm">
       <p className="text-muted-foreground text-xs">{label}</p>
       <p className="text-2xl font-semibold tabular-nums">{value}</p>
       {note && <p className="text-muted-foreground text-xs">{note}</p>}
@@ -160,7 +160,7 @@ function PassTable({
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">{empty}</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="overflow-x-auto rounded-xl border bg-card">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground text-left text-xs">
               <tr>

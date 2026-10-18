@@ -31,7 +31,7 @@ export default async function NewApplicationPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Lamaran baru</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Lamaran baru</h1>
       <NewApplication
         aiEnabled={aiEnabled() && !isReadOnly(user)}
         stages={stages}

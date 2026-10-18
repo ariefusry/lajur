@@ -40,7 +40,7 @@ export default async function BoardPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">Board lamaran</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Board lamaran</h1>
         <Button asChild>
           <Link href="/applications/new">Tambah lamaran</Link>
         </Button>

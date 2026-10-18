@@ -72,7 +72,7 @@ export function RequirementsEditor({
                 new Date(),
               );
               return (
-                <li key={r.key} className="space-y-1.5 rounded-lg border p-2">
+                <li key={r.key} className="space-y-1.5 rounded-lg border bg-card p-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <select
                       value={r.type}

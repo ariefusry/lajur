@@ -35,7 +35,7 @@ export default async function SettingsPage() {
     <div className="grid max-w-6xl items-start gap-10 xl:grid-cols-2">
       <section className="space-y-4">
         <div>
-          <h1 className="text-xl font-semibold">Profil</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Profil</h1>
           <p className="text-sm text-muted-foreground">Dipakai untuk mengecek syarat lowongan (IPK, usia, jurusan).</p>
         </div>
         <ProfileForm
@@ -51,7 +51,7 @@ export default async function SettingsPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold">Tahap seleksi</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Tahap seleksi</h2>
           <p className="text-sm text-muted-foreground">Kolom di board mengikuti urutan ini.</p>
         </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export function ApplicationForm({
   defaults,
   submitLabel,
   evidence,
+  compact,
   children,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
@@ -42,6 +44,8 @@ export function ApplicationForm({
   defaults: ApplicationDefaults;
   submitLabel: string;
   evidence?: Evidence;
+  /** Single column (narrow side panel) instead of two. */
+  compact?: boolean;
   children?: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -80,8 +84,10 @@ export function ApplicationForm({
     "aria-describedby": err(name) ? `${name}-error` : undefined,
   });
 
+  const span = compact ? undefined : "sm:col-span-2";
+
   return (
-    <form action={formAction} className="grid max-w-3xl gap-4 sm:grid-cols-2">
+    <form action={formAction} className={cn("grid gap-4", !compact && "max-w-3xl sm:grid-cols-2")}>
       {field("company", "Perusahaan *", <Input {...a11y("company")} defaultValue={defaults.company} required />)}
       {field("position", "Posisi *", <Input {...a11y("position")} defaultValue={defaults.position} required />)}
       {field(
@@ -134,12 +140,12 @@ export function ApplicationForm({
         "Gaji yang diharapkan (Rp/bulan)",
         <Input {...a11y("expectedSalary")} inputMode="numeric" placeholder="8000000" defaultValue={defaults.expectedSalary} />,
       )}
-      <div className="sm:col-span-2">
+      <div className={span}>
         {field("notes", "Catatan", <Textarea {...a11y("notes")} rows={4} defaultValue={defaults.notes} />)}
       </div>
-      {children && <div className="sm:col-span-2">{children}</div>}
-      {state.message && !state.ok && <p className="text-sm text-destructive sm:col-span-2">{state.message}</p>}
-      <div className="sm:col-span-2">
+      {children && <div className={span}>{children}</div>}
+      {state.message && !state.ok && <p className={cn("text-sm text-destructive", span)}>{state.message}</p>}
+      <div className={span}>
         <Button type="submit" disabled={pending}>
           {pending ? "Menyimpan…" : submitLabel}
         </Button>
