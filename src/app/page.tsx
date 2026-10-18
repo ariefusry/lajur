@@ -12,7 +12,9 @@ import {
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { HowItWorksVideo } from "@/components/how-it-works-video";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { redirect } from "next/navigation";
 import { signInAsDemo } from "@/actions/demo";
 import { Button } from "@/components/ui/button";
@@ -96,9 +98,12 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
               Privasi
             </a>
           </nav>
-          <Button asChild size="sm">
-            <Link href="/login">Masuk</Link>
-          </Button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Button asChild size="sm">
+              <Link href="/login">Masuk</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -140,14 +145,21 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
 
         {/* Product shot */}
         <section className="mx-auto max-w-6xl px-4" aria-label="Tampilan aplikasi">
+          {/* Light and dark shots; CSS shows the one for the current theme, and the hidden (lazy) one never loads. */}
           <div className="glass overflow-hidden rounded-3xl border p-2 shadow-2xl md:p-3">
             <Image
               src="/landing/dashboard.png"
               alt="Dashboard Lajur: jadwal 7 hari ke depan, lamaran yang perlu di-follow-up, dan pipeline tahap seleksi"
               width={1440}
               height={900}
-              priority
-              className="w-full rounded-2xl border"
+              className="w-full rounded-2xl border dark:hidden"
+            />
+            <Image
+              src="/landing/dashboard-dark.png"
+              alt="Dashboard Lajur: jadwal 7 hari ke depan, lamaran yang perlu di-follow-up, dan pipeline tahap seleksi"
+              width={1440}
+              height={900}
+              className="hidden w-full rounded-2xl border dark:block"
             />
           </div>
         </section>
@@ -213,13 +225,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
             </ol>
           </div>
           <div className="glass overflow-hidden rounded-3xl border p-2 shadow-xl">
-            <Image
-              src="/landing/board.png"
-              alt="Board Lajur: kolom tahap seleksi dengan kartu lamaran yang bisa digeser"
-              width={1440}
-              height={640}
-              className="w-full rounded-2xl border"
-            />
+            <HowItWorksVideo />
           </div>
         </section>
 
