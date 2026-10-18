@@ -1,6 +1,7 @@
 import { addStage } from "@/actions/settings";
 import { Card } from "@/components/dashboard/cards";
 import { AccountData } from "@/components/settings/account-data";
+import { AiConsent } from "@/components/settings/ai-consent";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { StageEditor } from "@/components/settings/stage-editor";
 import { TemplatePicker } from "@/components/settings/template-picker";
@@ -21,7 +22,7 @@ export default async function SettingsPage() {
   const [profile, stages, applicationCount] = await Promise.all([
     db.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { gpa: true, birthDate: true, major: true, degree: true, domicile: true },
+      select: { gpa: true, birthDate: true, major: true, degree: true, domicile: true, aiConsentAt: true },
     }),
     db.stage.findMany({ where: { userId }, orderBy: { order: "asc" } }),
     db.application.count({ where: { userId } }),
@@ -45,6 +46,9 @@ export default async function SettingsPage() {
                 domicile: profile.domicile ?? "",
               }}
             />
+          </Card>
+          <Card title="Persetujuan AI" description="Fitur AI hanya aktif setelah kamu setuju." className="order-1 lg:order-none">
+            <AiConsent consentedAt={profile.aiConsentAt} readOnly={isDemoEmail(email)} />
           </Card>
           <Card
             title="Data & akun"

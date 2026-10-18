@@ -1,7 +1,7 @@
 /**
  * Strips personal data from CV text before any of it reaches an LLM (CLAUDE.md rule 7a / 7.5).
  * Free model endpoints may train on what they receive, so only the skills/experience-type sections leave,
- * with contact details, addresses, ID numbers and the owner's name removed.
+ * with address lines dropped and contact details, ID numbers and the owner's name/address swapped for placeholders.
  */
 
 export const MAX_REDACTED_CHARS = 6000;
@@ -49,29 +49,69 @@ function relevantSections(lines: string[]): string[] {
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export function redact(cvText: string, ownerName: string | null): string {
+/** Whole-word, case-insensitive match of any of the given words. */
+function wordsRegExp(words: string[]) {
+  const alts = [...new Set(words)].sort((a, b) => b.length - a.length).map(escapeRegExp);
+  return alts.length ? new RegExp(`(?<![\\p{L}])(?:${alts.join("|")})(?![\\p{L}])`, "giu") : null;
+}
+
+/** Placeholder → the original text it replaced, for putting personal data back into the AI's answer. */
+export type PiiMap = Record<string, string>;
+export type KnownPii = { name?: string | null; address?: string | null };
+
+const PLACEHOLDER = /\[(?:EMAIL|PHONE|URL|ID|NAME|ADDRESS)_\d+\]/g;
+
+/**
+ * Swaps personal data for numbered placeholders ([EMAIL_1], [PHONE_1], [NAME_1], …): emails, Indonesian phone
+ * numbers, URLs, long ID numbers (NIK), and the user's own name and address from the profile.
+ * The same value always gets the same placeholder.
+ */
+export function redactPII(text: string, known: KnownPii = {}): { text: string; map: PiiMap } {
+  const map: PiiMap = {};
+  const seen = new Map<string, string>();
+  const counts: Record<string, number> = {};
+  const swap = (kind: string) => (value: string) => {
+    let placeholder = seen.get(`${kind}\0${value}`);
+    if (!placeholder) {
+      counts[kind] = (counts[kind] ?? 0) + 1;
+      placeholder = `[${kind}_${counts[kind]}]`;
+      seen.set(`${kind}\0${value}`, placeholder);
+      map[placeholder] = value;
+    }
+    return placeholder;
+  };
+
+  // Every word of the name (3+ letters): "Rina Kartika Sari" → rina|kartika|sari. The address as a whole.
+  const NAME = wordsRegExp((known.name ?? "").split(/[\s.,]+/).filter((w) => w.length >= 3));
+  const ADDRESS = wordsRegExp(known.address?.trim() ? [known.address.trim()] : []);
+
+  let out = text.replace(EMAIL, swap("EMAIL")).replace(URL, swap("URL")).replace(PHONE, swap("PHONE")).replace(LONG_NUMBER, swap("ID"));
+  if (ADDRESS) out = out.replace(ADDRESS, swap("ADDRESS"));
+  if (NAME) out = out.replace(NAME, swap("NAME"));
+  return { text: out, map };
+}
+
+/** Puts the originals back into text the AI wrote from redacted input. Unknown placeholders stay as they are. */
+export function rehydrate(text: string, map: PiiMap): string {
+  return text.replace(PLACEHOLDER, (p) => map[p] ?? p);
+}
+
+/**
+ * CV text for an LLM: only the relevant sections, address lines dropped, everything personal swapped for
+ * placeholders (redactPII), capped in length.
+ */
+export function redact(cvText: string, known: KnownPii = {}): { text: string; map: PiiMap } {
   const lines = cvText
     .replace(/\r\n?/g, "\n")
     .split("\n")
     .map((l) => l.replace(/[ \t ]+/g, " ").trim())
     .filter(Boolean);
 
-  // Every word of the owner's name (3+ letters), case-insensitive: "Rina Kartika Sari" → rina|kartika|sari.
-  const nameWords = (ownerName ?? "")
-    .split(/[\s.,]+/)
-    .filter((w) => w.length >= 3)
-    .map(escapeRegExp);
-  const NAME = nameWords.length ? new RegExp(`(?<![\\p{L}])(?:${nameWords.join("|")})(?![\\p{L}])`, "giu") : null;
-
-  const scrubbed = relevantSections(lines)
-    .filter((l) => !ADDRESS_LINE.test(l))
-    .map((l) => {
-      let out = l.replace(EMAIL, "[email]").replace(URL, "[url]").replace(PHONE, "[telepon]").replace(LONG_NUMBER, "[angka]");
-      if (NAME) out = out.replace(NAME, "[nama]");
-      return out;
-    })
+  const { text, map } = redactPII(relevantSections(lines).filter((l) => !ADDRESS_LINE.test(l)).join("\n"), known);
+  const kept = text
+    .split("\n")
     // Drop lines that were nothing but contact details.
-    .filter((l) => l.replace(/\[(email|url|telepon|angka|nama)\]|[\s|,•·-]/g, "").length > 0);
+    .filter((l) => l.replace(PLACEHOLDER, "").replace(/[\s|,•·-]/g, "").length > 0);
 
-  return scrubbed.join("\n").slice(0, MAX_REDACTED_CHARS);
+  return { text: kept.join("\n").slice(0, MAX_REDACTED_CHARS), map };
 }

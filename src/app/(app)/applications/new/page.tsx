@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NewApplication } from "@/components/application/new-application";
+import { hasAiConsent } from "@/lib/ai/consent";
 import { aiEnabled } from "@/lib/ai/provider";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -14,10 +15,11 @@ export default async function NewApplicationPage({
   searchParams: Promise<{ stage?: string }>;
 }) {
   const user = await requireUser();
-  const [stages, resumes, profile] = await Promise.all([
+  const [stages, resumes, profile, aiConsent] = await Promise.all([
     db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" }, select: { id: true, name: true } }),
     db.resume.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, select: { id: true, versionName: true } }),
     getEligibilityProfile(user.id),
+    hasAiConsent(user.id),
   ]);
   const { stage } = await searchParams;
 
@@ -34,6 +36,7 @@ export default async function NewApplicationPage({
       <h1 className="text-2xl font-semibold tracking-tight">Lamaran baru</h1>
       <NewApplication
         aiEnabled={aiEnabled() && !isReadOnly(user)}
+        aiConsent={aiConsent}
         stages={stages}
         resumes={resumes}
         profile={{ ...profile, birthDate: profile.birthDate?.toISOString() ?? null }}

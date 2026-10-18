@@ -2,7 +2,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { NothingFoundError, postingSkills } from "@/lib/ai/extract-job.server";
 import { aiEnabled, AiUnavailableError, generateStructured } from "@/lib/ai/provider";
-import { redact } from "@/lib/ai/redact";
+import { AiConsentRequiredError } from "@/lib/ai/consent";
+import { redact, rehydrate } from "@/lib/ai/redact";
 import { matchSkills, SKILL_GAP_SYSTEM, SkillGapAnswer, skillGapPrompt, verifySkillGap, type GapRow } from "@/lib/ai/skill-gap";
 import { QuotaExceededError } from "@/lib/ai/usage";
 import { auth } from "@/lib/auth";
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
   try {
     skills = await postingSkills(app.jobPostingText, userId);
   } catch (error) {
+    if (error instanceof AiConsentRequiredError) return fail(error.message, 403);
     if (error instanceof QuotaExceededError) return fail(error.message, 429);
     if (error instanceof NothingFoundError) return fail("Tidak ada skill yang bisa dibaca dari teks lowongan ini.", 422);
     return fail("Daftar skill lowongan belum tersedia dan AI sedang tidak tersedia. Coba lagi nanti.", 503);
@@ -54,7 +56,8 @@ export async function POST(request: Request) {
   let fromAi: GapRow[] = [];
   let aiNote: string | null = null;
   if (missing.length) {
-    const redacted = redact(cvText, session?.user?.name ?? null);
+    const owner = await db.user.findUnique({ where: { id: userId }, select: { name: true, domicile: true } });
+    const redacted = redact(cvText, { name: owner?.name, address: owner?.domicile });
     const notChecked = (suggestion: string) => missing.map((skill) => ({ skill, inResume: false, suggestion, sourceQuote: null }));
     if (!aiEnabled()) {
       fromAi = notChecked("Tidak ditemukan di CV. AI tidak aktif, jadi istilah setara belum dicek.");
@@ -63,14 +66,20 @@ export async function POST(request: Request) {
         const { object } = await generateStructured({
           schema: SkillGapAnswer,
           system: SKILL_GAP_SYSTEM,
-          prompt: skillGapPrompt(missing, redacted),
+          prompt: skillGapPrompt(missing, redacted.text),
           feature: "SKILL_GAP",
           userId,
         });
-        fromAi = verifySkillGap(missing, object, redacted);
+        // Quotes are checked against what the AI saw, then shown with the user's own data back in.
+        fromAi = verifySkillGap(missing, object, redacted.text).map((r) => ({
+          ...r,
+          suggestion: r.suggestion && rehydrate(r.suggestion, redacted.map),
+          sourceQuote: r.sourceQuote && rehydrate(r.sourceQuote, redacted.map),
+        }));
       } catch (error) {
-        aiNote = error instanceof QuotaExceededError ? error.message : "AI sedang tidak tersedia, jadi hanya pencocokan teks yang dipakai.";
-        if (!(error instanceof QuotaExceededError || error instanceof AiUnavailableError)) {
+        const known = error instanceof QuotaExceededError || error instanceof AiConsentRequiredError;
+        aiNote = known ? error.message : "AI sedang tidak tersedia, jadi hanya pencocokan teks yang dipakai.";
+        if (!(known || error instanceof AiUnavailableError)) {
           console.error("skill gap failed", error instanceof Error ? error.name : "unknown");
         }
         fromAi = notChecked("Tidak ditemukan di CV. Istilah setara belum dicek AI.");

@@ -63,6 +63,8 @@ model User {
   major         String?
   degree        Degree?
   domicile      String?
+  // UU PDP: kapan user menyetujui teksnya diproses AI pihak ketiga di luar negeri. Null = fitur AI nonaktif.
+  aiConsentAt   DateTime?
   createdAt     DateTime  @default(now())
 
   accounts     Account[]
@@ -250,6 +252,8 @@ model AiUsage {
 enum AiFeature {
   EXTRACT_JOB
   SKILL_GAP
+  CV_TWEAKS
+  FOLLOW_UP
 }
 
 model ExtractionCache {

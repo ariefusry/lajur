@@ -1,21 +1,33 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { createApplication } from "@/actions/applications";
 import { ApplicationForm, type ApplicationDefaults, type Evidence } from "@/components/application/application-form";
 import { JobPastePanel, type ExtractResult } from "@/components/application/job-paste-panel";
 import { RequirementsEditor } from "@/components/application/requirements-editor";
+import { AiConsent } from "@/components/settings/ai-consent";
 import { Button } from "@/components/ui/button";
 
 type Props = {
   aiEnabled: boolean;
+  aiConsent: boolean;
   stages: { id: string; name: string }[];
   resumes: { id: string; versionName: string }[];
   defaults: ApplicationDefaults;
   profile: React.ComponentProps<typeof RequirementsEditor>["profile"];
 };
 
-export function NewApplication({ aiEnabled, stages, resumes, defaults, profile }: Props) {
+const WORK_MODE_LABELS = { onsite: "Kerja di kantor", hybrid: "Hybrid", remote: "Remote" } as const;
+
+/** Posting details the form has no field for, as a first line of the notes draft. */
+function postingNotes(job: ExtractResult["job"]) {
+  const parts = [job.employmentType, job.workMode && WORK_MODE_LABELS[job.workMode], job.salaryRange && `Gaji ${job.salaryRange}`];
+  const line = parts.filter(Boolean).join(" · ");
+  return line ? `Dari lowongan: ${line}` : "";
+}
+
+export function NewApplication({ aiEnabled, aiConsent, stages, resumes, defaults, profile }: Props) {
   const [draft, setDraft] = useState<ExtractResult | null>(null);
   const [version, setVersion] = useState(0);
   // With AI on, the long manual form stays folded until it is needed (or the AI filled a draft).
@@ -29,7 +41,8 @@ export function NewApplication({ aiEnabled, stages, resumes, defaults, profile }
         position: job.position ?? "",
         location: job.location ?? "",
         deadline: job.deadline ?? "",
-        url: draft.sourceUrl ?? defaults.url,
+        url: draft.sourceUrl ?? job.sourceUrl ?? defaults.url,
+        notes: postingNotes(job) || defaults.notes,
       }
     : defaults;
   const evidence: Evidence | undefined = job
@@ -45,12 +58,21 @@ export function NewApplication({ aiEnabled, stages, resumes, defaults, profile }
     <div className={aiEnabled ? "grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]" : "space-y-6"}>
       {aiEnabled && (
         <div className="lg:sticky lg:top-6">
-          <JobPastePanel
-            onResult={(r) => {
-              setDraft(r);
-              setVersion((v) => v + 1); // remount the uncontrolled form with the draft values
-            }}
-          />
+          {aiConsent ? (
+            <JobPastePanel
+              onResult={(r) => {
+                setDraft(r);
+                setVersion((v) => v + 1); // remount the uncontrolled form with the draft values
+              }}
+            />
+          ) : (
+            <section className="glass space-y-3 rounded-2xl border p-4">
+              <h2 className="flex items-center gap-2 font-medium">
+                <Sparkles className="size-4" /> Tambah dengan AI
+              </h2>
+              <AiConsent consentedAt={null} />
+            </section>
+          )}
         </div>
       )}
       {aiEnabled && !draft && !manual ? (

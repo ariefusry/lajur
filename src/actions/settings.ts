@@ -24,6 +24,17 @@ export async function updateProfile(_: FormState, formData: FormData): Promise<F
   return { ok: true, message: "Profil disimpan." };
 }
 
+/** UU PDP consent for sending text to the (foreign) AI providers; agree=false withdraws it. */
+export async function setAiConsent(formData: FormData) {
+  const user = await requireUser();
+  if (isReadOnly(user)) return;
+  const agree = z.enum(["true", "false"]).safeParse(formData.get("agree"));
+  if (!agree.success) return;
+  await db.user.update({ where: { id: user.id }, data: { aiConsentAt: agree.data === "true" ? new Date() : null } });
+  revalidatePath("/settings");
+  revalidatePath("/applications/new");
+}
+
 export async function addStage(formData: FormData) {
   const user = await requireUser();
   if (isReadOnly(user)) return;
