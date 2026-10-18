@@ -68,6 +68,14 @@ export const profileSchema = z.object({
 export const stageNameSchema = z.string().trim().min(1).max(50);
 export const stageKindSchema = z.enum(StageKind);
 
+export const STAGE_KIND_LABELS: Record<StageKind, string> = {
+  WISHLIST: "Wishlist",
+  IN_PROGRESS: "Proses seleksi",
+  OFFER: "Offering",
+  REJECTED: "Ditolak",
+  WITHDRAWN: "Mengundurkan diri",
+};
+
 export const resumeNameSchema = z.string().trim().min(1).max(100);
 
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {

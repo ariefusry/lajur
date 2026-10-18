@@ -137,6 +137,58 @@
   select {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Native dropdown lists fall back to the OS serif unless told otherwise. */
+  select,
+  option,
+  optgroup {
+    font-family: inherit;
+  }
+}
+/* Chromium 135+: style the dropdown list itself (rounded popup, our font and colours). Others keep the native list. */
+@supports (appearance: base-select) {
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+  select {
+    align-items: center;
+    justify-content: space-between;
+  }
+  select::picker-icon {
+    color: var(--muted-foreground);
+    transition: rotate 150ms ease;
+  }
+  select:open::picker-icon {
+    rotate: 180deg;
+  }
+  ::picker(select) {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--popover);
+    color: var(--popover-foreground);
+    padding: 0.25rem;
+    margin-block: 0.25rem;
+    box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.25);
+  }
+  select option {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+  }
+  select option:hover,
+  select option:focus-visible {
+    background: color-mix(in oklch, var(--primary) 12%, transparent);
+    outline: none;
+  }
+  select option:checked {
+    color: var(--primary);
+    font-weight: 500;
+  }
+}
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,

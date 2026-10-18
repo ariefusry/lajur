@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/core";
 import { CalendarClock } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState, useSyncExternalStore, useTransition, type RefObject } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition, type RefObject } from "react";
 import { toast } from "sonner";
 import { moveApplication } from "@/actions/applications";
 import { EligibilityBadge } from "@/components/eligibility-badge";
@@ -94,6 +94,23 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
 
   const activeCard = activeId ? cards.find((c) => c.id === activeId) : undefined;
 
+  // Fade the right edge while more columns are scrolled out of view.
+  const scroller = useRef<HTMLDivElement>(null);
+  const [moreRight, setMoreRight] = useState(false);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const update = () => setMoreRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
+
   return (
     <DndContext
       id="board"
@@ -105,7 +122,11 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
         setTimeout(() => (justDragged.current = false), 0);
       }}
     >
-      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:snap-none md:px-0">
+      <div
+        ref={scroller}
+        className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:snap-none md:px-0"
+        style={moreRight ? { maskImage: "linear-gradient(to right, #000 calc(100% - 3rem), transparent)" } : undefined}
+      >
         {stages.map((stage) => (
           <Column key={stage.id} stage={stage} cards={cards.filter((c) => c.currentStageId === stage.id)} justDragged={justDragged} />
         ))}
@@ -141,6 +162,11 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
       {cards.map((card) => (
         <ApplicationCard key={card.id} card={card} justDragged={justDragged} />
       ))}
+      {cards.length === 0 && (
+        <p className="text-muted-foreground rounded-xl border border-dashed px-3 py-6 text-center text-sm">
+          Belum ada lamaran. Tarik kartu ke sini.
+        </p>
+      )}
       <Link
         href={`/applications/new?stage=${stage.id}`}
         className="rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"

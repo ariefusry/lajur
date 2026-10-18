@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { StageKind } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
@@ -36,28 +37,38 @@ export async function addStage(formData: FormData) {
   done();
 }
 
-export async function renameStage(id: string, formData: FormData) {
+/** Autosave from the stage editor: rename and/or change the kind of one stage. */
+export async function updateStage(id: string, input: { name?: string; kind?: string }): Promise<FormState> {
   const user = await requireUser();
-  if (isReadOnly(user)) return;
-  const name = stageNameSchema.safeParse(formData.get("name"));
-  if (!name.success) return;
-  await db.stage.updateMany({ where: { id, userId: user.id }, data: { name: name.data } });
+  if (isReadOnly(user)) return { message: DEMO_READ_ONLY_MESSAGE };
+  const data: { name?: string; kind?: StageKind } = {};
+  if (input.name !== undefined) {
+    const name = stageNameSchema.safeParse(input.name);
+    if (!name.success) return { message: "Nama tahap tidak boleh kosong (maks. 50 karakter)." };
+    data.name = name.data;
+  }
+  if (input.kind !== undefined) {
+    const kind = stageKindSchema.safeParse(input.kind);
+    if (!kind.success) return { message: "Jenis tahap tidak dikenal." };
+    data.kind = kind.data;
+  }
+  await db.stage.updateMany({ where: { id, userId: user.id }, data });
   done();
+  return { ok: true, message: "Tahap disimpan." };
 }
 
-/** Swap with the neighbour above (-1) or below (+1), then renumber 0..n. */
-export async function moveStage(id: string, direction: -1 | 1) {
+/** Persist a drag-and-drop order: `ids` must be exactly the user's stages, in the new order. */
+export async function reorderStages(ids: string[]): Promise<FormState> {
   const user = await requireUser();
-  if (isReadOnly(user)) return;
-  const stages = await db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" } });
-  const i = stages.findIndex((s) => s.id === id);
-  const j = i + direction;
-  if (i < 0 || j < 0 || j >= stages.length) return;
-  [stages[i], stages[j]] = [stages[j], stages[i]];
-  await db.$transaction(
-    stages.map((s, order) => db.stage.update({ where: { id: s.id }, data: { order } })),
-  );
+  if (isReadOnly(user)) return { message: DEMO_READ_ONLY_MESSAGE };
+  const stages = await db.stage.findMany({ where: { userId: user.id }, select: { id: true } });
+  const known = new Set(stages.map((s) => s.id));
+  if (ids.length !== known.size || new Set(ids).size !== ids.length || !ids.every((id) => known.has(id))) {
+    return { message: "Urutan tahap tidak valid. Muat ulang halaman." };
+  }
+  await db.$transaction(ids.map((id, order) => db.stage.update({ where: { id }, data: { order } })));
   done();
+  return { ok: true, message: "Urutan tahap disimpan." };
 }
 
 export async function applyTemplate(key: TemplateKey): Promise<FormState> {

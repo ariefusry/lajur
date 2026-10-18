@@ -4,15 +4,27 @@ import type { JobSource } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { computeDashboard, type PassRate } from "@/lib/dashboard";
 import { db } from "@/lib/db";
-import { JOB_SOURCE_LABELS } from "@/lib/validation";
+import { daysUntil, formatDate, formatDateTime } from "@/lib/dates";
+import { cn } from "@/lib/utils";
+import { EVENT_TYPE_LABELS, JOB_SOURCE_LABELS } from "@/lib/validation";
 
 export const metadata = { title: "Dashboard · Lamarin" };
 
+const RANGES = [
+  { key: "30", label: "30 hari", days: 30 },
+  { key: "90", label: "90 hari", days: 90 },
+  { key: "all", label: "Semua", days: null },
+] as const;
+
 const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x * 100)}%`);
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const user = await requireUser();
-  const [stages, apps, resumes] = await Promise.all([
+  const { range: rangeParam } = await searchParams;
+  const range = RANGES.find((x) => x.key === rangeParam) ?? RANGES[2];
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const [stages, allApps, resumes, events, deadlines] = await Promise.all([
     db.stage.findMany({
       where: { userId: user.id },
       select: { id: true, name: true, order: true, kind: true },
@@ -20,6 +32,7 @@ export default async function DashboardPage() {
     db.application.findMany({
       where: { userId: user.id },
       select: {
+        createdAt: true,
         source: true,
         resumeId: true,
         currentStageId: true,
@@ -31,9 +44,49 @@ export default async function DashboardPage() {
       where: { userId: user.id },
       select: { id: true, versionName: true },
     }),
+    db.event.findMany({
+      where: { startsAt: { gte: now }, application: { userId: user.id } },
+      orderBy: { startsAt: "asc" },
+      take: 6,
+      select: { id: true, type: true, startsAt: true, application: { select: { id: true, company: true } } },
+    }),
+    db.application.findMany({
+      where: {
+        userId: user.id,
+        deadline: { gte: startOfToday },
+        currentStage: { kind: { in: ["WISHLIST", "IN_PROGRESS"] } },
+      },
+      orderBy: { deadline: "asc" },
+      take: 6,
+      select: { id: true, company: true, deadline: true },
+    }),
   ]);
 
-  if (apps.length === 0) {
+  // The period filters by application date (falls back to when it was added).
+  const since = range.days === null ? null : new Date(now.getTime() - range.days * 86_400_000);
+  const apps = since ? allApps.filter((a) => (a.appliedAt ?? a.createdAt) >= since) : allApps;
+  const upcoming = [
+    ...events.map((e) => ({
+      key: `e${e.id}`,
+      appId: e.application.id,
+      title: e.application.company,
+      what: EVENT_TYPE_LABELS[e.type],
+      at: e.startsAt,
+      withTime: true,
+    })),
+    ...deadlines.map((a) => ({
+      key: `d${a.id}`,
+      appId: a.id,
+      title: a.company,
+      what: "Deadline pendaftaran",
+      at: a.deadline!,
+      withTime: false,
+    })),
+  ]
+    .sort((a, b) => a.at.getTime() - b.at.getTime())
+    .slice(0, 6);
+
+  if (allApps.length === 0) {
     return (
       <div className="max-w-xl space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
@@ -58,12 +111,29 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl space-y-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <nav aria-label="Periode" className="bg-foreground/5 inline-flex rounded-lg p-0.5">
+          {RANGES.map((x) => (
+            <Link
+              key={x.key}
+              href={x.key === "all" ? "/dashboard" : `/dashboard?range=${x.key}`}
+              aria-current={x.key === range.key ? "true" : undefined}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm transition-colors pointer-coarse:py-2.5",
+                x.key === range.key ? "bg-card font-medium shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {x.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Ringkasan">
-        <Stat label="Total lamaran" value={d.totals.applications} />
-        <Stat label="Masih berjalan" value={d.totals.active} />
-        <Stat label="Offering" value={d.totals.offers} />
+        <Stat label="Total lamaran" value={d.totals.applications} href="/board" />
+        <Stat label="Masih berjalan" value={d.totals.active} href="/board" />
+        <Stat label="Offering" value={d.totals.offers} href="/board" />
         <Stat
           label="Median waktu respons"
           value={d.responseTime.medianDays === null ? "–" : `${Math.round(d.responseTime.medianDays * 10) / 10} hari`}
@@ -83,13 +153,13 @@ export default async function DashboardPage() {
             {d.funnel.map((f) => (
               <li
                 key={f.stage}
-                className="grid grid-cols-[minmax(6rem,9rem)_1fr_auto] items-center gap-3 text-sm"
+                className="hover:bg-foreground/5 -mx-2 grid grid-cols-[minmax(6rem,9rem)_1fr_auto] items-center gap-3 rounded-lg px-2 py-1 text-sm transition-colors"
                 title={`${f.stage}: ${f.count} lamaran${f.conversion === null ? "" : `, ${pct(f.conversion)} dari tahap sebelumnya`}`}
               >
                 <span className="truncate">{f.stage}</span>
                 <span className="bg-muted h-5 rounded-sm" aria-hidden>
                   <span
-                    className="bg-primary block h-full rounded-sm"
+                    className="bg-primary block h-full origin-left rounded-sm motion-safe:animate-[bar-grow_700ms_cubic-bezier(0.2,0.8,0.2,1)_both]"
                     style={{ width: `${(f.count / maxFunnel) * 100}%` }}
                   />
                 </span>
@@ -100,6 +170,44 @@ export default async function DashboardPage() {
               </li>
             ))}
           </ol>
+
+          <div className="space-y-3 pt-6">
+            <h2 className="font-medium">Segera tiba</h2>
+            {upcoming.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Belum ada jadwal atau deadline mendatang. Tambahkan di halaman detail lamaran.
+              </p>
+            ) : (
+              <ul className="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+                {upcoming.map((u) => {
+                  const days = daysUntil(u.at);
+                  return (
+                    <li key={u.key}>
+                      <Link
+                        href={`/applications/${u.appId}`}
+                        className="hover:bg-foreground/5 flex items-center gap-3 p-3 transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{u.title}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {u.what} · {u.withTime ? formatDateTime(u.at) : formatDate(u.at)}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+                            days <= 3 ? "bg-destructive/10 text-destructive" : "bg-foreground/5 text-muted-foreground",
+                          )}
+                        >
+                          {days <= 0 ? "Hari ini" : `${days} hari lagi`}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </section>
 
         <div className="space-y-8">
@@ -127,13 +235,24 @@ export default async function DashboardPage() {
   );
 }
 
-function Stat({ label, value, note }: { label: string; value: number | string; note?: string }) {
-  return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm">
+function Stat({ label, value, note, href }: { label: string; value: number | string; note?: string; href?: string }) {
+  const className = cn(
+    "bg-card rounded-2xl border p-4 shadow-sm",
+    href && "transition-[box-shadow,transform] hover:shadow-md active:scale-[0.98]",
+  );
+  const body = (
+    <>
       <p className="text-muted-foreground text-xs">{label}</p>
       <p className="text-2xl font-semibold tabular-nums">{value}</p>
       {note && <p className="text-muted-foreground text-xs">{note}</p>}
-    </div>
+    </>
+  );
+  return href ? (
+    <Link href={href} className={className}>
+      {body}
+    </Link>
+  ) : (
+    <div className={className}>{body}</div>
   );
 }
 

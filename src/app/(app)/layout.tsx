@@ -1,6 +1,7 @@
 import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { NavLinks, TabBar } from "@/components/nav-links";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { requireUser, signOut } from "@/lib/auth";
 import { DEMO_EMAIL, isReadOnly } from "@/lib/demo";
@@ -26,6 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <p className="truncate text-xs text-muted-foreground" title={user.email ?? ""}>
             {user.name ?? user.email}
           </p>
+          <ThemeToggle withLabel />
           <form action={signOutAction}>
             <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
               <LogOut /> Keluar
@@ -40,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           Lamarin
         </Link>
         <div className="flex items-center">
+          <ThemeToggle />
           <Button asChild variant="ghost" size="icon-sm" aria-label="Pengaturan">
             <Link href="/settings">
               <Settings />

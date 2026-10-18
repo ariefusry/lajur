@@ -28,6 +28,10 @@ test("demo user creates an application, moves it on the board, and sees it on th
 
   // 2. Buat lamaran (lands in the first column, Wishlist)
   await page.goto("/applications/new");
+  // With AI configured the manual form is folded behind a button.
+  await page.waitForLoadState("networkidle"); // the click needs hydration
+  const manual = page.getByRole("button", { name: /Isi manual/ });
+  if (await manual.isVisible()) await manual.click();
   await page.getByLabel("Perusahaan *").fill(COMPANY);
   await page.getByLabel("Posisi *").fill("Staf Administrasi");
   await page.getByLabel("Sumber lowongan *").selectOption("JOBSTREET");
@@ -58,8 +62,8 @@ test("demo user creates an application, moves it on the board, and sees it on th
 
   // Cleanup
   await page.goto(detailUrl);
-  page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Hapus lamaran" }).click();
+  await page.getByRole("button", { name: "Ya, hapus" }).click(); // inline confirmation
   await expect(page).toHaveURL(/\/board$/);
   await expect(page.getByText(COMPANY)).toHaveCount(0);
 });
