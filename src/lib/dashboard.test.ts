@@ -25,8 +25,8 @@ const d = computeDashboard(stages, apps, today);
  */
 describe("computeDashboard on the demo data (matches the hand count)", () => {
   it("totals", () => {
-    // Current stages: wishlist 2, in progress 8 (6 of them ghosted, see below), offering 1, ditolak 4.
-    expect(d.totals).toEqual({ applications: 15, wishlist: 2, active: 8, ghosted: 6, offers: 1, rejected: 4 });
+    // Current stages: wishlist 2, in progress 8 (1 of them ghosted, see below), offering 1, ditolak 4.
+    expect(d.totals).toEqual({ applications: 15, wishlist: 2, active: 8, ghosted: 1, offers: 1, rejected: 4 });
     expect(d.adminStage).toBe("Administrasi");
   });
 
@@ -74,10 +74,9 @@ describe("computeDashboard on the demo data (matches the hand count)", () => {
     // Sent: 13 (all but the two wishlist ones, KAI and Angkasa Pura).
     // No reaction yet: Pertamina and Astra (still at Administrasi) → 11 responded (rejections count as a reaction).
     // Reached an Interview stage: Telkom, Tokopedia, Gojek, BSI, Traveloka → 5. Offering: Traveloka.
-    // Last news (applied 60-2i days ago, one stage per 3+(i%5) days): Mandiri 54, BRI 54, Telkom 36,
-    // Pertamina 54, BCA 41, Astra 42 days → ghosted 6; Tokopedia 21 and BSI 14 → only quiet.
-    // Waiting = active, not ghosted, no reaction yet → none.
-    expect(d.outcomes).toEqual({ applied: 13, responded: 11, interviewed: 5, offered: 1, ghosted: 6, waiting: 0 });
+    // Days since last news (DAYS_SINCE_LAST_MOVE): Pertamina 33 → ghosted; BCA 16, Tokopedia 21, BSI 18 → quiet.
+    // Waiting = active, not ghosted, no reaction yet → Astra (applied 3 days ago).
+    expect(d.outcomes).toEqual({ applied: 13, responded: 11, interviewed: 5, offered: 1, ghosted: 1, waiting: 1 });
   });
 
   it("per source: sent and responded", () => {
@@ -89,8 +88,9 @@ describe("computeDashboard on the demo data (matches the hand count)", () => {
 
   it("per-application facts: quiet vs ghosted", () => {
     const facts = apps.map(appFactsFor(stages, today));
-    expect(facts.filter((f) => f.quiet).map((f) => f.idleDays)).toEqual([21, 14]); // Tokopedia, BSI
-    expect(facts[0]).toMatchObject({ idleDays: 54, ghosted: true, quiet: false }); // Mandiri
+    expect(facts.filter((f) => f.quiet).map((f) => f.idleDays)).toEqual([16, 21, 18]); // BCA, Tokopedia, BSI
+    expect(facts[3]).toMatchObject({ idleDays: 33, ghosted: true, quiet: false, respondedOn: null }); // Pertamina
+    expect(facts[0]).toMatchObject({ idleDays: 2, ghosted: false, quiet: false }); // Mandiri
     expect(facts[10]).toMatchObject({ appliedOn: null, ghosted: false }); // KAI, wishlist: never ghosted
     expect(facts[12]).toMatchObject({ offered: true, interviewed: true, ghosted: false }); // Traveloka
   });

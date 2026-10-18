@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dueReminder, reminderEmail } from "./reminders";
+import { dueFollowUp, dueReminder, reminderEmail } from "./reminders";
 
 // Cron runs 07:00 WIB = 00:00 UTC.
 const now = new Date("2026-10-17T00:00:00Z");
@@ -42,5 +42,28 @@ describe("reminderEmail", () => {
     expect(html).not.toContain("<b>Budi");
     expect(html).toContain("09.00");
     expect(subject).toContain("besok");
+  });
+
+  it("follow-ups: own section and subject when there are no events, escaped", () => {
+    const f = { company: "PT <i>X</i>", position: "Staf", applicationId: "a2", nextActionAt: new Date("2026-10-18T00:00:00+07:00") };
+    const only = reminderEmail(null, [], "http://localhost:3000", [f]);
+    expect(only.subject).toBe("Pengingat: 1 lamaran perlu di-follow-up hari ini");
+    expect(only.text).toContain("Saatnya follow-up:");
+    expect(only.text).not.toContain("Jadwal seleksi");
+    expect(only.html).not.toContain("<i>X");
+    const both = reminderEmail(null, [{ kind: "H3", type: "LGD", startsAt: new Date("2026-10-20T02:00:00Z"), locationOrUrl: null, company: "B", position: "C", applicationId: "a3" }], "http://x", [f]);
+    expect(both.subject).toContain("+ 1 follow-up");
+  });
+});
+
+describe("dueFollowUp", () => {
+  const now = new Date("2026-10-18T09:00:00+07:00");
+  const on = (d: string) => new Date(`${d}T00:00:00+07:00`);
+  it("due today or overdue, once", () => {
+    expect(dueFollowUp({ nextActionAt: on("2026-10-18"), followUpRemindedAt: null }, now)).toBe(true);
+    expect(dueFollowUp({ nextActionAt: on("2026-10-15"), followUpRemindedAt: null }, now)).toBe(true);
+    expect(dueFollowUp({ nextActionAt: on("2026-10-18"), followUpRemindedAt: now }, now)).toBe(false);
+    expect(dueFollowUp({ nextActionAt: on("2026-10-19"), followUpRemindedAt: null }, now)).toBe(false);
+    expect(dueFollowUp({ nextActionAt: null, followUpRemindedAt: null }, now)).toBe(false);
   });
 });

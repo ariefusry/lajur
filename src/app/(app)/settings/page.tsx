@@ -1,4 +1,5 @@
 import { addStage } from "@/actions/settings";
+import { AccountData } from "@/components/settings/account-data";
 import { StageEditor } from "@/components/settings/stage-editor";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { TemplatePicker } from "@/components/settings/template-picker";
@@ -6,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isDemoEmail } from "@/lib/demo";
 import { toDateInput } from "@/lib/dates";
 import { STAGE_KIND_LABELS } from "@/lib/validation";
-import { Select, optionsFrom } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
+import { optionsFrom } from "@/lib/utils";
 
 export const metadata = { title: "Pengaturan · Lamarin" };
 
 export default async function SettingsPage() {
-  const { id: userId } = await requireUser();
+  const { id: userId, email } = await requireUser();
   const [profile, stages, applicationCount] = await Promise.all([
     db.user.findUniqueOrThrow({
       where: { id: userId },
@@ -69,6 +72,18 @@ export default async function SettingsPage() {
           />
           <Button type="submit">Tambah tahap</Button>
         </form>
+      </section>
+
+      <section className="space-y-4 xl:col-span-2" aria-labelledby="data-akun">
+        <div>
+          <h2 id="data-akun" className="text-2xl font-semibold tracking-tight">
+            Data &amp; akun
+          </h2>
+          <p className="text-muted-foreground text-sm">Datamu milikmu: unduh salinannya, atau hapus semuanya.</p>
+        </div>
+        <div className="max-w-2xl">
+          <AccountData isDemo={isDemoEmail(email)} applicationCount={applicationCount} />
+        </div>
       </section>
     </div>
   );

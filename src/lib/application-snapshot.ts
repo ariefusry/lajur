@@ -25,6 +25,9 @@ export const applicationSnapshotSchema = z.object({
   expectedSalary: z.number().int().nullable(),
   notes: z.string().nullable(),
   appliedAt: z.date().nullable(),
+  nextActionAt: z.date().nullable().default(null),
+  lastFollowUpAt: z.date().nullable().default(null),
+  followUpRemindedAt: z.date().nullable().default(null),
   createdAt: z.date(),
   history: z.array(
     z.object({

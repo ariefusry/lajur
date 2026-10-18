@@ -1,4 +1,5 @@
 import { CalendarClock, FileText, KanbanSquare, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInAsDemo } from "@/actions/demo";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="mx-auto grid min-h-svh max-w-5xl items-center gap-10 p-4 py-10 lg:grid-cols-[1fr_22rem] lg:gap-16">
       <div className="space-y-8">
         <div className="space-y-3">
-          <h1 className="text-4xl font-semibold tracking-tight">Lamarin</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">
+            <Link href="/" className="hover:opacity-80">
+              Lamarin
+            </Link>
+          </h1>
           <p className="text-muted-foreground max-w-md text-lg">
             Catat semua lamaran kerja, deadline, dan tahap seleksi di satu tempat.
           </p>

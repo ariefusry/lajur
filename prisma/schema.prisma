@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
   // .ts import extensions let `node` run prisma/seed.ts directly (no tsx needed)
   importFileExtension = "ts"
 }
@@ -118,22 +118,26 @@ enum StageKind {
 }
 
 model Application {
-  id             String    @id @default(cuid())
-  userId         String
-  resumeId       String?
-  currentStageId String
-  company        String
-  position       String
-  source         JobSource
-  url            String?
-  jobPostingText String?   @db.Text
-  location       String?
-  deadline       DateTime?
-  expectedSalary Int? // rupiah per bulan
-  notes          String?   @db.Text
-  appliedAt      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String
+  resumeId           String?
+  currentStageId     String
+  company            String
+  position           String
+  source             JobSource
+  url                String?
+  jobPostingText     String?   @db.Text
+  location           String?
+  deadline           DateTime?
+  expectedSalary     Int? // rupiah per bulan
+  notes              String?   @db.Text
+  appliedAt          DateTime?
+  // Follow-up: when to chase the company next, when the user last did, and whether the email reminder went out.
+  nextActionAt       DateTime?
+  lastFollowUpAt     DateTime?
+  followUpRemindedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   resume       Resume?        @relation(fields: [resumeId], references: [id], onDelete: SetNull)
@@ -144,6 +148,7 @@ model Application {
   skillGaps    SkillGap[]
 
   @@index([userId, currentStageId])
+  @@index([nextActionAt])
 }
 
 enum JobSource {
@@ -202,16 +207,16 @@ enum EventType {
 }
 
 model Requirement {
-  id            String            @id @default(cuid())
-  applicationId String
-  type          RequirementType
-  value         String
-  ageReferenceDate DateTime?      @db.Date // MAX_AGE: "usia maks. 25 tahun per 31 Desember 2026"
-  sourceQuote   String            @db.Text
-  status        EligibilityStatus @default(UNKNOWN)
-  reason        String?
-  editedByUser  Boolean           @default(false)
-  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id               String            @id @default(cuid())
+  applicationId    String
+  type             RequirementType
+  value            String
+  ageReferenceDate DateTime?         @db.Date // MAX_AGE: "usia maks. 25 tahun per 31 Desember 2026"
+  sourceQuote      String            @db.Text
+  status           EligibilityStatus @default(UNKNOWN)
+  reason           String?
+  editedByUser     Boolean           @default(false)
+  application      Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 enum RequirementType {

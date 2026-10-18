@@ -93,3 +93,31 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await expect(page).toHaveURL(/\/board$/);
   await expect(page.getByText(COMPANY)).toHaveCount(0);
 });
+
+// Every page renders for the demo account (server/client boundary mistakes only show up at runtime).
+test("all main pages render", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Masuk sebagai demo" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  for (const [path, heading] of [
+    ["/dashboard", "Dashboard"],
+    ["/analytics", "Analytics"],
+    ["/board", "Lamaran"],
+    ["/applications", "Lamaran"],
+    ["/applications/new", "Lamaran baru"],
+    ["/calendar", /\d{4}/],
+    ["/resumes", "CV"],
+    ["/settings", "Profil"],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    await expect(page.getByText("Terjadi kesalahan")).toHaveCount(0);
+  }
+});
+
+test("landing page for visitors", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1, name: /Semua lamaran kerjamu/ })).toBeVisible();
+  await page.getByRole("link", { name: "Masuk" }).first().click();
+  await expect(page).toHaveURL(/\/login$/);
+});

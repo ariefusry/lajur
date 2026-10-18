@@ -18,6 +18,8 @@ import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
 import { formatDate, formatDateTime, toDateInput, toDateTimeInput } from "@/lib/dates";
 import { AddToCalendar } from "@/components/add-to-calendar";
+import { FollowUpPanel } from "@/components/application/follow-up-panel";
+import { isFollowUpDue } from "@/lib/follow-up";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS, REQUIREMENT_TYPE_LABELS, STAGE_RESULT_LABELS } from "@/lib/validation";
 
@@ -213,6 +215,13 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
           />
         </div>
         <div className="space-y-4">
+          <FollowUpPanel
+            id={app.id}
+            next={toDateInput(app.nextActionAt)}
+            nextLabel={app.nextActionAt ? formatDate(app.nextActionAt) : null}
+            lastLabel={app.lastFollowUpAt ? formatDate(app.lastFollowUpAt) : null}
+            due={isFollowUpDue(app.nextActionAt, now)}
+          />
           <section className="glass space-y-4 rounded-2xl border p-4">
             <h2 className="font-semibold">Data lamaran</h2>
             <ApplicationForm

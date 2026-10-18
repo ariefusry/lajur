@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, computeDashboard, GHOSTED_DAYS, MIN_SAMPLE, QUIET_DAYS, rate, weeklyCounts } from "@/lib/dashboard";
 import { db } from "@/lib/db";
+import { isFollowUpDue } from "@/lib/follow-up";
 import { daysUntil, formatDate, formatDateTime, fromDateInput, toDateInput } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS } from "@/lib/validation";
@@ -13,6 +14,8 @@ import { EVENT_TYPE_LABELS } from "@/lib/validation";
 export const metadata = { title: "Dashboard · Lamarin" };
 
 const DAY_MS = 86_400_000;
+/** Follow-ups only make sense while the application is still open. */
+const isOpen = (kind: string | undefined) => kind === "WISHLIST" || kind === "IN_PROGRESS" || kind === "OFFER";
 const WEEKS = 12;
 const AHEAD_DAYS = 7;
 
@@ -47,6 +50,7 @@ export default async function DashboardPage() {
         resumeId: true,
         currentStageId: true,
         appliedAt: true,
+        nextActionAt: true,
         history: { select: { stageId: true, enteredAt: true } },
       },
     }),
@@ -137,9 +141,32 @@ export default async function DashboardPage() {
       withTime: false,
       location: null,
     })),
+    // Follow-ups scheduled for the coming days (due ones are in the follow-up card instead).
+    ...withFacts
+      .filter((a) => isOpen(a.kind) && a.nextActionAt && !isFollowUpDue(a.nextActionAt, now) && a.nextActionAt < horizon)
+      .map((a) => ({
+        key: `f${a.id}`,
+        appId: a.id,
+        title: a.company,
+        what: "Follow-up",
+        at: a.nextActionAt!,
+        withTime: false,
+        location: null,
+      })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
-  const quiet = withFacts.filter((a) => a.quiet).sort((a, b) => b.idleDays - a.idleDays);
+  // Follow-up card: due/overdue follow-ups first, then quiet applications with nothing scheduled yet.
+  const dueFollowUps = withFacts
+    .filter((a) => isOpen(a.kind) && isFollowUpDue(a.nextActionAt, now))
+    .sort((a, b) => a.nextActionAt!.getTime() - b.nextActionAt!.getTime());
+  const quiet = withFacts.filter((a) => a.quiet && !a.nextActionAt).sort((a, b) => b.idleDays - a.idleDays);
+  const followUps = [
+    ...dueFollowUps.map((a) => {
+      const late = -daysUntil(a.nextActionAt!, now);
+      return { ...a, note: late === 0 ? "Hari ini" : `Lewat ${late} hari`, urgent: true };
+    }),
+    ...quiet.map((a) => ({ ...a, note: `${a.idleDays} hari tanpa kabar`, urgent: false })),
+  ];
 
   // Where everything is right now; ghosted ones are pulled out of their stage into their own row.
   const pipeline = [
@@ -239,21 +266,21 @@ export default async function DashboardPage() {
         </Card>
 
         <Card
-          title="Mulai tanpa kabar"
-          description={`Belum ada kabar ${QUIET_DAYS}–${GHOSTED_DAYS - 1} hari. Follow-up sebelum jadi ghosted (${GHOSTED_DAYS} hari).`}
+          title="Perlu follow-up"
+          description={`Follow-up yang jatuh tempo, dan lamaran ${QUIET_DAYS}–${GHOSTED_DAYS - 1} hari tanpa kabar (jadi ghosted di ${GHOSTED_DAYS} hari).`}
           action={
-            quiet.length > 0 && (
+            followUps.length > 0 && (
               <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
-                {quiet.length}
+                {followUps.length}
               </span>
             )
           }
         >
-          {quiet.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Semua lamaran yang berjalan masih ada kabarnya.</p>
+          {followUps.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Tidak ada yang perlu di-follow-up hari ini.</p>
           ) : (
             <ul className="-mx-5 divide-y border-y">
-              {quiet.slice(0, 5).map((a) => (
+              {followUps.slice(0, 5).map((a) => (
                 <li key={a.id}>
                   <Link
                     href={`/applications/${a.id}`}
@@ -265,12 +292,20 @@ export default async function DashboardPage() {
                         {stageById.get(a.currentStageId)?.name} · {a.position}
                       </p>
                     </div>
-                    <span className="text-xs font-medium whitespace-nowrap text-amber-700 tabular-nums dark:text-amber-300">
-                      {a.idleDays} hari
+                    <span
+                      className={cn(
+                        "text-xs font-medium whitespace-nowrap tabular-nums",
+                        a.urgent ? "text-destructive" : "text-amber-700 dark:text-amber-300",
+                      )}
+                    >
+                      {a.note}
                     </span>
                   </Link>
                 </li>
               ))}
+              {followUps.length > 5 && (
+                <li className="text-muted-foreground px-5 py-3 text-xs">+{followUps.length - 5} lamaran lain</li>
+              )}
             </ul>
           )}
           {d.totals.ghosted > 0 && (

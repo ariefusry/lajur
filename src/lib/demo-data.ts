@@ -53,14 +53,21 @@ export const DEMO_APPS: DemoApp[] = [
 const DAY = 86_400_000;
 
 /**
- * Stage path and dates for demo app #i: applied 60-2i days ago, then one stage every 3–7 days
- * (varied so the dashboard's median response time is a meaningful, hand-checkable number).
+ * Days since each demo app's last stage change, so the demo always looks current: mostly recent, three going
+ * quiet (BCA 16, Tokopedia 21, BSI 18), Pertamina ghosted (33), Astra and BRI applied this week.
+ */
+const DAYS_SINCE_LAST_MOVE = [2, 2, 4, 33, 6, 16, 3, 21, 5, 3, 0, 18, 1, 0, 7];
+
+/**
+ * Stage path and dates for demo app #i: one stage every 3–7 days (varied so the dashboard's median response
+ * time is a meaningful, hand-checkable number), ending DAYS_SINCE_LAST_MOVE[i] days before today.
  */
 export function demoTimeline(app: DemoApp, i: number, today: Date) {
   const reached = app.stage === 9 ? app.failedAt! : app.stage;
   const path = app.stage === 0 ? [0] : [...Array.from({ length: reached }, (_, k) => k + 1), ...(app.stage === 9 ? [9] : [])];
-  const appliedAt = app.stage === 0 ? null : new Date(today.getTime() - (60 - i * 2) * DAY);
   const stepDays = 3 + (i % 5);
+  const daysAgo = (path.length - 1) * stepDays + DAYS_SINCE_LAST_MOVE[i];
+  const appliedAt = app.stage === 0 ? null : new Date(today.getTime() - daysAgo * DAY);
   const history = path.map((stageIndex, step) => ({
     stageIndex,
     enteredAt: appliedAt ? new Date(appliedAt.getTime() + step * stepDays * DAY) : today,
