@@ -159,7 +159,7 @@ function Row({
         value={stage.kind}
         onValueChange={(v) => onKind(v as StageKind)}
         aria-label={`Jenis tahap ${stage.name}`}
-        className="w-40 shrink-0"
+        className="w-36 shrink-0 sm:w-40"
         options={optionsFrom(STAGE_KIND_LABELS)}
       />
     </li>

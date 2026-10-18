@@ -39,9 +39,9 @@ export function AccountData({ isDemo, applicationCount }: { isDemo: boolean; app
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="space-y-2">
-        <h3 className="font-medium">Unduh data</h3>
+        <h3 className="text-sm font-medium">Unduh data</h3>
         <p className="text-muted-foreground text-sm">
           Semua lamaran ({applicationCount}) dalam satu file CSV, bisa dibuka di Excel atau Google Sheets: tahap,
           riwayat, jadwal, follow-up, dan catatan.
@@ -52,7 +52,7 @@ export function AccountData({ isDemo, applicationCount }: { isDemo: boolean; app
       </div>
 
       <div className="border-destructive/30 space-y-2 rounded-xl border p-4">
-        <h3 className="text-destructive font-medium">Hapus akun</h3>
+        <h3 className="text-destructive text-sm font-medium">Hapus akun</h3>
         <p className="text-muted-foreground text-sm">
           Menghapus akun beserta semua lamaran, riwayat, jadwal, profil, dan file CV secara permanen. Tidak bisa
           dibatalkan. Unduh CSV dulu kalau ingin menyimpan salinannya.

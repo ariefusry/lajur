@@ -107,7 +107,7 @@ test("all main pages render", async ({ page }) => {
     ["/applications/new", "Lamaran baru"],
     ["/calendar", /\d{4}/],
     ["/resumes", "CV"],
-    ["/settings", "Profil"],
+    ["/settings", "Pengaturan"],
   ] as const) {
     await page.goto(path);
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();

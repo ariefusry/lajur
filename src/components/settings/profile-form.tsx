@@ -28,7 +28,7 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
   );
 
   return (
-    <form action={action} className="grid max-w-2xl gap-4 sm:grid-cols-2">
+    <form action={action} className="grid gap-4 sm:grid-cols-2">
       {row("gpa", "IPK (skala 4.00)", <Input id="gpa" name="gpa" inputMode="decimal" placeholder="3.45" defaultValue={defaults.gpa} aria-invalid={!!err("gpa") || undefined} />)}
       {row("birthDate", "Tanggal lahir", <Input id="birthDate" name="birthDate" type="date" defaultValue={defaults.birthDate} />)}
       {row(
