@@ -1,13 +1,19 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 
-export const MAX_JOB_TEXT = 20_000;
+// ~3.5K tokens: with the prompt and the answer this stays inside Groq's free 8K tokens/minute.
+export const MAX_JOB_TEXT = 12_000;
 
 export const ExtractedJob = z.object({
   company: z.string().nullable(),
   position: z.string().nullable(),
   location: z.string().nullable(),
   deadline: z.iso.date().nullable(), // YYYY-MM-DD
+  employmentType: z.string().nullable(), // as written: "Kontrak", "Full-time", "Magang"
+  workMode: z.enum(["onsite", "hybrid", "remote"]).nullable(),
+  salaryRange: z.string().nullable(), // as written: "Rp8–10 juta"
+  sourceUrl: z.string().nullable(), // a link printed in the posting
+  language: z.enum(["id", "en"]),
   // Evidence for the scalar fields above, so the form can show where each value came from.
   quotes: z.object({
     company: z.string().nullable(),
@@ -33,7 +39,13 @@ Aturan:
 - Hanya ambil informasi yang TERTULIS di teks. Kalau tidak ada, isi null atau array kosong. Dilarang menebak.
 - Setiap "quote" WAJIB berupa potongan teks yang disalin persis karakter demi karakter dari lowongan (boleh pendek, cukup frasa yang memuat buktinya). Jangan parafrase, jangan terjemahkan.
 - deadline dan ageReferenceDate dalam format YYYY-MM-DD. Kalau tahun tidak disebut, isi null.
+- Teks hasil ekstraksi ditulis dalam bahasa lowongan, jangan diterjemahkan.
 - location: kota/wilayah penempatan atau kantor.
+- employmentType: jenis hubungan kerja persis seperti di teks (contoh "Kontrak", "Full-time", "Magang").
+- workMode: "onsite" (WFO/di kantor), "hybrid", atau "remote" (WFH), hanya kalau disebut.
+- salaryRange: gaji atau rentang gaji persis seperti di teks.
+- sourceUrl: link pendaftaran atau sumber lowongan yang tertulis di teks.
+- language: "id" kalau lowongan berbahasa Indonesia, "en" kalau berbahasa Inggris.
 - skills: keahlian teknis, tools, bahasa, sertifikasi, atau lisensi yang diminta, dari bidang apa pun (contoh: Microsoft Excel, SAP, Accurate, perpajakan, AutoCAD, Canva, SQL, bahasa Inggris, Brevet A&B, SIM A). Bukan soft skill umum seperti "jujur" atau "mampu bekerja dalam tim".
 - requirements: SATU item per jenis syarat (jangan ada dua MIN_GPA, dua MAX_AGE, atau dua MIN_DEGREE).
   Kalau syarat dibedakan per jenjang, gabungkan semua varian dalam satu value, contoh "IPK minimal 3,00 untuk S1 dan 3,25 untuk S2" menjadi MIN_GPA "3.00 (S1), 3.25 (S2)", dan "usia maksimal 26 tahun untuk S1 dan 28 tahun untuk S2" menjadi MAX_AGE "26 (S1), 28 (S2)". Jenjang "S1/S2" menjadi MIN_DEGREE "S1".
@@ -66,12 +78,17 @@ export function hashJobText(normalized: string) {
 // Quotes must be exact substrings; whitespace differences (line breaks vs spaces) are forgiven.
 const squash = (s: string) => s.replace(/\s+/g, " ").trim();
 
-/** Drops skills/requirements whose quote isn't in the posting; nulls unverifiable scalar quotes. */
+/**
+ * Drops skills/requirements whose quote isn't in the posting; nulls unverifiable scalar quotes, and a salary
+ * or link that isn't written in the posting (the easiest fields to make up).
+ */
 export function verifyQuotes(job: ExtractedJob, text: string): ExtractedJob {
   const haystack = squash(text);
   const found = (q: string | null) => !!q && squash(q).length > 0 && haystack.includes(squash(q));
   return {
     ...job,
+    salaryRange: found(job.salaryRange) ? job.salaryRange : null,
+    sourceUrl: found(job.sourceUrl) ? job.sourceUrl : null,
     quotes: {
       company: found(job.quotes.company) ? job.quotes.company : null,
       position: found(job.quotes.position) ? job.quotes.position : null,
