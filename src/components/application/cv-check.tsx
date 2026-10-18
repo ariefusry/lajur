@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheck, CirclePlus, CircleX, Copy, LoaderCircle, Sparkles } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -144,17 +144,25 @@ export function CvCheckResults({ rows, tweaks }: { rows: CvCheckRow[]; tweaks: C
 }
 
 /**
- * "Cek CV" inside the new-application form, before saving: checks the CV picked in the form against the AI
- * draft's posting. The result rides along in a hidden "cvCheck" field and is saved with the application.
+ * "Cek CV" next to the new-application form, before saving: checks the CV picked in the form (found by
+ * `formId`) against the AI draft's posting. The result joins that form through a hidden "cvCheck" field
+ * (`form` attribute) and is saved with the application.
  */
-export function NewApplicationCvCheck({ text, resumes }: { text: string; resumes: { id: string; versionName: string }[] }) {
-  const ref = useRef<HTMLElement>(null);
+export function NewApplicationCvCheck({
+  formId,
+  text,
+  resumes,
+}: {
+  formId: string;
+  text: string;
+  resumes: { id: string; versionName: string }[];
+}) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<{ resumeId: string; rows: CvCheckRow[]; tweaks: CvTweak[] } | null>(null);
 
   async function run() {
-    const form = ref.current?.closest("form");
-    const resumeId = form ? String(new FormData(form).get("resumeId") ?? "") : "";
+    const form = document.getElementById(formId);
+    const resumeId = form instanceof HTMLFormElement ? String(new FormData(form).get("resumeId") ?? "") : "";
     if (!resumeId) {
       toast.error(resumes.length ? "Pilih dulu CV yang dikirim di atas." : "Unggah CV dulu di menu CV.");
       return;
@@ -167,10 +175,12 @@ export function NewApplicationCvCheck({ text, resumes }: { text: string; resumes
 
   const cvName = result && resumes.find((r) => r.id === result.resumeId)?.versionName;
   return (
-    <section ref={ref} className="space-y-3 border-t pt-4">
+    <section className="glass space-y-3 rounded-2xl border p-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h3 className="text-sm font-medium">Cek CV untuk lowongan ini</h3>
+          <h2 className="flex items-center gap-2 font-medium">
+            <Sparkles className="size-4" /> Cek CV untuk lowongan ini
+          </h2>
           <p className="text-xs text-muted-foreground">
             Lihat skill yang belum terlihat di CV dan apa yang perlu ditambahkan sebelum melamar. {CV_CHECK_PRIVACY_NOTE}
           </p>
@@ -187,7 +197,7 @@ export function NewApplicationCvCheck({ text, resumes }: { text: string; resumes
             lamaran selama CV yang dikirim tetap ini.
           </p>
           <CvCheckResults rows={result.rows} tweaks={result.tweaks} />
-          <input type="hidden" name="cvCheck" value={JSON.stringify(result)} />
+          <input type="hidden" form={formId} name="cvCheck" value={JSON.stringify(result)} />
         </>
       )}
     </section>

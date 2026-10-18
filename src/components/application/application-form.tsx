@@ -30,6 +30,7 @@ export type ApplicationDefaults = {
 export type Evidence = Partial<Record<keyof ApplicationDefaults, string | null>>;
 
 export function ApplicationForm({
+  id,
   action,
   stages,
   resumes,
@@ -38,6 +39,8 @@ export function ApplicationForm({
   evidence,
   children,
 }: {
+  /** Lets fields outside the form (the "Cek CV" result) join it via the `form` attribute. */
+  id?: string;
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   stages: { id: string; name: string }[];
   resumes: { id: string; versionName: string }[];
@@ -85,7 +88,7 @@ export function ApplicationForm({
   const span = "sm:col-span-2";
 
   return (
-    <form action={formAction} className="grid max-w-3xl gap-4 sm:grid-cols-2">
+    <form id={id} action={formAction} className="grid max-w-3xl gap-4 sm:grid-cols-2">
       {field("company", "Perusahaan *", <Input {...a11y("company")} defaultValue={defaults.company} required />)}
       {field("position", "Posisi *", <Input {...a11y("position")} defaultValue={defaults.position} required />)}
       {field(

@@ -122,7 +122,7 @@ export function RequirementsEditor({
               </Badge>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">Cocokkan skill ini dengan CV-mu lewat &ldquo;Cek CV&rdquo; di bawah.</p>
+          <p className="text-xs text-muted-foreground">Cocokkan skill ini dengan CV-mu lewat &ldquo;Cek CV&rdquo;.</p>
         </div>
       )}
     </div>
