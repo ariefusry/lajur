@@ -1,10 +1,9 @@
 import { CalendarClock, FileText, KanbanSquare, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
-import { signInAsDemo, signInAsNonItDemo } from "@/actions/demo";
+import { signInAsDemo } from "@/actions/demo";
 import { Button } from "@/components/ui/button";
 import { auth, signIn } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { DEMO_NONIT_EMAIL, demoLoginEnabled } from "@/lib/demo";
+import { demoLoginEnabled } from "@/lib/demo";
 
 export const metadata = { title: "Masuk · Lamarin" };
 
@@ -18,9 +17,6 @@ const VALUE_PROPS = [
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if ((await auth())?.user) redirect("/board");
   const { error } = await searchParams;
-  // The second demo persona only shows up where it has been seeded.
-  const nonItDemo =
-    demoLoginEnabled() && !!(await db.user.findUnique({ where: { email: DEMO_NONIT_EMAIL }, select: { id: true } }));
 
   return (
     <main className="mx-auto grid min-h-svh max-w-5xl items-center gap-10 p-4 py-10 lg:grid-cols-[1fr_22rem] lg:gap-16">
@@ -63,13 +59,6 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <form action={signInAsDemo}>
               <Button type="submit" size="lg" variant="outline" className="w-full">
                 Masuk sebagai demo
-              </Button>
-            </form>
-          )}
-          {nonItDemo && (
-            <form action={signInAsNonItDemo}>
-              <Button type="submit" size="lg" variant="outline" className="w-full">
-                Demo lulusan Manajemen (non-IT)
               </Button>
             </form>
           )}

@@ -1,8 +1,5 @@
 export const DEMO_EMAIL = "demo@lamarin.local";
-/** Second demo persona (Manajemen graduate) so non-IT visitors see an app that fits them. */
-export const DEMO_NONIT_EMAIL = "demo.nonit@lamarin.local";
-
-export const isDemoEmail = (email: string | null | undefined) => email === DEMO_EMAIL || email === DEMO_NONIT_EMAIL;
+export const isDemoEmail = (email: string | null | undefined) => email === DEMO_EMAIL;
 
 export const DEMO_READ_ONLY_MESSAGE =
   "Mode demo hanya bisa dilihat. Masuk dengan Google untuk mencatat lamaranmu sendiri.";

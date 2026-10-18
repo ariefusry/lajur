@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { DEMO_EMAIL, DEMO_NONIT_EMAIL, demoLoginEnabled } from "@/lib/demo";
+import { DEMO_EMAIL, demoLoginEnabled } from "@/lib/demo";
 
 const DEMO_SESSION_MS = 24 * 60 * 60 * 1000;
 
@@ -13,17 +13,8 @@ const DEMO_SESSION_MS = 24 * 60 * 60 * 1000;
  * Only when DEMO_LOGIN_ENABLED=true; in production the account is also view-only (DEMO_READ_ONLY=true).
  */
 export async function signInAsDemo() {
-  await openDemoSession(DEMO_EMAIL);
-}
-
-/** Same, for the second persona (S1 Manajemen) so non-IT visitors see data that fits them. */
-export async function signInAsNonItDemo() {
-  await openDemoSession(DEMO_NONIT_EMAIL);
-}
-
-async function openDemoSession(email: string) {
   if (!demoLoginEnabled()) redirect("/login");
-  const user = await db.user.findUnique({ where: { email }, select: { id: true } });
+  const user = await db.user.findUnique({ where: { email: DEMO_EMAIL }, select: { id: true } });
   if (!user) redirect("/login?error=demo");
 
   const sessionToken = randomUUID();

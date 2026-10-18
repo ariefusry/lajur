@@ -1,10 +1,10 @@
-// Two demo accounts (IT graduate: 15 applications; Manajemen graduate: 12), 2 CV versions each.
-// Re-running resets ONLY the demo accounts. Run: pnpm db:seed   (one persona: pnpm prisma db seed -- --only=nonit)
+// Demo account + 15 dummy applications (mixed fields) + 2 CV versions. Re-running resets ONLY the demo account.
+// Run: pnpm db:seed
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.ts";
-import { DEMO_APPS, DEMO_NONIT_APPS, DEMO_NONIT_RESUMES, DEMO_RESUMES, demoTimeline } from "../src/lib/demo-data.ts";
-import { DEMO_EMAIL, DEMO_NONIT_EMAIL } from "../src/lib/demo.ts";
+import { DEMO_APPS, DEMO_RESUMES, demoTimeline } from "../src/lib/demo-data.ts";
+import { DEMO_EMAIL } from "../src/lib/demo.ts";
 import { templateStageRows } from "../src/lib/stage-templates.ts";
 
 const BUCKET = "resumes"; // as in neon.ts / src/lib/storage.ts
@@ -12,62 +12,33 @@ const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.
 const s3 = new S3Client({ forcePathStyle: true }); // AWS_* env vars from `neon deploy`
 
 // Fake CV content (fake contact details on purpose: shows what redaction strips before AI sees it).
-const CV_TEXT: Record<string, string[]> = {
+const CV_TEXT: Record<(typeof DEMO_RESUMES)[number], string[]> = {
   "CV BUMN v1": [
     "Akun Demo",
     "demo@lamarin.local | 0812-3456-7890 | linkedin.com/in/akundemo",
     "Jl. Merdeka No. 1, Bekasi 17111",
     "PENDIDIKAN",
-    "S1 Informatika, Universitas Contoh, IPK 3.45",
+    "S1 Manajemen, Universitas Contoh, IPK 3.45",
     "KEAHLIAN",
-    "Java, SQL, PostgreSQL, Git, Microsoft Excel, analisis data",
+    "Microsoft Excel, akuntansi dasar, analisis data, pelayanan pelanggan, komunikasi efektif, bahasa Inggris (TOEFL 550)",
     "PENGALAMAN",
-    "Magang IT Support - PT Contoh Persero (2025)",
-    "Membuat laporan otomatis dengan Excel dan SQL untuk tim operasional",
-    "ORGANISASI",
-    "Ketua Divisi Teknologi, Himpunan Mahasiswa Informatika",
-  ],
-  "CV Startup v2": [
-    "Akun Demo",
-    "+62 812 3456 7890 | demo@lamarin.local | github.com/akundemo",
-    "PROFIL",
-    "Fresh graduate yang suka membangun produk web.",
-    "SKILLS",
-    "TypeScript, React.js, Next.js, Node.js, Postgres, Tailwind CSS, Git",
-    "EXPERIENCE",
-    "Frontend Engineer Intern - Startup Contoh (2025)",
-    "Built a customer dashboard with React and REST APIs, wrote unit tests with Jest",
-    "PROJECTS",
-    "Lamarin: job application tracker (Next.js, Prisma)",
-  ],
-  "CV Perbankan v1": [
-    "Akun Demo Manajemen",
-    "demo.nonit@lamarin.local | 0813-9876-5432 | linkedin.com/in/akundemomanajemen",
-    "Jl. Pahlawan No. 5, Jakarta Timur 13430",
-    "PENDIDIKAN",
-    "S1 Manajemen, Universitas Contoh, IPK 3.52",
-    "KEAHLIAN",
-    "Microsoft Excel, akuntansi dasar, pelayanan pelanggan, komunikasi efektif, bahasa Inggris (TOEFL 560)",
-    "PENGALAMAN",
-    "Magang Customer Service - Bank Contoh (2025)",
-    "Melayani 40+ nasabah per hari dan menyusun laporan harian transaksi dengan Excel",
+    "Magang Administrasi Keuangan - PT Contoh Persero (2025)",
+    "Menyusun laporan harian transaksi dan rekap anggaran dengan Excel",
     "ORGANISASI",
     "Bendahara, Badan Eksekutif Mahasiswa Fakultas Ekonomi",
   ],
-  "CV Marketing v2": [
-    "Akun Demo Manajemen",
-    "+62 813 9876 5432 | demo.nonit@lamarin.local | instagram.com/akundemomanajemen",
+  "CV Startup v2": [
+    "Akun Demo",
+    "+62 812 3456 7890 | demo@lamarin.local | instagram.com/akundemo",
     "PROFIL",
-    "Fresh graduate Manajemen yang tertarik pada pemasaran dan penjualan FMCG.",
+    "Fresh graduate yang suka mengolah data dan membangun produk digital.",
     "KEAHLIAN",
-    "Digital marketing, media sosial, Canva, penulisan konten, Google Analytics, public speaking, kepemimpinan",
+    "SQL, Microsoft Excel, Google Analytics, digital marketing, Canva, HTML, JavaScript, public speaking",
     "PENGALAMAN",
-    "Magang Marketing Communications - Brand Contoh (2025)",
-    "Mengelola kalender konten Instagram dan menaikkan engagement 30% dalam 3 bulan",
+    "Magang Growth & Marketing - Startup Contoh (2025)",
+    "Membuat dashboard penjualan dengan SQL dan menaikkan engagement media sosial 30% dalam 3 bulan",
     "PROYEK",
-    "Kampanye penjualan produk lokal, juara 2 kompetisi bisnis kampus",
-    "ORGANISASI",
-    "Ketua Divisi Humas, Himpunan Mahasiswa Manajemen",
+    "Website toko UMKM dengan HTML dan JavaScript, juara 2 kompetisi bisnis kampus",
   ],
 };
 
@@ -96,71 +67,47 @@ function pdf(lines: string[]) {
 
 const today = new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date())}T00:00:00+07:00`);
 
-const PERSONAS = [
-  {
-    key: "it",
-    email: DEMO_EMAIL,
-    name: "Akun Demo",
-    profile: { gpa: "3.45", birthDate: new Date("2001-05-14"), major: "Informatika", degree: "S1", domicile: "Bekasi" },
-    resumes: DEMO_RESUMES as readonly string[],
-    apps: DEMO_APPS,
-  },
-  {
-    key: "nonit",
-    email: DEMO_NONIT_EMAIL,
-    name: "Akun Demo (Manajemen)",
-    profile: { gpa: "3.52", birthDate: new Date("2000-09-03"), major: "Manajemen", degree: "S1", domicile: "Jakarta Timur" },
-    resumes: DEMO_NONIT_RESUMES as readonly string[],
-    apps: DEMO_NONIT_APPS,
-  },
-] as const;
-const only = process.argv.find((a) => a.startsWith("--only="))?.slice("--only=".length);
-
-for (const persona of PERSONAS) {
-  if (only && only !== persona.key) continue;
-
-  const existing = await db.user.findUnique({ where: { email: persona.email }, include: { resumes: true } });
-  if (existing) {
-    for (const r of existing.resumes) {
-      await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: r.filePath })).catch((e) => console.warn("old CV not deleted:", e.message));
-    }
-    // Applications first: their history rows reference stages (no cascade from Stage).
-    await db.application.deleteMany({ where: { userId: existing.id } });
-    await db.user.delete({ where: { id: existing.id } });
+const existing = await db.user.findUnique({ where: { email: DEMO_EMAIL }, include: { resumes: true } });
+if (existing) {
+  for (const r of existing.resumes) {
+    await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: r.filePath })).catch((e) => console.warn("old CV not deleted:", e.message));
   }
-
-  const user = await db.user.create({ data: { email: persona.email, name: persona.name, ...persona.profile } });
-  await db.stage.createMany({ data: templateStageRows("BUMN", user.id) });
-  const stages = await db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" } });
-
-  const resumeIds: string[] = [];
-  for (const versionName of persona.resumes) {
-    const id = crypto.randomUUID();
-    const filePath = `cv/${user.id}/${id}.pdf`;
-    await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: filePath, Body: pdf(CV_TEXT[versionName]), ContentType: "application/pdf" }));
-    await db.resume.create({ data: { id, userId: user.id, versionName, filePath, extractedText: CV_TEXT[versionName].join("\n") } });
-    resumeIds.push(id);
-  }
-
-  for (const [i, app] of persona.apps.entries()) {
-    const { appliedAt, history } = demoTimeline(app, i, today);
-    await db.application.create({
-      data: {
-        userId: user.id,
-        company: app.company,
-        position: app.position,
-        source: app.source,
-        location: app.location,
-        jobPostingText: app.jobPostingText ?? null,
-        currentStageId: stages[app.stage].id,
-        resumeId: app.resume === undefined ? null : resumeIds[app.resume],
-        appliedAt,
-        deadline: app.deadlineInDays !== undefined ? new Date(today.getTime() + app.deadlineInDays * 86_400_000) : null,
-        history: { create: history.map((h) => ({ stageId: stages[h.stageIndex].id, enteredAt: h.enteredAt, result: h.result })) },
-      },
-    });
-  }
-
-  console.log(`Seeded ${persona.email}: ${stages.length} stages, ${resumeIds.length} CVs, ${persona.apps.length} applications.`);
+  // Applications first: their history rows reference stages (no cascade from Stage).
+  await db.application.deleteMany({ where: { userId: existing.id } });
+  await db.user.delete({ where: { id: existing.id } });
 }
+
+const user = await db.user.create({ data: { email: DEMO_EMAIL, name: "Akun Demo", gpa: "3.45", birthDate: new Date("2001-05-14"), major: "Manajemen", degree: "S1", domicile: "Bekasi" } });
+await db.stage.createMany({ data: templateStageRows("BUMN", user.id) });
+const stages = await db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" } });
+
+const resumeIds: string[] = [];
+for (const versionName of DEMO_RESUMES) {
+  const id = crypto.randomUUID();
+  const filePath = `cv/${user.id}/${id}.pdf`;
+  await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: filePath, Body: pdf(CV_TEXT[versionName]), ContentType: "application/pdf" }));
+  await db.resume.create({ data: { id, userId: user.id, versionName, filePath, extractedText: CV_TEXT[versionName].join("\n") } });
+  resumeIds.push(id);
+}
+
+for (const [i, app] of DEMO_APPS.entries()) {
+  const { appliedAt, history } = demoTimeline(app, i, today);
+  await db.application.create({
+    data: {
+      userId: user.id,
+      company: app.company,
+      position: app.position,
+      source: app.source,
+      location: app.location,
+      jobPostingText: app.jobPostingText ?? null,
+      currentStageId: stages[app.stage].id,
+      resumeId: app.resume === undefined ? null : resumeIds[app.resume],
+      appliedAt,
+      deadline: app.deadlineInDays !== undefined ? new Date(today.getTime() + app.deadlineInDays * 86_400_000) : null,
+      history: { create: history.map((h) => ({ stageId: stages[h.stageIndex].id, enteredAt: h.enteredAt, result: h.result })) },
+    },
+  });
+}
+
+console.log(`Seeded ${DEMO_EMAIL}: ${stages.length} stages, ${resumeIds.length} CVs, ${DEMO_APPS.length} applications.`);
 await db.$disconnect();
