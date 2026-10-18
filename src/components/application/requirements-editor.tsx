@@ -10,7 +10,8 @@ import type { RequirementType } from "@/generated/prisma/enums";
 import type { ExtractedJob } from "@/lib/ai/extract-job";
 import { checkRequirement, type EligibilityProfile } from "@/lib/eligibility/check";
 import { REQUIREMENT_TYPE_LABELS, type Draft } from "@/lib/validation";
-import { Select, optionsFrom } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
+import { optionsFrom } from "@/lib/utils";
 
 type Row = Draft["requirements"][number] & { key: number; original: { type: RequirementType; value: string } };
 

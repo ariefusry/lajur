@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { STAGE_RESULT_LABELS, type FormState } from "@/lib/validation";
-import { Select, optionsFrom } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
+import { optionsFrom } from "@/lib/utils";
 
 export function StageHistoryForm({
   id,

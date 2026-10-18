@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { JobSource } from "@/generated/prisma/enums";
 import { JOB_SOURCE_LABELS, type FormState } from "@/lib/validation";
-import { Select, optionsFrom } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
+import { optionsFrom } from "@/lib/utils";
 
 export type ApplicationDefaults = {
   company: string;

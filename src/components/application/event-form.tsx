@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EVENT_TYPE_LABELS, type FormState } from "@/lib/validation";
-import { Select, optionsFrom } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
+import { optionsFrom } from "@/lib/utils";
 
 export function EventForm({
   action,

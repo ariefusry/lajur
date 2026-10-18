@@ -3,12 +3,12 @@
 import { Check, ChevronDown } from "lucide-react";
 import { Select as SelectPrimitive } from "radix-ui";
 import { useState } from "react";
-import { cn, selectClass } from "@/lib/utils";
+import { cn, selectClass, type SelectOption } from "@/lib/utils";
 
 // Radix reserves "" for "nothing selected", so an option whose value is "" ("Semua tahap") gets a stand-in.
 const EMPTY = "__empty__";
 
-export type SelectOption = { value: string; label: string };
+export type { SelectOption };
 
 type SelectProps = {
   options: SelectOption[];
@@ -114,7 +114,3 @@ export function Select({
     </>
   );
 }
-
-/** `{ KEY: "Label" }` → options, the shape most label maps in lib/validation already have. */
-export const optionsFrom = (labels: Record<string, string>): SelectOption[] =>
-  Object.entries(labels).map(([value, label]) => ({ value, label }));

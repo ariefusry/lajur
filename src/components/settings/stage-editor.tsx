@@ -24,7 +24,8 @@ import { Input } from "@/components/ui/input";
 import type { StageKind } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
 import { STAGE_KIND_LABELS } from "@/lib/validation";
-import { Select, optionsFrom } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
+import { optionsFrom } from "@/lib/utils";
 
 type StageRow = { id: string; name: string; kind: StageKind };
 
