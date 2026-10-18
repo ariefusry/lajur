@@ -41,7 +41,12 @@ export function ResumeUpload() {
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="grid gap-4">
+    // One row above the list (stacks on phones), so the list gets the full width as it grows.
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      className="glass grid gap-3 rounded-2xl border p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+    >
       <div className="space-y-1.5">
         <Label htmlFor="versionName">Nama versi</Label>
         <Input id="versionName" name="versionName" placeholder="CV Umum v2" required maxLength={100} />
@@ -57,12 +62,17 @@ export function ResumeUpload() {
           className="sr-only"
           onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
         />
-        <Button type="button" variant="outline" className="w-full justify-start" onClick={() => fileRef.current?.click()}>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 w-full justify-start pointer-coarse:h-11"
+          onClick={() => fileRef.current?.click()}
+        >
           <FileUp />
           <span className="truncate">{fileName ?? "Pilih file PDF…"}</span>
         </Button>
       </div>
-      <Button type="submit" disabled={pending || !fileName}>
+      <Button type="submit" className="h-10 pointer-coarse:h-11" disabled={pending || !fileName}>
         {pending ? "Mengunggah…" : "Unggah"}
       </Button>
     </form>

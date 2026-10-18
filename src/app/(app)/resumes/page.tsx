@@ -29,15 +29,15 @@ export default async function ResumesPage() {
         </p>
       </div>
 
-      <div className="grid items-start gap-8 lg:grid-cols-[22rem_minmax(0,1fr)]">
+      <div className="space-y-4">
         <ResumeUpload />
 
         {resumes.length === 0 ? (
           <p className="text-muted-foreground text-sm">Belum ada CV yang diunggah.</p>
         ) : (
-          <ul className="glass divide-y rounded-2xl border">
+          <ul className="grid gap-3 sm:grid-cols-2">
             {resumes.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center gap-3 p-3">
+              <li key={r.id} className="glass flex flex-wrap items-center gap-3 rounded-2xl border p-4">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{r.versionName}</p>
                   <p className="text-muted-foreground text-xs">
