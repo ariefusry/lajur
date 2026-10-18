@@ -1,4 +1,4 @@
-import { BarChart3, Heart, LogOut, Settings } from "lucide-react";
+import { Heart, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { NavLinks, TabBar } from "@/components/nav-links";
@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Phone header: brand + the two items that don't fit the tab bar */}
+      {/* Phone header: brand + the items that don't fit the tab bar */}
       <header className="bg-background/80 sticky top-0 z-30 flex h-12 items-center justify-between border-b px-4 backdrop-blur-xl md:hidden">
         <Link href="/dashboard" aria-label="Lajur, ke dashboard">
           <Logo markClassName="size-5" />
@@ -51,11 +51,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Button asChild variant="ghost" size="icon-sm" aria-label="Dukung Lajur" className="hover:text-rose-500">
             <Link href="/donasi">
               <Heart />
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="icon-sm" aria-label="Analytics">
-            <Link href="/analytics">
-              <BarChart3 />
             </Link>
           </Button>
           <ThemeToggle />
@@ -72,7 +67,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-6">
+      <main className="min-w-0 flex-1 p-4 pb-36 md:p-6 md:pb-6">
         {isDemo && (
           <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-900 dark:text-amber-200">
             <span>

@@ -208,7 +208,7 @@ export default async function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="hidden md:inline-flex">
             <Link href="/analytics">
               <BarChart3 /> Analytics
             </Link>

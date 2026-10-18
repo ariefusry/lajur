@@ -49,43 +49,47 @@ export function NavLinks() {
   );
 }
 
-/** Phone navigation: a fixed bottom tab bar (thumb reach), with "new application" as the centre action. */
+/** Phone navigation: a fixed bottom tab bar (thumb reach), plus a floating "new application" button above it. */
 export function TabBar() {
   const pathname = usePathname();
-  // Five tabs max: Settings sits in the header, Analytics is reached from the dashboard (whose tab stays lit there).
-  const tabs = LINKS.filter((l) => l.href !== "/settings" && l.href !== "/analytics");
+  // Five tabs max: Settings sits in the header, "Lamaran baru" is the floating button.
+  const tabs = LINKS.filter((l) => l.href !== "/settings" && l.href !== "/applications/new");
   return (
-    <nav
-      aria-label="Navigasi utama"
-      className="bg-background/80 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
-    >
-      <ul className="mx-auto grid max-w-md grid-cols-5">
-        {tabs.map(({ href, label, icon: Icon }) => {
-          const active = isActive(pathname, href) || (href === "/dashboard" && isActive(pathname, "/analytics"));
-          const primary = href === "/applications/new";
-          return (
-            <li key={href}>
-              <Link
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "text-muted-foreground flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] transition-transform active:scale-95",
-                  active && "text-primary font-medium",
-                )}
-              >
-                {primary ? (
-                  <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-full shadow-sm">
-                    <Icon className="size-5" />
-                  </span>
-                ) : (
+    <>
+      {pathname !== "/applications/new" && (
+        <Link
+          href="/applications/new"
+          aria-label="Lamaran baru"
+          className="bg-primary text-primary-foreground fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 flex size-14 items-center justify-center rounded-full shadow-lg transition-transform active:scale-95 md:hidden"
+        >
+          <Plus className="size-6" />
+        </Link>
+      )}
+      <nav
+        aria-label="Navigasi utama"
+        className="bg-background/80 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+      >
+        <ul className="mx-auto grid max-w-md grid-cols-5">
+          {tabs.map(({ href, label, icon: Icon }) => {
+            const active = isActive(pathname, href);
+            return (
+              <li key={href}>
+                <Link
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "text-muted-foreground flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] transition-transform active:scale-95",
+                    active && "text-primary font-medium",
+                  )}
+                >
                   <Icon className={cn("size-5", active && "stroke-[2.5]")} />
-                )}
-                <span className={cn(primary && "sr-only")}>{label}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+                  <span>{label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </>
   );
 }
