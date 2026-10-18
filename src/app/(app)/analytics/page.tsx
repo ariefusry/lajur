@@ -8,7 +8,7 @@ import { appFactsFor, computeDashboard, GHOSTED_DAYS, MIN_SAMPLE, rate, type Pas
 import { db } from "@/lib/db";
 import { JOB_SOURCE_LABELS } from "@/lib/validation";
 
-export const metadata = { title: "Analytics · Lamarin" };
+export const metadata = { title: "Analytics · Lajur" };
 
 const RANGES = [
   { key: "30", label: "30 hari", days: 30 },

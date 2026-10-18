@@ -13,7 +13,7 @@ import { STAGE_KIND_LABELS } from "@/lib/validation";
 import { Select } from "@/components/ui/select";
 import { optionsFrom } from "@/lib/utils";
 
-export const metadata = { title: "Pengaturan · Lamarin" };
+export const metadata = { title: "Pengaturan · Lajur" };
 
 export default async function SettingsPage() {
   const { id: userId, email } = await requireUser();

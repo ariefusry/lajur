@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { JOB_SOURCE_LABELS } from "@/lib/validation";
 import { Select } from "@/components/ui/select";
 
-export const metadata = { title: "Daftar lamaran · Lamarin" };
+export const metadata = { title: "Daftar lamaran · Lajur" };
 
 const SORTS = {
   updated: { label: "Terbaru diubah", orderBy: { updatedAt: "desc" } },

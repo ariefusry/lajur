@@ -1,4 +1,4 @@
-# Lamarin
+# Lajur
 
 Tracker lamaran kerja dengan bantuan AI, untuk pencari kerja di Indonesia yang melamar ke banyak tempat sekaligus: BUMN, bank, startup, atau perusahaan di bidang apa pun.
 

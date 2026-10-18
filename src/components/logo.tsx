@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The Lamarin mark: an L built from two cards, the column and the card just moved one column over
+ * The Lajur mark: an L built from two cards, the column and the card just moved one column over
  * (masters and guidelines in docs/brand). Inherits colour from `currentColor`; brand blue by default.
  */
 export function LogoMark({ className, small }: { className?: string; small?: boolean }) {
@@ -23,12 +23,12 @@ export function LogoMark({ className, small }: { className?: string; small?: boo
   );
 }
 
-/** Mark + wordmark (live Geist text, so it stays crisp and readable by screen readers as "Lamarin"). */
+/** Mark + wordmark (live Geist text, so it stays crisp and readable by screen readers as "Lajur"). */
 export function Logo({ className, markClassName }: { className?: string; markClassName?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2 font-semibold tracking-tight", className)}>
       <LogoMark className={cn("text-primary", markClassName)} />
-      Lamarin
+      Lajur
     </span>
   );
 }

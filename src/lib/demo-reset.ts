@@ -18,7 +18,7 @@ type Deps = {
 const CV_TEXT: Record<(typeof DEMO_RESUMES)[number], string[]> = {
   "CV BUMN v1": [
     "Akun Demo",
-    "demo@lamarin.local | 0812-3456-7890 | linkedin.com/in/akundemo",
+    "demo@lajur.local | 0812-3456-7890 | linkedin.com/in/akundemo",
     "Jl. Merdeka No. 1, Bekasi 17111",
     "PENDIDIKAN",
     "S1 Manajemen, Universitas Contoh, IPK 3.45",
@@ -32,7 +32,7 @@ const CV_TEXT: Record<(typeof DEMO_RESUMES)[number], string[]> = {
   ],
   "CV Startup v2": [
     "Akun Demo",
-    "+62 812 3456 7890 | demo@lamarin.local | instagram.com/akundemo",
+    "+62 812 3456 7890 | demo@lajur.local | instagram.com/akundemo",
     "PROFIL",
     "Fresh graduate yang suka mengolah data dan membangun produk digital.",
     "KEAHLIAN",

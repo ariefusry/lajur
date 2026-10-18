@@ -23,7 +23,7 @@ Frontend Developer Intern - PT Contoh Digital (2024 - 2025)
 - Kontak atasan: budi@contoh.co.id, 0812 9999 8888
 
 PROYEK
-Lamarin - tracker lamaran kerja (Next.js, Prisma), demo di lamarin.vercel.app
+Lajur - tracker lamaran kerja (Next.js, Prisma), demo di lajur.vercel.app
 
 REFERENSI
 Budi Santoso - 0811 2222 3333`;
@@ -52,7 +52,7 @@ describe("redact", () => {
     expect(out).toContain("KEAHLIAN");
     expect(out).toContain("TypeScript, React.js, Next.js, PostgreSQL, Docker, Git");
     expect(out).toContain("Frontend Developer Intern - PT Contoh Digital (2024 - 2025)");
-    expect(out).toContain("Lamarin - tracker lamaran kerja (Next.js, Prisma)");
+    expect(out).toContain("Lajur - tracker lamaran kerja (Next.js, Prisma)");
     // Profile, education and references are not relevant to a skill match.
     expect(out).not.toMatch(/antusias|Gunadarma|Santoso/);
   });

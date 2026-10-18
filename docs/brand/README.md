@@ -1,18 +1,18 @@
-# Logo Lamarin
+# Logo Lajur
 
-**Ide:** huruf L yang dibangun dari dua kartu, yaitu kolom tahap seleksi dan kartu yang baru digeser ke kolom berikutnya.
+**Ide:** huruf L yang dibangun dari dua kartu: lajur (kolom tahap seleksi) dan kartu yang baru pindah ke lajur berikutnya.
 Logo ini diambil langsung dari board di aplikasi. Lamaranmu bergerak satu tahap ke depan.
 
-![Lockup horizontal](horizontal/lamarin-horizontal-mono-0069e8-1200.png)
+![Lockup horizontal](horizontal/lajur-horizontal-mono-0069e8-1200.png)
 
 ## File
 
 | Pakai untuk | File |
 |---|---|
-| Simbol (master, biru) | `lamarin-symbol.svg` |
-| Simbol ukuran kecil (≤ 20 px, favicon) | `lamarin-symbol-small.svg` |
-| Lockup horizontal (header, dokumen) | `lamarin-horizontal.svg` |
-| Lockup bertumpuk (poster, halaman kosong) | `lamarin-stacked.svg` |
+| Simbol (master, biru) | `lajur-symbol.svg` |
+| Simbol ukuran kecil (≤ 20 px, favicon) | `lajur-symbol-small.svg` |
+| Lockup horizontal (header, dokumen) | `lajur-horizontal.svg` |
+| Lockup bertumpuk (poster, halaman kosong) | `lajur-stacked.svg` |
 | Hitam / putih / satu warna | `symbol/`, `horizontal/`, `stacked/` (`*-black`, `*-white`, `*-mono-0069e8`) |
 | Ikon aplikasi, favicon, ikon PWA | `symbol/` (`favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, `icon-192/512.png`, `maskable-512.png`) |
 | Presentasi + mockup | `presentation/board.html`, `presentation/slide-*.png` |
@@ -32,7 +32,7 @@ Di aplikasi, logo dipakai lewat `src/components/logo.tsx` (`<Logo />`, `<LogoMar
 
 | | HEX | RGB | Catatan |
 |---|---|---|---|
-| **Biru Lamarin** | `#0069E8` | 0 105 232 | = `oklch(0.55 0.21 258)`, warna `--primary` di aplikasi. Kontras 5,0 : 1 di atas putih |
+| **Biru Lajur** | `#0069E8` | 0 105 232 | = `oklch(0.55 0.21 258)`, warna `--primary` di aplikasi. Kontras 5,0 : 1 di atas putih |
 | Putih | `#FFFFFF` | 255 255 255 | Logo di atas biru atau latar gelap |
 | Hitam | `#000000` | 0 0 0 | Cetak satu warna, faks, stempel |
 
@@ -42,7 +42,7 @@ CMYK dan Pantone belum ditetapkan. Kalau mau dicetak, minta percetakan mencocokk
 
 - **Ruang kosong:** di sekeliling logo, sisakan minimal selebar satu kartu (sisi kartu ≈ ¼ tinggi simbol).
 - **Ukuran minimum:** simbol 16 px (gunakan potongan kecil di bawah 20 px), lockup horizontal 24 px tingginya.
-- **Latar:** biru di atas putih atau abu terang. Putih di atas biru Lamarin atau latar gelap. Di atas foto, letakkan logo di
+- **Latar:** biru di atas putih atau abu terang. Putih di atas biru Lajur atau latar gelap. Di atas foto, letakkan logo di
   area yang tenang, atau pakai versi putih di atas bidang gelap.
 - **Jangan:**
   - mengubah warna di luar palet;

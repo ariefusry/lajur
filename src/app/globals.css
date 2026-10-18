@@ -50,7 +50,7 @@
 
 :root {
   /* Button group (components/ui/primitive-button-group.tsx): a recessed tray, the active item raised.
-     Recipe from the Bjork group, mapped onto Lamarin's cool neutrals instead of its warm beige. */
+     Recipe from the Bjork group, mapped onto Lajur's cool neutrals instead of its warm beige. */
   --bjork-border: color-mix(in oklch, var(--foreground) 8%, transparent);
   --bjork-surface-muted: color-mix(in oklch, var(--foreground) 4.5%, transparent);
   --bjork-surface-hover: color-mix(in oklch, var(--foreground) 6%, transparent);

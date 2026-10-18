@@ -21,7 +21,7 @@ import { demoLoginEnabled } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Lamarin · Tracker lamaran kerja",
+  title: "Lajur · Tracker lamaran kerja",
   description:
     "Catat semua lamaran kerja, deadline, dan tahap seleksi khas Indonesia di satu tempat. Pengingat jadwal tes, cek syarat otomatis, dan analisis CV mana yang paling sering lolos.",
 };
@@ -82,7 +82,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
     <div className="min-h-svh">
       <header className="sticky top-0 z-30 border-b bg-background/70 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
-          <Link href="/" aria-label="Lamarin, beranda">
+          <Link href="/" aria-label="Lajur, beranda">
             <Logo className="text-lg" markClassName="size-6" />
           </Link>
           <nav aria-label="Bagian halaman" className="text-muted-foreground hidden items-center gap-6 text-sm md:flex">
@@ -106,7 +106,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
         {akun === "dihapus" && (
           <p role="status" className="mx-auto mt-4 max-w-6xl px-4">
             <span className="glass block rounded-xl border px-4 py-3 text-sm">
-              Akunmu dan semua datanya sudah dihapus. Terima kasih sudah memakai Lamarin.
+              Akunmu dan semua datanya sudah dihapus. Terima kasih sudah memakai Lajur.
             </span>
           </p>
         )}
@@ -143,7 +143,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
           <div className="glass overflow-hidden rounded-3xl border p-2 shadow-2xl md:p-3">
             <Image
               src="/landing/dashboard.png"
-              alt="Dashboard Lamarin: jadwal 7 hari ke depan, lamaran yang perlu di-follow-up, dan pipeline tahap seleksi"
+              alt="Dashboard Lajur: jadwal 7 hari ke depan, lamaran yang perlu di-follow-up, dan pipeline tahap seleksi"
               width={1440}
               height={900}
               priority
@@ -215,7 +215,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
           <div className="glass overflow-hidden rounded-3xl border p-2 shadow-xl">
             <Image
               src="/landing/board.png"
-              alt="Board Lamarin: kolom tahap seleksi dengan kartu lamaran yang bisa digeser"
+              alt="Board Lajur: kolom tahap seleksi dengan kartu lamaran yang bisa digeser"
               width={1440}
               height={640}
               className="w-full rounded-2xl border"

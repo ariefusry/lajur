@@ -12,7 +12,7 @@ import { daysUntil, formatDate, formatDateTime, fromDateInput, toDateInput } fro
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS } from "@/lib/validation";
 
-export const metadata = { title: "Dashboard · Lamarin" };
+export const metadata = { title: "Dashboard · Lajur" };
 
 const DAY_MS = 86_400_000;
 /** Follow-ups only make sense while the application is still open. */

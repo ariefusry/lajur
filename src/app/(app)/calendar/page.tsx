@@ -8,7 +8,7 @@ import { formatDateTime, fromDateInput, toDateInput } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS } from "@/lib/validation";
 
-export const metadata = { title: "Kalender · Lamarin" };
+export const metadata = { title: "Kalender · Lajur" };
 
 const WEEKDAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
 const pad = (n: number) => String(n).padStart(2, "0");

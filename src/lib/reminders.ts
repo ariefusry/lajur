@@ -61,7 +61,7 @@ export function reminderEmail(name: string | null, items: ReminderItem[], appUrl
       : []),
     "",
     "Semoga lancar!",
-    "Lamarin",
+    "Lajur",
   ].join("\n");
 
   const list = (lines: { text: string; id: string }[]) =>
@@ -72,7 +72,7 @@ export function reminderEmail(name: string | null, items: ReminderItem[], appUrl
 <p>Halo${name ? ` ${escape(name)}` : ""},</p>
 ${items.length ? `<p>Jadwal seleksi kamu yang akan datang:</p>\n${list(items.map((i) => ({ text: eventLine(i), id: i.applicationId })))}` : ""}
 ${followUps.length ? `<p>Saatnya follow-up:</p>\n${list(followUps.map((f) => ({ text: followUpLine(f), id: f.applicationId })))}` : ""}
-<p>Semoga lancar!<br>Lamarin</p>
+<p>Semoga lancar!<br>Lajur</p>
 </div>`;
 
   return { subject, text, html };

@@ -132,7 +132,7 @@ export async function fetchJobPageText(raw: string): Promise<string> {
     const res = await fetch(url, {
       redirect: "manual", // re-validate every redirect target
       signal: AbortSignal.timeout(10_000),
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; Lamarin/1.0)", Accept: "text/html,text/plain" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Lajur/1.0)", Accept: "text/html,text/plain" },
     }).catch(() => {
       throw new FetchPageError("Halaman tidak bisa diambil. Salin teks lowongannya saja.");
     });

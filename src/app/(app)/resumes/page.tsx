@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
 
-export const metadata = { title: "CV · Lamarin" };
+export const metadata = { title: "CV · Lajur" };
 
 export default async function ResumesPage() {
   const user = await requireUser();

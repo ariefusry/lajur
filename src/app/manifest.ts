@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 
-/** Lets phones install Lamarin to the home screen (icons from docs/brand). */
+/** Lets phones install Lajur to the home screen (icons from docs/brand). */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Lamarin",
-    short_name: "Lamarin",
+    name: "Lajur",
+    short_name: "Lajur",
     description: "Tracker lamaran kerja: tahap seleksi, deadline, dan jadwal tes di satu tempat.",
     start_url: "/dashboard",
     display: "standalone",

@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-svh flex-col md:flex-row">
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-svh w-56 shrink-0 flex-col gap-4 border-r bg-sidebar p-4 backdrop-blur-xl backdrop-saturate-150 md:flex">
-        <Link href="/dashboard" aria-label="Lamarin, ke dashboard" className="px-1">
+        <Link href="/dashboard" aria-label="Lajur, ke dashboard" className="px-1">
           <Logo className="text-xl" markClassName="size-7" />
         </Link>
         <NavLinks />
@@ -39,7 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Phone header: brand + the two items that don't fit the tab bar */}
       <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-xl md:hidden">
-        <Link href="/dashboard" aria-label="Lamarin, ke dashboard">
+        <Link href="/dashboard" aria-label="Lajur, ke dashboard">
           <Logo markClassName="size-5" />
         </Link>
         <div className="flex items-center">

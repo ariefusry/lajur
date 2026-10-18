@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { auth, signIn } from "@/lib/auth";
 import { demoLoginEnabled } from "@/lib/demo";
 
-export const metadata = { title: "Masuk · Lamarin" };
+export const metadata = { title: "Masuk · Lajur" };
 
 const VALUE_PROPS = [
   { icon: KanbanSquare, title: "Board tahap seleksi", text: "Dari administrasi sampai offering, geser kartu saat lamaranmu maju." },
@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div className="space-y-8">
         <div className="space-y-3">
           <h1 className="text-4xl font-semibold tracking-tight">
-            <Link href="/" className="hover:opacity-80" aria-label="Lamarin, beranda">
+            <Link href="/" className="hover:opacity-80" aria-label="Lajur, beranda">
               <Logo className="gap-3" markClassName="size-10" />
             </Link>
           </h1>

@@ -66,7 +66,7 @@ export async function exportApplicationsCsv(): Promise<{ filename: string; csv: 
       toDateInput(a.createdAt),
     ]),
   );
-  return { filename: `lamarin-lamaran-${toDateInput(new Date())}.csv`, csv };
+  return { filename: `lajur-lamaran-${toDateInput(new Date())}.csv`, csv };
 }
 
 /**

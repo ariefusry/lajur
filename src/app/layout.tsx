@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lamarin",
+  title: "Lajur",
   description: "Tracker lamaran kerja untuk pencari kerja di Indonesia",
 };
 

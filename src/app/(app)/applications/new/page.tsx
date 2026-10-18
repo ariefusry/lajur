@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { isReadOnly } from "@/lib/demo";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
 
-export const metadata = { title: "Lamaran baru · Lamarin" };
+export const metadata = { title: "Lamaran baru · Lajur" };
 
 export default async function NewApplicationPage({
   searchParams,
