@@ -24,15 +24,23 @@ export async function updateProfile(_: FormState, formData: FormData): Promise<F
   return { ok: true, message: "Profil disimpan." };
 }
 
-/** UU PDP consent for sending text to the (foreign) AI providers; agree=false withdraws it. */
-export async function setAiConsent(formData: FormData) {
+/**
+ * UU PDP consent for sending text to the (foreign) AI providers; false withdraws it. Returns the new consent
+ * time (ISO) or null, which the button shows directly instead of waiting on the page refresh.
+ */
+export async function setAiConsent(agree: boolean): Promise<{ consentedAt: string | null } | { error: string }> {
   const user = await requireUser();
-  if (isReadOnly(user)) return;
-  const agree = z.enum(["true", "false"]).safeParse(formData.get("agree"));
-  if (!agree.success) return;
-  await db.user.update({ where: { id: user.id }, data: { aiConsentAt: agree.data === "true" ? new Date() : null } });
+  if (isReadOnly(user)) return { error: DEMO_READ_ONLY_MESSAGE };
+  const parsed = z.boolean().safeParse(agree);
+  if (!parsed.success) return { error: "Permintaan tidak valid." };
+  const { aiConsentAt } = await db.user.update({
+    where: { id: user.id },
+    data: { aiConsentAt: parsed.data ? new Date() : null },
+    select: { aiConsentAt: true },
+  });
   revalidatePath("/settings");
   revalidatePath("/applications/new");
+  return { consentedAt: aiConsentAt?.toISOString() ?? null };
 }
 
 export async function addStage(formData: FormData) {

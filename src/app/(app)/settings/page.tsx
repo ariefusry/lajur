@@ -48,7 +48,7 @@ export default async function SettingsPage() {
             />
           </Card>
           <Card title="Persetujuan AI" description="Fitur AI hanya aktif setelah kamu setuju." className="order-1 lg:order-none">
-            <AiConsent consentedAt={profile.aiConsentAt} readOnly={isReadOnly({ email })} />
+            <AiConsent consentedAt={profile.aiConsentAt?.toISOString() ?? null} readOnly={isReadOnly({ email })} />
           </Card>
           <Card
             title="Data & akun"
