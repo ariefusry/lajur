@@ -2,7 +2,7 @@
 
 Tracker lamaran kerja dengan bantuan AI, untuk pencari kerja di Indonesia yang melamar ke banyak tempat sekaligus: BUMN, bank, startup, atau perusahaan di bidang apa pun.
 
-**Coba langsung:** https://tracker-lamaran-ashy.vercel.app → **Masuk sebagai demo** (akun contoh berisi 15 lamaran; hanya bisa dilihat).
+**Coba langsung:** https://lajur.vercel.app → **Masuk sebagai demo** (akun contoh berisi 15 lamaran; hanya bisa dilihat).
 
 ![Dashboard](docs/screenshots/dashboard.png)
 

@@ -1,8 +1,8 @@
-# CLAUDE.md — Lamarin: Tracker Lamaran Kerja dengan Bantuan AI
+# CLAUDE.md — Lajur: Tracker Lamaran Kerja dengan Bantuan AI
 
 > Taruh file ini di root repo. Claude Code membacanya otomatis setiap sesi.
-> Mulai dengan prompt: **"Baca CLAUDE.md, lalu kerjakan Fase 1. Berhenti di akhir fase dan tunjukkan hasilnya."**
-> Nama "Lamarin" hanya placeholder, ganti sesukamu.
+> Nama aplikasi: **Lajur** (sebelumnya "Lamarin"). Produksi: https://lajur.vercel.app. Repo: `ariefusry/lajur`.
+> Email akun demo tetap `demo@lamarin.local`, karena mengubahnya membuat reset harian membuat akun demo kedua.
 
 ---
 

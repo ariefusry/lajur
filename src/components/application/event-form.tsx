@@ -34,32 +34,58 @@ export function EventForm({
   const err = (name: string) => state.errors?.[name]?.[0];
 
   return (
-    <form ref={formRef} action={formAction} className="grid gap-3 sm:grid-cols-[10rem_14rem_1fr_auto] sm:items-end">
-      <div className="space-y-1.5">
-        <Label htmlFor={`${idPrefix}-type`}>Jenis</Label>
-        <Select
-          id={`${idPrefix}-type`}
-          name="type"
-          defaultValue={defaults.type}
-          placeholder="Pilih"
-          required
-          options={optionsFrom(EVENT_TYPE_LABELS)}
-        />
-        {err("type") && <p className="text-xs text-destructive">{err("type")}</p>}
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor={`${idPrefix}-startsAt`}>Tanggal & jam (WIB)</Label>
-        <Input id={`${idPrefix}-startsAt`} name="startsAt" type="datetime-local" defaultValue={defaults.startsAt} required />
-        {err("startsAt") && <p className="text-xs text-destructive">{err("startsAt")}</p>}
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor={`${idPrefix}-loc`}>Lokasi / link</Label>
-        <Input id={`${idPrefix}-loc`} name="locationOrUrl" defaultValue={defaults.locationOrUrl} placeholder="Zoom, alamat kantor…" />
-      </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Menyimpan…" : submitLabel}
-      </Button>
-      {state.message && !state.ok && <p className="text-sm text-destructive sm:col-span-4">{state.message}</p>}
-    </form>
+    // Container query: the same form sits in a narrow side card and in a wide list row.
+    <div className="@container">
+      <form
+        ref={formRef}
+        action={formAction}
+        className="grid gap-3 @2xl:grid-cols-[10rem_14rem_1fr_auto] @2xl:items-end"
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-type`}>Jenis</Label>
+          <Select
+            id={`${idPrefix}-type`}
+            name="type"
+            defaultValue={defaults.type}
+            placeholder="Pilih"
+            required
+            options={optionsFrom(EVENT_TYPE_LABELS)}
+          />
+          {err("type") && (
+            <p className="text-destructive text-xs">{err("type")}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-startsAt`}>Tanggal & jam (WIB)</Label>
+          <Input
+            id={`${idPrefix}-startsAt`}
+            name="startsAt"
+            type="datetime-local"
+            defaultValue={defaults.startsAt}
+            required
+          />
+          {err("startsAt") && (
+            <p className="text-destructive text-xs">{err("startsAt")}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-loc`}>Lokasi / link</Label>
+          <Input
+            id={`${idPrefix}-loc`}
+            name="locationOrUrl"
+            defaultValue={defaults.locationOrUrl}
+            placeholder="Zoom, alamat kantor…"
+          />
+        </div>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Menyimpan…" : submitLabel}
+        </Button>
+        {state.message && !state.ok && (
+          <p className="text-destructive text-sm @2xl:col-span-4">
+            {state.message}
+          </p>
+        )}
+      </form>
+    </div>
   );
 }
