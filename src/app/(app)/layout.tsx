@@ -1,4 +1,4 @@
-import { LogOut, Settings } from "lucide-react";
+import { BarChart3, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { NavLinks, TabBar } from "@/components/nav-links";
@@ -43,6 +43,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Logo markClassName="size-5" />
         </Link>
         <div className="flex items-center">
+          <Button asChild variant="ghost" size="icon-sm" aria-label="Analytics">
+            <Link href="/analytics">
+              <BarChart3 />
+            </Link>
+          </Button>
           <ThemeToggle />
           <Button asChild variant="ghost" size="icon-sm" aria-label="Pengaturan">
             <Link href="/settings">

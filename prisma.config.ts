@@ -1,10 +1,14 @@
 import { defineConfig } from "prisma/config";
 
 // Prisma 7 doesn't load env files itself; .env.local is written by `neon deploy`.
-try {
-  process.loadEnvFile(".env.local");
-} catch {
-  // CI/Vercel provide env vars directly.
+// Only when no database is configured yet: loadEnvFile overwrites existing variables, so it would silently
+// swap an injected production DATABASE_URL (e.g. `vercel env run -e production -- pnpm db:seed`) for dev's.
+if (!process.env.DATABASE_URL) {
+  try {
+    process.loadEnvFile(".env.local");
+  } catch {
+    // CI/Vercel provide env vars directly.
+  }
 }
 
 export default defineConfig({
