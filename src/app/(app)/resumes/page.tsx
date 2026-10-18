@@ -35,7 +35,7 @@ export default async function ResumesPage() {
         {resumes.length === 0 ? (
           <p className="text-muted-foreground text-sm">Belum ada CV yang diunggah.</p>
         ) : (
-          <ul className="divide-y rounded-xl border bg-card">
+          <ul className="glass divide-y rounded-2xl border">
             {resumes.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">

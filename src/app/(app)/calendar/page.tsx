@@ -102,7 +102,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      <div className="grid grid-cols-7 overflow-hidden rounded-xl border bg-card text-xs">
+      <div className="glass grid grid-cols-7 overflow-hidden rounded-2xl border text-xs">
         {WEEKDAYS.map((d) => (
           <div key={d} className="border-b bg-muted/50 p-2 text-center font-medium">
             {d}
@@ -154,7 +154,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             Tidak ada jadwal. Tambahkan jadwal tes atau interview dari halaman detail lamaran.
           </p>
         ) : (
-          <ul className="max-w-2xl divide-y rounded-xl border bg-card">
+          <ul className="glass max-w-2xl divide-y rounded-2xl border">
             {items.map((it) => (
               <li key={it.key} className="flex items-center gap-1 pr-2">
                 <Link

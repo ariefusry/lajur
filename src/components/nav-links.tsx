@@ -7,15 +7,20 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/board", label: "Board", icon: KanbanSquare },
+  { href: "/board", label: "Lamaran", icon: KanbanSquare, also: "/applications" },
   { href: "/applications/new", label: "Lamaran baru", icon: Plus },
   { href: "/calendar", label: "Kalender", icon: CalendarDays },
   { href: "/resumes", label: "CV", icon: FileText },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
-const isActive = (pathname: string, href: string) =>
-  pathname === href || (href !== "/applications/new" && pathname.startsWith(`${href}/`));
+const LINK_ALSO: Record<string, string | undefined> = Object.fromEntries(LINKS.map((l) => [l.href, l.also]));
+
+const isActive = (pathname: string, href: string) => {
+  if (pathname === "/applications/new") return href === "/applications/new";
+  const also = LINK_ALSO[href];
+  return pathname === href || pathname.startsWith(`${href}/`) || (!!also && (pathname === also || pathname.startsWith(`${also}/`)));
+};
 
 /** Desktop sidebar navigation. */
 export function NavLinks() {

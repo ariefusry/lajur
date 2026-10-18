@@ -42,7 +42,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </ul>
       </div>
 
-      <div className="bg-card space-y-4 rounded-3xl border p-6 text-center shadow-sm">
+      <div className="glass space-y-4 rounded-3xl border p-6 text-center">
         <h2 className="text-xl font-semibold tracking-tight">Masuk</h2>
         <div className="space-y-2">
           <form

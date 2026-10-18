@@ -76,7 +76,7 @@ export function SkillGapSection({
           <p className="text-sm">
             <span className="font-medium">{have.length}</span> dari {gaps.length} skill sudah terlihat di CV.
           </p>
-          <ul className="divide-y rounded-xl border bg-card">
+          <ul className="glass divide-y rounded-2xl border">
             {[...have, ...missing].map((g) => (
               <li key={g.id} className="flex gap-3 p-3 text-sm">
                 {g.inResume ? (

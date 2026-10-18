@@ -107,7 +107,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     return (
       <div className="max-w-xl space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <div className="bg-card space-y-3 rounded-xl border p-6">
+        <div className="glass space-y-3 rounded-2xl border p-6">
           <p className="font-medium">Belum ada data untuk dianalisis.</p>
           <p className="text-muted-foreground text-sm">
             Setelah kamu mencatat beberapa lamaran dan menggesernya antar tahap, di sini akan muncul: tahap mana yang
@@ -419,7 +419,7 @@ function Card({
   children: ReactNode;
 }) {
   return (
-    <section className={cn("bg-card flex flex-col gap-4 overflow-hidden rounded-2xl border p-5 shadow-sm", className)}>
+    <section className={cn("glass flex flex-col gap-4 overflow-hidden rounded-2xl border p-5", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-semibold tracking-tight">{title}</h2>
@@ -434,7 +434,7 @@ function Card({
 
 function Stat({ label, value, note, href }: { label: string; value: number | string; note?: string; href?: string }) {
   const className = cn(
-    "bg-card rounded-2xl border p-4 shadow-sm",
+    "glass rounded-2xl border p-4",
     href && "transition-[box-shadow,transform] hover:shadow-md active:scale-[0.98]",
   );
   const body = (

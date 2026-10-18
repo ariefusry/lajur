@@ -85,7 +85,7 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
 
   const pending = startedAt !== null;
   return (
-    <section className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm">
+    <section className="glass space-y-3 rounded-2xl border p-4">
       <div>
         <h2 className="flex items-center gap-2 font-medium">
           <Sparkles className="size-4" /> Tempel lowongan

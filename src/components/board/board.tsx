@@ -141,7 +141,7 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
           then glides into the card's new slot on drop. */}
       <DragOverlay dropAnimation={reducedMotion ? null : { duration: 220, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" }}>
         {activeCard && (
-          <div className="scale-[1.03] rotate-1 cursor-grabbing rounded-lg border bg-card p-3 text-sm shadow-xl motion-reduce:scale-100 motion-reduce:rotate-0">
+          <div className="scale-[1.03] rotate-1 cursor-grabbing glass rounded-xl border p-3 text-sm shadow-xl motion-reduce:scale-100 motion-reduce:rotate-0">
             <CardBody card={activeCard} />
           </div>
         )}
@@ -195,7 +195,7 @@ function ApplicationCard({ card, justDragged }: { card: Card; justDragged: RefOb
         if (justDragged.current) e.preventDefault();
       }}
       className={cn(
-        "cursor-grab rounded-xl border-0 bg-card p-3.5 text-sm shadow-sm ring-1 ring-foreground/5 transition-shadow select-none [-webkit-touch-callout:none] hover:shadow-md",
+        "glass cursor-grab rounded-xl border p-3.5 text-sm transition-shadow select-none [-webkit-touch-callout:none] hover:shadow-md",
         // The original stays in place as a faint placeholder while its lifted copy moves.
         isDragging && "opacity-40 shadow-none",
       )}

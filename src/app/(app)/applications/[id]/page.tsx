@@ -76,7 +76,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
                   Dicek otomatis dari profil di Pengaturan (tanpa AI). Ubah profil untuk memperbarui hasilnya.
                 </p>
               </div>
-              <ul className="bg-card divide-y rounded-xl border">
+              <ul className="glass divide-y rounded-2xl border">
                 {checks.map((r) => (
                   <li key={r.id} className="flex items-start gap-3 p-3">
                     <div className="min-w-0 flex-1 space-y-1">
@@ -152,7 +152,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
               <p className="text-muted-foreground text-xs">Pengingat email dikirim H-3 dan H-1 pukul 07.00 WIB.</p>
             </div>
             {app.events.length > 0 && (
-              <ul className="bg-card divide-y rounded-xl border">
+              <ul className="glass divide-y rounded-2xl border">
                 {app.events.map((e) => (
                   <li key={e.id} className={cn("space-y-2 p-3", e.startsAt < now && "opacity-60")}>
                     <div className="flex items-start gap-2">
@@ -213,7 +213,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
           />
         </div>
         <div className="space-y-4">
-          <section className="bg-card space-y-4 rounded-2xl border p-4 shadow-sm">
+          <section className="glass space-y-4 rounded-2xl border p-4">
             <h2 className="font-semibold">Data lamaran</h2>
             <ApplicationForm
               action={updateApplication.bind(null, app.id)}

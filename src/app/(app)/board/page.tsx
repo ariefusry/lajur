@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Board } from "@/components/board/board";
 import { Button } from "@/components/ui/button";
+import { ViewSwitch } from "@/components/view-switch";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
@@ -39,11 +40,14 @@ export default async function BoardPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Board lamaran</h1>
-        <Button asChild>
-          <Link href="/applications/new">Tambah lamaran</Link>
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">Lamaran</h1>
+        <div className="flex items-center gap-2">
+          <ViewSwitch active="board" />
+          <Button asChild>
+            <Link href="/applications/new">Tambah lamaran</Link>
+          </Button>
+        </div>
       </div>
       {applications.length === 0 && (
         <p className="text-sm text-muted-foreground">
