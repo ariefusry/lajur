@@ -61,7 +61,8 @@ describe("checkCv", () => {
     const { prompt, feature } = mocks.generateStructured.mock.calls[0][0];
     expect(feature).toBe("SKILL_GAP");
     expect(prompt).toMatch(/Skill yang dicek:\n- TypeScript\n\nCV:/); // React was found via the React.js alias
-    expect(prompt).toContain("Syarat (MIN_DEGREE): S1");
+    expect(prompt).toContain("Syarat (pendidikan minimal): S1");
+    expect(prompt).not.toContain("MIN_DEGREE");
     expect(prompt).not.toMatch(/rina|sari|@/i);
 
     expect(result.rows.map((r) => [r.skill, r.inResume])).toEqual([["React", true], ["TypeScript", false]]);

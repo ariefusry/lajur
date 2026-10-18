@@ -7,6 +7,7 @@ import { aiEnabled, AiUnavailableError, generateStructured } from "@/lib/ai/prov
 import { redact, rehydrate, type KnownPii } from "@/lib/ai/redact";
 import { matchSkills, SkillGapAnswer, verifySkillGap, type GapRow } from "@/lib/ai/skill-gap";
 import { QuotaExceededError } from "@/lib/ai/usage";
+import { REQUIREMENT_TYPE_LABELS } from "@/lib/validation";
 
 export const CvCheckAnswer = z.object({
   skills: SkillGapAnswer.shape.results,
@@ -37,7 +38,8 @@ export function cvCheckPrompt(posting: ExtractedJob, missing: string[], redacted
     posting.position && `Posisi: ${posting.position}`,
     posting.company && `Perusahaan: ${posting.company}`,
     posting.skills.length > 0 && `Skill yang diminta: ${posting.skills.map((s) => s.name).join(", ")}`,
-    ...posting.requirements.map((r) => `Syarat (${r.type}): ${r.value}`),
+    // Readable labels, not enum codes: the model repeats whatever it sees in its tips.
+    ...posting.requirements.map((r) => `Syarat (${REQUIREMENT_TYPE_LABELS[r.type].toLowerCase()}): ${r.value}`),
   ].filter(Boolean);
   const toCheck = missing.length ? missing.map((s) => `- ${s}`).join("\n") : "(kosong: semua skill sudah ditemukan di CV)";
   return `Lowongan:\n${lines.join("\n")}\n\nSkill yang dicek:\n${toCheck}\n\nCV:\n${redactedCv}`;
