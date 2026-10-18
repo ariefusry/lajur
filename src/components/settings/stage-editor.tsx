@@ -22,8 +22,9 @@ import { toast } from "sonner";
 import { reorderStages, updateStage } from "@/actions/settings";
 import { Input } from "@/components/ui/input";
 import type { StageKind } from "@/generated/prisma/enums";
-import { cn, selectClass } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { STAGE_KIND_LABELS } from "@/lib/validation";
+import { Select, optionsFrom } from "@/components/ui/select";
 
 type StageRow = { id: string; name: string; kind: StageKind };
 
@@ -153,18 +154,13 @@ function Row({
         onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
         className="min-w-0 flex-1"
       />
-      <select
+      <Select
         value={stage.kind}
-        onChange={(e) => onKind(e.target.value as StageKind)}
+        onValueChange={(v) => onKind(v as StageKind)}
         aria-label={`Jenis tahap ${stage.name}`}
-        className={cn(selectClass, "w-40 shrink-0")}
-      >
-        {Object.entries(STAGE_KIND_LABELS).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
+        className="w-40 shrink-0"
+        options={optionsFrom(STAGE_KIND_LABELS)}
+      />
     </li>
   );
 }

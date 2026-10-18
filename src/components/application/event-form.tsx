@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { selectClass } from "@/lib/utils";
 import { EVENT_TYPE_LABELS, type FormState } from "@/lib/validation";
+import { Select, optionsFrom } from "@/components/ui/select";
 
 export function EventForm({
   action,
@@ -36,16 +36,14 @@ export function EventForm({
     <form ref={formRef} action={formAction} className="grid gap-3 sm:grid-cols-[10rem_14rem_1fr_auto] sm:items-end">
       <div className="space-y-1.5">
         <Label htmlFor={`${idPrefix}-type`}>Jenis</Label>
-        <select id={`${idPrefix}-type`} name="type" defaultValue={defaults.type} className={selectClass} required>
-          <option value="" disabled>
-            Pilih
-          </option>
-          {Object.entries(EVENT_TYPE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <Select
+          id={`${idPrefix}-type`}
+          name="type"
+          defaultValue={defaults.type}
+          placeholder="Pilih"
+          required
+          options={optionsFrom(EVENT_TYPE_LABELS)}
+        />
         {err("type") && <p className="text-xs text-destructive">{err("type")}</p>}
       </div>
       <div className="space-y-1.5">

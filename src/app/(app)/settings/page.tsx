@@ -1,5 +1,4 @@
 import { addStage } from "@/actions/settings";
-import { selectClass } from "@/lib/utils";
 import { StageEditor } from "@/components/settings/stage-editor";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { TemplatePicker } from "@/components/settings/template-picker";
@@ -9,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { toDateInput } from "@/lib/dates";
 import { STAGE_KIND_LABELS } from "@/lib/validation";
+import { Select, optionsFrom } from "@/components/ui/select";
 
 export const metadata = { title: "Pengaturan · Lamarin" };
 
@@ -60,13 +60,13 @@ export default async function SettingsPage() {
             className="min-w-48 flex-1"
             aria-label="Nama tahap baru"
           />
-          <select name="kind" defaultValue="IN_PROGRESS" className={`${selectClass} w-auto`} aria-label="Jenis tahap">
-            {Object.entries(STAGE_KIND_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <Select
+            name="kind"
+            defaultValue="IN_PROGRESS"
+            className="w-44"
+            aria-label="Jenis tahap"
+            options={optionsFrom(STAGE_KIND_LABELS)}
+          />
           <Button type="submit">Tambah tahap</Button>
         </form>
       </section>

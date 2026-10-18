@@ -34,7 +34,8 @@ test("demo user creates an application, moves it on the board, and sees it on th
   if (await manual.isVisible()) await manual.click();
   await page.getByLabel("Perusahaan *").fill(COMPANY);
   await page.getByLabel("Posisi *").fill("Staf Administrasi");
-  await page.getByLabel("Sumber lowongan *").selectOption("JOBSTREET");
+  await page.getByLabel("Sumber lowongan *").click(); // custom dropdown (page-drawn list)
+  await page.getByRole("option", { name: "JobStreet" }).click();
   await page.getByLabel("Tanggal melamar").fill("2026-10-01");
   await page.getByRole("button", { name: "Simpan lamaran" }).click();
   await expect(page).toHaveURL(/\/board$/);

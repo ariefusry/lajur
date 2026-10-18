@@ -11,8 +11,9 @@ import { daysUntil, formatDate } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
-import { cn, selectClass } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { JOB_SOURCE_LABELS } from "@/lib/validation";
+import { Select } from "@/components/ui/select";
 
 export const metadata = { title: "Daftar lamaran · Lamarin" };
 
@@ -90,26 +91,23 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input name="q" defaultValue={query} placeholder="Cari perusahaan, posisi, atau lokasi" className="pl-9" />
         </label>
-        <label className="flex-1 sm:flex-none">
+        <label className="relative flex-1 sm:flex-none">
           <span className="sr-only">Tahap</span>
-          <select name="stage" defaultValue={stage} className={cn(selectClass, "w-full truncate whitespace-nowrap sm:w-auto")}>
-            <option value="">Semua tahap</option>
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            name="stage"
+            defaultValue={stage}
+            className="w-full sm:w-44"
+            options={[{ value: "", label: "Semua tahap" }, ...stages.map((s) => ({ value: s.id, label: s.name }))]}
+          />
         </label>
-        <label className="flex-1 sm:flex-none">
+        <label className="relative flex-1 sm:flex-none">
           <span className="sr-only">Urutkan</span>
-          <select name="sort" defaultValue={sortKey} className={cn(selectClass, "w-full truncate whitespace-nowrap sm:w-auto")}>
-            {Object.entries(SORTS).map(([key, s]) => (
-              <option key={key} value={key}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            name="sort"
+            defaultValue={sortKey}
+            className="w-full sm:w-44"
+            options={Object.entries(SORTS).map(([value, s]) => ({ value, label: s.label }))}
+          />
         </label>
         <Button type="submit" variant="outline" className="h-10 pointer-coarse:h-11">
           Terapkan

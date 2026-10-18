@@ -4,8 +4,8 @@ import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { selectClass } from "@/lib/utils";
 import { STAGE_RESULT_LABELS, type FormState } from "@/lib/validation";
+import { Select, optionsFrom } from "@/components/ui/select";
 
 export function StageHistoryForm({
   id,
@@ -24,19 +24,13 @@ export function StageHistoryForm({
 
   return (
     <form action={formAction} className="space-y-2">
-      <select
+      <Select
         name="result"
         defaultValue={defaults.result}
-        className={`${selectClass} w-40`}
+        className="w-44"
         aria-label="Hasil tahap"
-      >
-        <option value="">Belum ada hasil</option>
-        {Object.entries(STAGE_RESULT_LABELS).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
+        options={[{ value: "", label: "Belum ada hasil" }, ...optionsFrom(STAGE_RESULT_LABELS)]}
+      />
       <Textarea
         name="notes"
         id={`notes-${id}`}

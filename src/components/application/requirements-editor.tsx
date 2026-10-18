@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import type { RequirementType } from "@/generated/prisma/enums";
 import type { ExtractedJob } from "@/lib/ai/extract-job";
 import { checkRequirement, type EligibilityProfile } from "@/lib/eligibility/check";
-import { selectClass } from "@/lib/utils";
 import { REQUIREMENT_TYPE_LABELS, type Draft } from "@/lib/validation";
+import { Select, optionsFrom } from "@/components/ui/select";
 
 type Row = Draft["requirements"][number] & { key: number; original: { type: RequirementType; value: string } };
 
@@ -74,18 +74,13 @@ export function RequirementsEditor({
               return (
                 <li key={r.key} className="space-y-1.5 rounded-lg border bg-card p-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <select
+                    <Select
                       value={r.type}
-                      onChange={(e) => update(r.key, { type: e.target.value as RequirementType })}
-                      className={`${selectClass} w-40`}
+                      onValueChange={(v) => update(r.key, { type: v as RequirementType })}
+                      className="w-40"
                       aria-label="Jenis syarat"
-                    >
-                      {Object.entries(REQUIREMENT_TYPE_LABELS).map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
+                      options={optionsFrom(REQUIREMENT_TYPE_LABELS)}
+                    />
                     <Input
                       value={r.value}
                       onChange={(e) => update(r.key, { value: e.target.value })}

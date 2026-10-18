@@ -3,10 +3,10 @@
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 import { updateProfile } from "@/actions/settings";
-import { selectClass } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 
 type Defaults = { gpa: string; birthDate: string; major: string; degree: string; domicile: string };
 
@@ -34,14 +34,12 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
       {row(
         "degree",
         "Pendidikan terakhir",
-        <select id="degree" name="degree" defaultValue={defaults.degree} className={selectClass}>
-          <option value="">Belum diisi</option>
-          {DEGREES.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>,
+        <Select
+          id="degree"
+          name="degree"
+          defaultValue={defaults.degree}
+          options={[{ value: "", label: "Belum diisi" }, ...DEGREES.map((d) => ({ value: d, label: d }))]}
+        />,
       )}
       {row("major", "Jurusan", <Input id="major" name="major" placeholder="Akuntansi" defaultValue={defaults.major} />)}
       {row("domicile", "Domisili", <Input id="domicile" name="domicile" placeholder="Bekasi" defaultValue={defaults.domicile} />)}

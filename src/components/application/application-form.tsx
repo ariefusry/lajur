@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { JobSource } from "@/generated/prisma/enums";
-import { selectClass } from "@/lib/utils";
 import { JOB_SOURCE_LABELS, type FormState } from "@/lib/validation";
+import { Select, optionsFrom } from "@/components/ui/select";
 
 export type ApplicationDefaults = {
   company: string;
@@ -56,7 +56,7 @@ export function ApplicationForm({
   }, [state]);
 
   const field = (name: keyof ApplicationDefaults, label: string, input: React.ReactNode) => (
-    <div className="space-y-1.5">
+    <div className="relative space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
       {input}
       {evidence && name in evidence && defaults[name] && (
@@ -93,39 +93,35 @@ export function ApplicationForm({
       {field(
         "source",
         "Sumber lowongan *",
-        <select {...a11y("source")} defaultValue={defaults.source} className={selectClass} required>
-          <option value="" disabled>
-            Pilih sumber
-          </option>
-          {Object.entries(JOB_SOURCE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>,
+        <Select
+          {...a11y("source")}
+          defaultValue={defaults.source}
+          placeholder="Pilih sumber"
+          required
+          options={optionsFrom(JOB_SOURCE_LABELS)}
+        />,
       )}
       {field(
         "currentStageId",
         "Tahap *",
-        <select {...a11y("currentStageId")} defaultValue={defaults.currentStageId} className={selectClass} required>
-          {stages.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>,
+        <Select
+          {...a11y("currentStageId")}
+          defaultValue={defaults.currentStageId}
+          required
+          options={stages.map((s) => ({ value: s.id, label: s.name }))}
+        />,
       )}
       {field(
         "resumeId",
         "CV yang dikirim",
-        <select {...a11y("resumeId")} defaultValue={defaults.resumeId} className={selectClass}>
-          <option value="">{resumes.length ? "Belum dipilih" : "Belum ada CV (unggah di menu CV)"}</option>
-          {resumes.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.versionName}
-            </option>
-          ))}
-        </select>,
+        <Select
+          {...a11y("resumeId")}
+          defaultValue={defaults.resumeId}
+          options={[
+            { value: "", label: resumes.length ? "Belum dipilih" : "Belum ada CV (unggah di menu CV)" },
+            ...resumes.map((r) => ({ value: r.id, label: r.versionName })),
+          ]}
+        />,
       )}
       {field("location", "Lokasi / penempatan", <Input {...a11y("location")} defaultValue={defaults.location} />)}
       {field(
