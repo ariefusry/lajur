@@ -38,35 +38,46 @@ export function findingLines(job: DeepPartial<ExtractedJob>): string[] {
   return lines;
 }
 
+/**
+ * Live progress while the AI reads, at a fixed height: only the newest finding (one line, replaced as the next
+ * one arrives) and a running count. Everything found lands in the form once it's done.
+ */
 export function AiFindings({ status, job, elapsed }: { status: Status; job: DeepPartial<ExtractedJob> | null; elapsed: number }) {
   const lines = job ? findingLines(job) : [];
+  const latest = lines.at(-1);
+  // The newest line may still be being written.
+  const writing = status !== "verifying";
   return (
-    <div className="space-y-2 rounded-lg border bg-card p-3" aria-live="polite">
+    <div className="space-y-1.5 rounded-xl border bg-card p-3">
       <p className="flex items-center gap-2 text-sm font-medium">
         <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
         {HEADLINE[status]}
         <span className="ml-auto text-xs font-normal text-muted-foreground tabular-nums">{elapsed} dtk</span>
       </p>
-      {lines.length > 0 ? (
-        <ul className="space-y-1 text-sm">
-          {lines.map((line, i) => {
-            // The newest line may still be being written.
-            const writing = i === lines.length - 1 && status !== "verifying";
-            return (
-              <li key={i} className="flex items-start gap-2">
-                {writing ? (
-                  <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary motion-safe:animate-pulse" aria-hidden />
-                ) : (
-                  <Check className="mt-0.5 size-4 shrink-0 text-green-600" aria-hidden />
-                )}
-                <span className="min-w-0 break-words">{line}</span>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        status !== "fetching" && <p className="text-xs text-muted-foreground">Menunggu temuan pertama dari AI…</p>
-      )}
+      {/* Only this line is announced, not the ticking seconds above. */}
+      <div className="flex h-5 items-center gap-2 text-sm" aria-live="polite">
+        {latest ? (
+          <>
+            {writing ? (
+              <span className="size-2 shrink-0 rounded-full bg-primary motion-safe:animate-pulse" aria-hidden />
+            ) : (
+              <Check className="size-4 shrink-0 text-green-600" aria-hidden />
+            )}
+            <span
+              key={lines.length}
+              title={latest}
+              className="min-w-0 truncate motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300"
+            >
+              {latest}
+            </span>
+          </>
+        ) : (
+          status !== "fetching" && <span className="text-muted-foreground text-xs">Menunggu temuan pertama dari AI…</span>
+        )}
+      </div>
+      <p className="text-muted-foreground text-xs tabular-nums">
+        {lines.length > 0 ? `${lines.length} temuan sejauh ini · semuanya diisikan ke form setelah selesai` : " "}
+      </p>
     </div>
   );
 }
