@@ -34,14 +34,16 @@ export function NewApplication({ aiEnabled, stages, resumes, defaults, profile }
     : undefined;
 
   return (
-    <div className="space-y-6">
+    <div className={aiEnabled ? "grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]" : "space-y-6"}>
       {aiEnabled && (
-        <JobPastePanel
-          onResult={(r) => {
-            setDraft(r);
-            setVersion((v) => v + 1); // remount the uncontrolled form with the draft values
-          }}
-        />
+        <div className="lg:sticky lg:top-6">
+          <JobPastePanel
+            onResult={(r) => {
+              setDraft(r);
+              setVersion((v) => v + 1); // remount the uncontrolled form with the draft values
+            }}
+          />
+        </div>
       )}
       <ApplicationForm
         key={version}

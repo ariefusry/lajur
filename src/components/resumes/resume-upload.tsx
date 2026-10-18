@@ -41,7 +41,7 @@ export function ResumeUpload() {
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="grid max-w-2xl gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+    <form ref={formRef} onSubmit={onSubmit} className="grid gap-4">
       <div className="space-y-1.5">
         <Label htmlFor="versionName">Nama versi</Label>
         <Input id="versionName" name="versionName" placeholder="CV Umum v2" required maxLength={100} />

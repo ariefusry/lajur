@@ -81,7 +81,7 @@ export function ApplicationForm({
   });
 
   return (
-    <form action={formAction} className="grid max-w-2xl gap-4 sm:grid-cols-2">
+    <form action={formAction} className="grid max-w-3xl gap-4 sm:grid-cols-2">
       {field("company", "Perusahaan *", <Input {...a11y("company")} defaultValue={defaults.company} required />)}
       {field("position", "Posisi *", <Input {...a11y("position")} defaultValue={defaults.position} required />)}
       {field(

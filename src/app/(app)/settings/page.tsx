@@ -32,7 +32,7 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="space-y-10">
+    <div className="grid max-w-6xl items-start gap-10 xl:grid-cols-2">
       <section className="space-y-4">
         <div>
           <h1 className="text-xl font-semibold">Profil</h1>
@@ -49,7 +49,7 @@ export default async function SettingsPage() {
         />
       </section>
 
-      <section className="max-w-2xl space-y-4">
+      <section className="space-y-4">
         <div>
           <h2 className="text-xl font-semibold">Tahap seleksi</h2>
           <p className="text-sm text-muted-foreground">Kolom di board mengikuti urutan ini.</p>

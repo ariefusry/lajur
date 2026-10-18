@@ -21,35 +21,37 @@ export default async function ResumesPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-6xl space-y-8">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Versi CV</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl font-semibold tracking-tight">Versi CV</h1>
+        <p className="text-muted-foreground text-sm">
           Simpan setiap versi CV, lalu tautkan ke lamaran supaya ingat versi mana yang dikirim ke mana.
         </p>
       </div>
 
-      <ResumeUpload />
+      <div className="grid items-start gap-8 lg:grid-cols-[22rem_minmax(0,1fr)]">
+        <ResumeUpload />
 
-      {resumes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Belum ada CV yang diunggah.</p>
-      ) : (
-        <ul className="max-w-2xl divide-y rounded-xl border">
-          {resumes.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 p-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{r.versionName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(r.createdAt)} · dipakai di {r._count.applications} lamaran
-                  {r.extractedText === null && " · teks tidak terbaca"}
-                </p>
-              </div>
-              <ViewResumeButton id={r.id} />
-              <DeleteResumeButton id={r.id} name={r.versionName} usedBy={r._count.applications} />
-            </li>
-          ))}
-        </ul>
-      )}
+        {resumes.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Belum ada CV yang diunggah.</p>
+        ) : (
+          <ul className="divide-y rounded-xl border">
+            {resumes.map((r) => (
+              <li key={r.id} className="flex items-center gap-3 p-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{r.versionName}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {formatDate(r.createdAt)} · dipakai di {r._count.applications} lamaran
+                    {r.extractedText === null && " · teks tidak terbaca"}
+                  </p>
+                </div>
+                <ViewResumeButton id={r.id} />
+                <DeleteResumeButton id={r.id} name={r.versionName} usedBy={r._count.applications} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

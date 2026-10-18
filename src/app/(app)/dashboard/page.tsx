@@ -13,7 +13,10 @@ const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x * 100)}%
 export default async function DashboardPage() {
   const user = await requireUser();
   const [stages, apps, resumes] = await Promise.all([
-    db.stage.findMany({ where: { userId: user.id }, select: { id: true, name: true, order: true, kind: true } }),
+    db.stage.findMany({
+      where: { userId: user.id },
+      select: { id: true, name: true, order: true, kind: true },
+    }),
     db.application.findMany({
       where: { userId: user.id },
       select: {
@@ -24,7 +27,10 @@ export default async function DashboardPage() {
         history: { select: { stageId: true, enteredAt: true } },
       },
     }),
-    db.resume.findMany({ where: { userId: user.id }, select: { id: true, versionName: true } }),
+    db.resume.findMany({
+      where: { userId: user.id },
+      select: { id: true, versionName: true },
+    }),
   ]);
 
   if (apps.length === 0) {
@@ -33,7 +39,7 @@ export default async function DashboardPage() {
         <h1 className="text-xl font-semibold">Dashboard</h1>
         <div className="space-y-3 rounded-xl border p-6">
           <p className="font-medium">Belum ada data untuk dianalisis.</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Setelah kamu mencatat beberapa lamaran dan menggesernya antar tahap, di sini akan muncul: tahap mana yang
             paling sering membuat gagal, sumber lowongan dan versi CV mana yang paling sering lolos administrasi, dan
             berapa lama perusahaan biasanya merespons.
@@ -51,8 +57,8 @@ export default async function DashboardPage() {
   const maxFunnel = Math.max(1, ...d.funnel.map((f) => f.count));
 
   return (
-    <div className="max-w-4xl space-y-8">
-      <h1 className="text-xl font-semibold">Dashboard</h1>
+    <div className="max-w-7xl space-y-8">
+      <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Ringkasan">
         <Stat label="Total lamaran" value={d.totals.applications} />
@@ -65,45 +71,58 @@ export default async function DashboardPage() {
         />
       </section>
 
-      <section className="space-y-3">
-        <div>
-          <h2 className="font-medium">Funnel seleksi</h2>
-          <p className="text-xs text-muted-foreground">
-            Jumlah lamaran yang pernah mencapai tiap tahap, dan persentase yang lanjut dari tahap sebelumnya.
-          </p>
-        </div>
-        <ol className="space-y-2">
-          {d.funnel.map((f) => (
-            <li
-              key={f.stage}
-              className="grid grid-cols-[minmax(6rem,9rem)_1fr_auto] items-center gap-3 text-sm"
-              title={`${f.stage}: ${f.count} lamaran${f.conversion === null ? "" : `, ${pct(f.conversion)} dari tahap sebelumnya`}`}
-            >
-              <span className="truncate">{f.stage}</span>
-              <span className="h-5 rounded-sm bg-muted" aria-hidden>
-                <span className="block h-full rounded-sm bg-primary" style={{ width: `${(f.count / maxFunnel) * 100}%` }} />
-              </span>
-              <span className="w-24 text-right tabular-nums">
-                <span className="font-medium">{f.count}</span>
-                {f.conversion !== null && <span className="text-muted-foreground"> · {pct(f.conversion)}</span>}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <section className="space-y-3">
+          <div>
+            <h2 className="font-medium">Funnel seleksi</h2>
+            <p className="text-muted-foreground text-xs">
+              Jumlah lamaran yang pernah mencapai tiap tahap, dan persentase yang lanjut dari tahap sebelumnya.
+            </p>
+          </div>
+          <ol className="space-y-2">
+            {d.funnel.map((f) => (
+              <li
+                key={f.stage}
+                className="grid grid-cols-[minmax(6rem,9rem)_1fr_auto] items-center gap-3 text-sm"
+                title={`${f.stage}: ${f.count} lamaran${f.conversion === null ? "" : `, ${pct(f.conversion)} dari tahap sebelumnya`}`}
+              >
+                <span className="truncate">{f.stage}</span>
+                <span className="bg-muted h-5 rounded-sm" aria-hidden>
+                  <span
+                    className="bg-primary block h-full rounded-sm"
+                    style={{ width: `${(f.count / maxFunnel) * 100}%` }}
+                  />
+                </span>
+                <span className="w-24 text-right tabular-nums">
+                  <span className="font-medium">{f.count}</span>
+                  {f.conversion !== null && <span className="text-muted-foreground"> · {pct(f.conversion)}</span>}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-      <PassTable
-        title="Per sumber lowongan"
-        empty="Belum ada data."
-        adminStage={d.adminStage}
-        rows={d.bySource.map((r) => ({ ...r, label: JOB_SOURCE_LABELS[r.key as JobSource] }))}
-      />
-      <PassTable
-        title="Per versi CV"
-        empty="Belum ada lamaran yang ditautkan ke CV. Pilih CV di form lamaran supaya bisa dibandingkan."
-        adminStage={d.adminStage}
-        rows={d.byResume.map((r) => ({ ...r, label: resumeName.get(r.key as string) ?? "CV terhapus" }))}
-      />
+        <div className="space-y-8">
+          <PassTable
+            title="Per sumber lowongan"
+            empty="Belum ada data."
+            adminStage={d.adminStage}
+            rows={d.bySource.map((r) => ({
+              ...r,
+              label: JOB_SOURCE_LABELS[r.key as JobSource],
+            }))}
+          />
+          <PassTable
+            title="Per versi CV"
+            empty="Belum ada lamaran yang ditautkan ke CV. Pilih CV di form lamaran supaya bisa dibandingkan."
+            adminStage={d.adminStage}
+            rows={d.byResume.map((r) => ({
+              ...r,
+              label: resumeName.get(r.key as string) ?? "CV terhapus",
+            }))}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -111,9 +130,9 @@ export default async function DashboardPage() {
 function Stat({ label, value, note }: { label: string; value: number | string; note?: string }) {
   return (
     <div className="rounded-xl border p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className="text-2xl font-semibold tabular-nums">{value}</p>
-      {note && <p className="text-xs text-muted-foreground">{note}</p>}
+      {note && <p className="text-muted-foreground text-xs">{note}</p>}
     </div>
   );
 }
@@ -133,17 +152,17 @@ function PassTable({
     <section className="space-y-3">
       <div>
         <h2 className="font-medium">{title}</h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Lolos administrasi = sudah melewati tahap {adminStage ?? "pertama"}, dihitung dari lamaran yang sudah sampai
           tahap itu.
         </p>
       </div>
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{empty}</p>
+        <p className="text-muted-foreground text-sm">{empty}</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="bg-muted/50 text-muted-foreground text-left text-xs">
               <tr>
                 <th className="p-2 font-medium">{title.replace("Per ", "").replace(/^./, (c) => c.toUpperCase())}</th>
                 <th className="p-2 text-right font-medium">Lamaran</th>
@@ -157,12 +176,18 @@ function PassTable({
                   <td className="p-2 text-right tabular-nums">{r.total}</td>
                   <td className="p-2">
                     <div className="flex items-center gap-2" title={`${r.passedAdmin} dari ${r.reachedAdmin} lolos`}>
-                      <span className="h-2 w-24 shrink-0 rounded-full bg-muted" aria-hidden>
-                        <span className="block h-full rounded-full bg-primary" style={{ width: `${(r.rate ?? 0) * 100}%` }} />
+                      <span className="bg-muted h-2 w-24 shrink-0 rounded-full" aria-hidden>
+                        <span
+                          className="bg-primary block h-full rounded-full"
+                          style={{ width: `${(r.rate ?? 0) * 100}%` }}
+                        />
                       </span>
                       <span className="tabular-nums">
                         {pct(r.rate)}
-                        <span className="text-muted-foreground"> ({r.passedAdmin}/{r.reachedAdmin})</span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          ({r.passedAdmin}/{r.reachedAdmin})
+                        </span>
                       </span>
                     </div>
                   </td>
