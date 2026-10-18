@@ -62,7 +62,12 @@ export function FollowUpPanel({ id, next, nextLabel, lastLabel, due }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" className="h-10 pointer-coarse:h-11" disabled={pending} onClick={() => run({ mode: "done", inDays })}>
+        <Button
+          type="button"
+          className="h-10 pointer-coarse:h-11"
+          disabled={pending}
+          onClick={() => run({ mode: "done", inDays })}
+        >
           Sudah follow-up
         </Button>
         <Select

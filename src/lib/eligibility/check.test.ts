@@ -1,13 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { ageOn, checkRequirement, numberForDegree, overallStatus, parseMinDegree, type EligibilityProfile } from "./check";
+import {
+  ageOn,
+  checkRequirement,
+  numberForDegree,
+  overallStatus,
+  parseMinDegree,
+  type EligibilityProfile,
+} from "./check";
 
 const d = (iso: string) => new Date(`${iso}T00:00:00Z`); // @db.Date style
 const wib = (iso: string) => new Date(`${iso}T00:00:00+07:00`);
 const today = wib("2026-10-18");
 const profile: EligibilityProfile = { gpa: 3.45, birthDate: d("2001-05-14"), major: "Informatika", degree: "S1" };
 const empty: EligibilityProfile = { gpa: null, birthDate: null, major: null, degree: null };
-const check = (type: Parameters<typeof checkRequirement>[0]["type"], value: string, p = profile, ageReferenceDate: Date | null = null) =>
-  checkRequirement({ type, value, ageReferenceDate }, p, today).status;
+const check = (
+  type: Parameters<typeof checkRequirement>[0]["type"],
+  value: string,
+  p = profile,
+  ageReferenceDate: Date | null = null,
+) => checkRequirement({ type, value, ageReferenceDate }, p, today).status;
 
 describe("MIN_GPA", () => {
   it("meets when ≥, including exactly equal", () => {
@@ -132,7 +143,9 @@ describe("per-degree variants", () => {
     const s1 = { ...profile, gpa: 3.1, degree: "S1" as const };
     expect(check("MIN_GPA", "3.00 (S1), 3.25 (S2)", s1)).toBe("MEETS");
     expect(check("MIN_GPA", "3.00 (S1), 3.25 (S2)", { ...s1, degree: "S2" })).toBe("FAILS");
-    expect(check("MAX_AGE", "26 (S1), 28 (S2)", { ...profile, birthDate: d("1999-01-01"), degree: "S2" })).toBe("MEETS"); // 27
+    expect(check("MAX_AGE", "26 (S1), 28 (S2)", { ...profile, birthDate: d("1999-01-01"), degree: "S2" })).toBe(
+      "MEETS",
+    ); // 27
     expect(check("MAX_AGE", "26 (S1), 28 (S2)", { ...profile, birthDate: d("1999-01-01") })).toBe("FAILS");
   });
 });
@@ -147,7 +160,9 @@ describe("non-IT majors", () => {
     expect(check("MAJOR", "Psikologi", p("Akuntansi"))).toBe("WARNING");
   });
   it("picks the most specific synonym group", () => {
-    expect(check("MAJOR", "Jurusan Logistik Kelautan, Manajemen Transportasi Laut, Logistik", p("Manajemen Logistik"))).toBe("MEETS");
+    expect(
+      check("MAJOR", "Jurusan Logistik Kelautan, Manajemen Transportasi Laut, Logistik", p("Manajemen Logistik")),
+    ).toBe("MEETS");
     expect(check("MAJOR", "Manajemen", p("Manajemen Logistik"))).toBe("WARNING");
   });
 });

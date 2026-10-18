@@ -2,10 +2,20 @@ import { describe, expect, it } from "vitest";
 import { fetchJobPageText, focusJobText, htmlToText, isPrivateAddress, jobPostingFromJsonLd } from "./fetch-page";
 
 describe("isPrivateAddress", () => {
-  it.each(["127.0.0.1", "10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.1.1", "169.254.169.254", "100.64.0.1", "0.0.0.0", "::1", "fd00::1", "fe80::1", "::ffff:127.0.0.1"])(
-    "blocks %s",
-    (ip) => expect(isPrivateAddress(ip)).toBe(true),
-  );
+  it.each([
+    "127.0.0.1",
+    "10.1.2.3",
+    "172.16.0.1",
+    "172.31.255.255",
+    "192.168.1.1",
+    "169.254.169.254",
+    "100.64.0.1",
+    "0.0.0.0",
+    "::1",
+    "fd00::1",
+    "fe80::1",
+    "::ffff:127.0.0.1",
+  ])("blocks %s", (ip) => expect(isPrivateAddress(ip)).toBe(true));
   it.each(["8.8.8.8", "172.32.0.1", "104.18.1.1", "2606:4700::1111"])("allows %s", (ip) =>
     expect(isPrivateAddress(ip)).toBe(false),
   );
@@ -33,7 +43,8 @@ describe("htmlToText", () => {
 });
 
 describe("jobPostingFromJsonLd", () => {
-  const ld = (data: unknown) => `<html><head><script type="application/ld+json">${JSON.stringify(data)}</script></head><body><div id="root"></div></body></html>`;
+  const ld = (data: unknown) =>
+    `<html><head><script type="application/ld+json">${JSON.stringify(data)}</script></head><body><div id="root"></div></body></html>`;
   const posting = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -52,7 +63,8 @@ describe("jobPostingFromJsonLd", () => {
     expect(text).toMatch(/- IPK minimal 3,00[\s\S]*- Menguasai Excel/);
   });
   it("finds it inside @graph and ignores other/invalid blocks", () => {
-    const html = `<script type="application/ld+json">{oops</script>` + ld({ "@graph": [{ "@type": "WebPage" }, posting] });
+    const html =
+      `<script type="application/ld+json">{oops</script>` + ld({ "@graph": [{ "@type": "WebPage" }, posting] });
     expect(jobPostingFromJsonLd(html)).toContain("PT Contoh Tbk");
     expect(jobPostingFromJsonLd(ld({ "@type": "Organization", name: "x" }))).toBe("");
   });
@@ -62,7 +74,8 @@ describe("focusJobText", () => {
   it("keeps short text as is", () => expect(focusJobText("Kualifikasi: S1", 100)).toBe("Kualifikasi: S1"));
   it("finds an ad buried after a long menu", () => {
     const menu = "Beranda\nTentang Kami\nCari Lowongan\n".repeat(4000); // ~120k chars, one weak keyword per line
-    const ad = "Rincian Lowongan\nMagang Logistik\nKualifikasi:\n- Jurusan Logistik\n- IPK minimal 3,00\nPersyaratan lain: penempatan Jakarta";
+    const ad =
+      "Rincian Lowongan\nMagang Logistik\nKualifikasi:\n- Jurusan Logistik\n- IPK minimal 3,00\nPersyaratan lain: penempatan Jakarta";
     const out = focusJobText(menu + ad + "\nFooter", 2000);
     expect(out).toHaveLength(2000);
     expect(out).toContain("Jurusan Logistik");
@@ -70,7 +83,8 @@ describe("focusJobText", () => {
   });
   it("prefers keyword variety over a filter that repeats one keyword", () => {
     const filter = "Pendidikan\n".repeat(105);
-    const ad = "Kualifikasi:\n- Jurusan Logistik\n- IPK minimal 3,1\nPersyaratan Dokumen\nPenutupan lamaran: 18 Oktober 2026";
+    const ad =
+      "Kualifikasi:\n- Jurusan Logistik\n- IPK minimal 3,1\nPersyaratan Dokumen\nPenutupan lamaran: 18 Oktober 2026";
     const text = "Menu\n".repeat(2000) + filter + "x".repeat(30_000) + ad + "\nFooter\n".repeat(100);
     expect(focusJobText(text, 5000)).toContain("IPK minimal 3,1");
   });

@@ -33,7 +33,10 @@ export function AccountData({ isDemo, applicationCount }: { isDemo: boolean; app
   function remove() {
     startDelete(async () => {
       // On success the action redirects away; it only returns on refusal.
-      const res = await deleteAccount(typed).catch(() => ({ ok: false as const, message: "Gagal menghapus akun. Coba lagi." }));
+      const res = await deleteAccount(typed).catch(() => ({
+        ok: false as const,
+        message: "Gagal menghapus akun. Coba lagi.",
+      }));
       if (res && !res.ok) toast.error(res.message);
     });
   }

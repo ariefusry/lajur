@@ -28,10 +28,20 @@ KEAHLIAN
 React.js, SQL`;
 
 const posting: ExtractedJob = {
-  company: "PT Bank Contoh", position: "Frontend Engineer", location: null, deadline: null,
-  employmentType: null, workMode: null, salaryRange: null, sourceUrl: null, language: "id",
+  company: "PT Bank Contoh",
+  position: "Frontend Engineer",
+  location: null,
+  deadline: null,
+  employmentType: null,
+  workMode: null,
+  salaryRange: null,
+  sourceUrl: null,
+  language: "id",
   quotes: { company: null, position: null, location: null, deadline: null },
-  skills: [{ name: "React", quote: "React" }, { name: "TypeScript", quote: "TypeScript" }],
+  skills: [
+    { name: "React", quote: "React" },
+    { name: "TypeScript", quote: "TypeScript" },
+  ],
   requirements: [{ type: "MIN_DEGREE", value: "S1", ageReferenceDate: null, quote: "S1" }],
 };
 const args = { posting, cvText: CV, owner: { name: "Rina Sari" }, userId: "u1" };
@@ -46,13 +56,39 @@ describe("checkCv", () => {
   it("matches what it can without AI, sends only the rest plus the redacted CV, and rehydrates the answer", async () => {
     mocks.generateStructured.mockResolvedValueOnce({
       object: {
-        skills: [{ skill: "TypeScript", inResume: false, suggestion: "Buat proyek kecil dengan TypeScript.", quote: null }],
+        skills: [
+          { skill: "TypeScript", inResume: false, suggestion: "Buat proyek kecil dengan TypeScript.", quote: null },
+        ],
         tweaks: [
-          { kind: "rewrite", section: "Pengalaman", current: "membuat dashboard React untuk tim [NAME_1]", suggestion: "Membangun dashboard React untuk tim [NAME_1].", reason: "Lowongan minta React." },
-          { kind: "rewrite", section: "Keahlian", current: "Memimpin tim 20 orang", suggestion: "x", reason: "dikarang" },
+          {
+            kind: "rewrite",
+            section: "Pengalaman",
+            current: "membuat dashboard React untuk tim [NAME_1]",
+            suggestion: "Membangun dashboard React untuk tim [NAME_1].",
+            reason: "Lowongan minta React.",
+          },
+          {
+            kind: "rewrite",
+            section: "Keahlian",
+            current: "Memimpin tim 20 orang",
+            suggestion: "x",
+            reason: "dikarang",
+          },
           // Claims the skill the check just found missing:
-          { kind: "rewrite", section: "Keahlian", current: "React.js, SQL", suggestion: "React.js, TypeScript, SQL", reason: "dikarang" },
-          { kind: "add", section: "Proyek", current: null, suggestion: "Kalau pernah memakai TypeScript, tambahkan proyeknya.", reason: "Lowongan minta TypeScript." },
+          {
+            kind: "rewrite",
+            section: "Keahlian",
+            current: "React.js, SQL",
+            suggestion: "React.js, TypeScript, SQL",
+            reason: "dikarang",
+          },
+          {
+            kind: "add",
+            section: "Proyek",
+            current: null,
+            suggestion: "Kalau pernah memakai TypeScript, tambahkan proyeknya.",
+            reason: "Lowongan minta TypeScript.",
+          },
         ],
       },
     });
@@ -65,11 +101,26 @@ describe("checkCv", () => {
     expect(prompt).not.toContain("MIN_DEGREE");
     expect(prompt).not.toMatch(/rina|sari|@/i);
 
-    expect(result.rows.map((r) => [r.skill, r.inResume])).toEqual([["React", true], ["TypeScript", false]]);
+    expect(result.rows.map((r) => [r.skill, r.inResume])).toEqual([
+      ["React", true],
+      ["TypeScript", false],
+    ]);
     expect(result).toMatchObject({ matchedWithoutAi: 1, checkedByAi: 1, aiNote: null });
     expect(result.tweaks).toEqual([
-      { kind: "rewrite", section: "Pengalaman", current: "membuat dashboard React untuk tim Rina", suggestion: "Membangun dashboard React untuk tim Rina.", reason: "Lowongan minta React." },
-      { kind: "add", section: "Proyek", current: null, suggestion: "Kalau pernah memakai TypeScript, tambahkan proyeknya.", reason: "Lowongan minta TypeScript." },
+      {
+        kind: "rewrite",
+        section: "Pengalaman",
+        current: "membuat dashboard React untuk tim Rina",
+        suggestion: "Membangun dashboard React untuk tim Rina.",
+        reason: "Lowongan minta React.",
+      },
+      {
+        kind: "add",
+        section: "Proyek",
+        current: null,
+        suggestion: "Kalau pernah memakai TypeScript, tambahkan proyeknya.",
+        reason: "Lowongan minta TypeScript.",
+      },
     ]);
   });
 

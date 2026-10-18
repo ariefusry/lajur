@@ -35,7 +35,17 @@ describe("reminderEmail", () => {
   it("escapes user content in HTML", () => {
     const { html, subject } = reminderEmail(
       "<b>Budi</b>",
-      [{ kind: "H1", type: "PSYCHOTEST", startsAt: new Date("2026-10-18T02:00:00Z"), locationOrUrl: null, company: "PT <script>", position: "IT", applicationId: "a1" }],
+      [
+        {
+          kind: "H1",
+          type: "PSYCHOTEST",
+          startsAt: new Date("2026-10-18T02:00:00Z"),
+          locationOrUrl: null,
+          company: "PT <script>",
+          position: "IT",
+          applicationId: "a1",
+        },
+      ],
       "http://localhost:3000",
     );
     expect(html).not.toContain("<script>");
@@ -45,13 +55,33 @@ describe("reminderEmail", () => {
   });
 
   it("follow-ups: own section and subject when there are no events, escaped", () => {
-    const f = { company: "PT <i>X</i>", position: "Staf", applicationId: "a2", nextActionAt: new Date("2026-10-18T00:00:00+07:00") };
+    const f = {
+      company: "PT <i>X</i>",
+      position: "Staf",
+      applicationId: "a2",
+      nextActionAt: new Date("2026-10-18T00:00:00+07:00"),
+    };
     const only = reminderEmail(null, [], "http://localhost:3000", [f]);
     expect(only.subject).toBe("Pengingat: 1 lamaran perlu di-follow-up hari ini");
     expect(only.text).toContain("Saatnya follow-up:");
     expect(only.text).not.toContain("Jadwal seleksi");
     expect(only.html).not.toContain("<i>X");
-    const both = reminderEmail(null, [{ kind: "H3", type: "LGD", startsAt: new Date("2026-10-20T02:00:00Z"), locationOrUrl: null, company: "B", position: "C", applicationId: "a3" }], "http://x", [f]);
+    const both = reminderEmail(
+      null,
+      [
+        {
+          kind: "H3",
+          type: "LGD",
+          startsAt: new Date("2026-10-20T02:00:00Z"),
+          locationOrUrl: null,
+          company: "B",
+          position: "C",
+          applicationId: "a3",
+        },
+      ],
+      "http://x",
+      [f],
+    );
     expect(both.subject).toContain("+ 1 follow-up");
   });
 });

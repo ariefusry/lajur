@@ -39,7 +39,9 @@ Salary: IDR 9–11 million/month. Apply before 15 December 2026.`,
 const { refs, skipped } = configuredRefs(["groq", "cloudflare"]);
 for (const s of skipped) console.log(`SKIP ${s}`);
 if (!refs.length) {
-  console.log("Tidak ada provider produksi yang bisa diuji. Isi GROQ_* dan/atau CLOUDFLARE_* di .env.local (lihat .env.example).");
+  console.log(
+    "Tidak ada provider produksi yang bisa diuji. Isi GROQ_* dan/atau CLOUDFLARE_* di .env.local (lihat .env.example).",
+  );
   process.exit(0);
 }
 
@@ -59,11 +61,25 @@ for (const ref of refs) {
         tokensIn: r.tokensIn,
         tokensOut: r.tokensOut,
         found: v ? `${v.company ?? "-"} | ${v.position ?? "-"} | ${v.deadline ?? "-"} | lang=${v.language}` : "",
-        quotesKept: v && r.data ? `${v.skills.length + v.requirements.length}/${r.data.skills.length + r.data.requirements.length}` : "",
+        quotesKept:
+          v && r.data
+            ? `${v.skills.length + v.requirements.length}/${r.data.skills.length + r.data.requirements.length}`
+            : "",
         error: r.schemaError ?? "",
       });
     } catch (error) {
-      rows.push({ provider: ref.provider, model: ref.model, posting: posting.name, schemaOk: "tidak", ms: "", tokensIn: "", tokensOut: "", found: "", quotesKept: "", error: describeError(error) });
+      rows.push({
+        provider: ref.provider,
+        model: ref.model,
+        posting: posting.name,
+        schemaOk: "tidak",
+        ms: "",
+        tokensIn: "",
+        tokensOut: "",
+        found: "",
+        quotesKept: "",
+        error: describeError(error),
+      });
     }
   }
 }

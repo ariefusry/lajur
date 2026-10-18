@@ -20,7 +20,11 @@ const LINK_ALSO: Record<string, string | undefined> = Object.fromEntries(LINKS.m
 const isActive = (pathname: string, href: string) => {
   if (pathname === "/applications/new") return href === "/applications/new";
   const also = LINK_ALSO[href];
-  return pathname === href || pathname.startsWith(`${href}/`) || (!!also && (pathname === also || pathname.startsWith(`${also}/`)));
+  return (
+    pathname === href ||
+    pathname.startsWith(`${href}/`) ||
+    (!!also && (pathname === also || pathname.startsWith(`${also}/`)))
+  );
 };
 
 /** Desktop sidebar navigation. */
@@ -34,8 +38,8 @@ export function NavLinks() {
           href={href}
           aria-current={isActive(pathname, href) ? "page" : undefined}
           className={cn(
-            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground",
-            isActive(pathname, href) && "bg-primary/10 font-medium text-primary hover:bg-primary/10 hover:text-primary",
+            "text-muted-foreground hover:bg-foreground/5 hover:text-foreground flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+            isActive(pathname, href) && "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary font-medium",
           )}
         >
           <Icon className="size-4" /> {label}
@@ -53,7 +57,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Navigasi utama"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+      className="bg-background/80 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
     >
       <ul className="mx-auto grid max-w-md grid-cols-5">
         {tabs.map(({ href, label, icon: Icon }) => {
@@ -65,12 +69,12 @@ export function TabBar() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground transition-transform active:scale-95",
-                  active && "font-medium text-primary",
+                  "text-muted-foreground flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] transition-transform active:scale-95",
+                  active && "text-primary font-medium",
                 )}
               >
                 {primary ? (
-                  <span className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                  <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-full shadow-sm">
                     <Icon className="size-5" />
                   </span>
                 ) : (

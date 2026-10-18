@@ -10,9 +10,21 @@ import { demoLoginEnabled } from "@/lib/demo";
 export const metadata = { title: "Masuk · Lajur" };
 
 const VALUE_PROPS = [
-  { icon: KanbanSquare, title: "Board tahap seleksi", text: "Dari administrasi sampai offering, geser kartu saat lamaranmu maju." },
-  { icon: CalendarClock, title: "Deadline dan tes tidak terlupa", text: "Pengingat email H-3 dan H-1 untuk setiap jadwal." },
-  { icon: FileText, title: "Tahu CV mana dikirim ke mana", text: "Simpan versi CV dan lihat versi mana yang paling sering lolos." },
+  {
+    icon: KanbanSquare,
+    title: "Board tahap seleksi",
+    text: "Dari administrasi sampai offering, geser kartu saat lamaranmu maju.",
+  },
+  {
+    icon: CalendarClock,
+    title: "Deadline dan tes tidak terlupa",
+    text: "Pengingat email H-3 dan H-1 untuk setiap jadwal.",
+  },
+  {
+    icon: FileText,
+    title: "Tahu CV mana dikirim ke mana",
+    text: "Simpan versi CV dan lihat versi mana yang paling sering lolos.",
+  },
   { icon: ShieldCheck, title: "Cek syarat otomatis", text: "IPK, usia, dan jurusan dicocokkan dengan profilmu." },
 ];
 

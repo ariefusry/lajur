@@ -15,7 +15,8 @@ const OTHER_HEADING =
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 // +62 / 62 / 08xx numbers with spaces, dots or dashes in between.
 const PHONE = /(?:\+?62|\b0)[\s.-]?8\d{1,3}(?:[\s.-]?\d{2,5}){2,3}\b/g;
-const URL = /\b(?:https?:\/\/|www\.)\S+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|id|io|dev|me|net|org|co|app|site|xyz|tech)(?:\/\S*)?/gi;
+const URL =
+  /\b(?:https?:\/\/|www\.)\S+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|id|io|dev|me|net|org|co|app|site|xyz|tech)(?:\/\S*)?/gi;
 // NIK (16 digits) and other long ID numbers, allowing separators.
 const LONG_NUMBER = /\b\d(?:[\s.-]?\d){9,}\b/g;
 const ADDRESS_LINE =
@@ -26,7 +27,9 @@ const headingText = (line: string) => line.replace(/:$/, "").trim();
 
 /** Keeps only relevant sections; if the CV has no recognizable headings, keeps everything (still scrubbed). */
 function relevantSections(lines: string[]): string[] {
-  const hasHeadings = lines.some((l) => isHeading(l) && (RELEVANT_HEADING.test(headingText(l)) || OTHER_HEADING.test(headingText(l))));
+  const hasHeadings = lines.some(
+    (l) => isHeading(l) && (RELEVANT_HEADING.test(headingText(l)) || OTHER_HEADING.test(headingText(l))),
+  );
   if (!hasHeadings) return lines;
   const kept: string[] = [];
   let inRelevant = false; // text before the first heading (name, contacts) is dropped
@@ -47,7 +50,6 @@ function relevantSections(lines: string[]): string[] {
   }
   return kept;
 }
-
 
 /** Whole-word, case-insensitive match of any of the given words. */
 function wordsRegExp(words: string[]) {
@@ -85,7 +87,11 @@ export function redactPII(text: string, known: KnownPii = {}): { text: string; m
   const NAME = wordsRegExp((known.name ?? "").split(/[\s.,]+/).filter((w) => w.length >= 3));
   const ADDRESS = wordsRegExp(known.address?.trim() ? [known.address.trim()] : []);
 
-  let out = text.replace(EMAIL, swap("EMAIL")).replace(URL, swap("URL")).replace(PHONE, swap("PHONE")).replace(LONG_NUMBER, swap("ID"));
+  let out = text
+    .replace(EMAIL, swap("EMAIL"))
+    .replace(URL, swap("URL"))
+    .replace(PHONE, swap("PHONE"))
+    .replace(LONG_NUMBER, swap("ID"));
   if (ADDRESS) out = out.replace(ADDRESS, swap("ADDRESS"));
   if (NAME) out = out.replace(NAME, swap("NAME"));
   return { text: out, map };
@@ -107,7 +113,12 @@ export function redact(cvText: string, known: KnownPii = {}): { text: string; ma
     .map((l) => l.replace(/[ \t ]+/g, " ").trim())
     .filter(Boolean);
 
-  const { text, map } = redactPII(relevantSections(lines).filter((l) => !ADDRESS_LINE.test(l)).join("\n"), known);
+  const { text, map } = redactPII(
+    relevantSections(lines)
+      .filter((l) => !ADDRESS_LINE.test(l))
+      .join("\n"),
+    known,
+  );
   const kept = text
     .split("\n")
     // Drop lines that were nothing but contact details.

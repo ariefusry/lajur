@@ -83,7 +83,7 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
         <h2 className="flex items-center gap-2 font-medium">
           <Sparkles className="size-4" /> Tambah dengan AI
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           AI mengisi form di bawah sebagai draf, lengkap dengan kutipan buktinya. Kamu tetap bisa mengubah semuanya.
         </p>
       </div>
@@ -108,7 +108,7 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
           placeholder="https://…"
           disabled={pending}
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {text.trim()
             ? "Teks lowongan di atas yang dibaca AI. Link (kalau diisi) hanya disimpan ke kolom Link lowongan."
             : "Beberapa situs (LinkedIn, JobStreet) menolak diambil otomatis. Kalau gagal, salin teksnya saja."}

@@ -40,7 +40,7 @@ export function StageHistoryForm({
         placeholder="Pertanyaan wawancara, kesan, alasan gagal…"
         aria-label="Catatan tahap"
       />
-      {state.errors?.notes && <p className="text-xs text-destructive">{state.errors.notes[0]}</p>}
+      {state.errors?.notes && <p className="text-destructive text-xs">{state.errors.notes[0]}</p>}
       <Button type="submit" size="sm" variant="outline" disabled={pending}>
         {pending ? "Menyimpan…" : "Simpan catatan"}
       </Button>

@@ -55,7 +55,7 @@ export default async function BoardPage() {
         </div>
       </div>
       {applications.length === 0 && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Belum ada lamaran. Klik “Tambah lamaran”, lalu geser kartunya antar kolom saat tahapnya berubah.
         </p>
       )}

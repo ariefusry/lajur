@@ -15,7 +15,10 @@ export function EligibilityBadge({ status, title }: { status: EligibilityStatus;
   return (
     <span
       title={title}
-      className={cn("inline-flex h-5 items-center gap-1 rounded-4xl px-2 text-xs font-medium whitespace-nowrap", className)}
+      className={cn(
+        "inline-flex h-5 items-center gap-1 rounded-4xl px-2 text-xs font-medium whitespace-nowrap",
+        className,
+      )}
     >
       <Icon className="size-3" aria-hidden /> {ELIGIBILITY_LABELS[status]}
     </span>

@@ -55,7 +55,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground text-sm">Strategi mana yang paling berhasil: sumber, versi CV, dan tahap.</p>
+          <p className="text-muted-foreground text-sm">
+            Strategi mana yang paling berhasil: sumber, versi CV, dan tahap.
+          </p>
         </div>
         <ButtonGroup role="navigation" aria-label="Periode" className="p-1">
           {RANGES.map((x) => (
@@ -73,7 +75,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
       {o.applied === 0 ? (
         <div className="glass max-w-xl space-y-3 rounded-2xl border p-6">
-          <p className="font-medium">Belum ada lamaran yang terkirim{range.days ? ` dalam ${range.label} terakhir` : ""}.</p>
+          <p className="font-medium">
+            Belum ada lamaran yang terkirim{range.days ? ` dalam ${range.label} terakhir` : ""}.
+          </p>
           <p className="text-muted-foreground text-sm">
             Geser lamaran dari Wishlist ke tahap pertama (misalnya Administrasi) setelah kamu mengirimnya. Analisis
             muncul dari situ.
@@ -85,13 +89,23 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       ) : (
         <>
           <section className="grid grid-cols-2 gap-3 md:grid-cols-5" aria-label="Ringkasan">
-            <Stat label="Response rate" value={pct(rate(o.responded, o.applied))} note={outOf(o.responded, o.applied)} />
-            <Stat label="Interview rate" value={pct(rate(o.interviewed, o.applied))} note={outOf(o.interviewed, o.applied)} />
+            <Stat
+              label="Response rate"
+              value={pct(rate(o.responded, o.applied))}
+              note={outOf(o.responded, o.applied)}
+            />
+            <Stat
+              label="Interview rate"
+              value={pct(rate(o.interviewed, o.applied))}
+              note={outOf(o.interviewed, o.applied)}
+            />
             <Stat label="Offer rate" value={pct(rate(o.offered, o.applied))} note={outOf(o.offered, o.applied)} />
             <Stat label="Ghosted" value={pct(rate(o.ghosted, o.applied))} note={outOf(o.ghosted, o.applied)} />
             <Stat
               label="Median sampai respons"
-              value={d.responseTime.medianDays === null ? "–" : `${Math.round(d.responseTime.medianDays * 10) / 10} hari`}
+              value={
+                d.responseTime.medianDays === null ? "–" : `${Math.round(d.responseTime.medianDays * 10) / 10} hari`
+              }
               note={d.responseTime.sample ? `dari ${d.responseTime.sample} lamaran` : "belum ada respons"}
             />
           </section>
@@ -131,7 +145,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
               ) : (
                 <ol className="space-y-2.5">
                   {d.failedAt.map((f) => (
-                    <li key={f.stage} className="grid grid-cols-[minmax(5rem,8rem)_1fr_auto] items-center gap-3 text-sm">
+                    <li
+                      key={f.stage}
+                      className="grid grid-cols-[minmax(5rem,8rem)_1fr_auto] items-center gap-3 text-sm"
+                    >
                       <span className="truncate">{f.stage}</span>
                       <span className="bg-muted h-2 rounded-full" aria-hidden>
                         <span
@@ -166,9 +183,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
           <p className="text-muted-foreground max-w-3xl text-xs">
             Respons = perpindahan tahap pertama setelah melamar, termasuk ditolak. Interview = pernah sampai tahap yang
-            namanya berisi &ldquo;Interview&rdquo;. Ghosted = masih di tahap seleksi tanpa kabar {GHOSTED_DAYS} hari atau
-            lebih. Persentase baru ditampilkan kalau ada minimal {MIN_SAMPLE} lamaran di belakangnya; sebelum itu hanya
-            jumlahnya.
+            namanya berisi &ldquo;Interview&rdquo;. Ghosted = masih di tahap seleksi tanpa kabar {GHOSTED_DAYS} hari
+            atau lebih. Persentase baru ditampilkan kalau ada minimal {MIN_SAMPLE} lamaran di belakangnya; sebelum itu
+            hanya jumlahnya.
           </p>
         </>
       )}

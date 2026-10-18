@@ -4,7 +4,12 @@ import { DEMO_APPS, demoTimeline } from "./demo-data";
 import { STAGE_TEMPLATES } from "./stage-templates";
 
 // Exactly what `pnpm db:seed` creates for the demo account.
-const stages: DashStage[] = STAGE_TEMPLATES.BUMN.stages.map((s, order) => ({ id: `s${order}`, name: s.name, order, kind: s.kind }));
+const stages: DashStage[] = STAGE_TEMPLATES.BUMN.stages.map((s, order) => ({
+  id: `s${order}`,
+  name: s.name,
+  order,
+  kind: s.kind,
+}));
 const today = new Date("2026-10-18T00:00:00+07:00");
 const apps: DashApp[] = DEMO_APPS.map((app, i) => {
   const { appliedAt, history } = demoTimeline(app, i, today);
@@ -118,8 +123,14 @@ describe("computeDashboard edge cases", () => {
   });
   it("skipped stages still count as reached; even sample count averages the middle pair", () => {
     const skip: DashApp = {
-      source: "OTHER", resumeId: null, currentStageId: "s4", appliedAt: new Date("2026-01-01"),
-      history: [{ stageId: "s1", enteredAt: new Date("2026-01-01") }, { stageId: "s4", enteredAt: new Date("2026-01-03") }],
+      source: "OTHER",
+      resumeId: null,
+      currentStageId: "s4",
+      appliedAt: new Date("2026-01-01"),
+      history: [
+        { stageId: "s1", enteredAt: new Date("2026-01-01") },
+        { stageId: "s4", enteredAt: new Date("2026-01-03") },
+      ],
     };
     const later = { ...skip, history: [skip.history[0], { stageId: "s2", enteredAt: new Date("2026-01-05") }] };
     const r = computeDashboard(stages, [skip, later], today);

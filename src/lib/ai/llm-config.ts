@@ -101,8 +101,20 @@ export function modelRef(provider: ProviderName, model: string, env: Env = proce
     console.warn(`AI: ignoring model "${model}", this vendor is not allowed`);
     return null;
   }
-  const client = createOpenAICompatible({ name: provider, baseURL: p.baseURL, apiKey: p.apiKey, supportsStructuredOutputs: p.structured });
-  return { provider, model, label: `${provider}:${model}`, structured: p.structured, languageModel: client(model), options: p.options };
+  const client = createOpenAICompatible({
+    name: provider,
+    baseURL: p.baseURL,
+    apiKey: p.apiKey,
+    supportsStructuredOutputs: p.structured,
+  });
+  return {
+    provider,
+    model,
+    label: `${provider}:${model}`,
+    structured: p.structured,
+    languageModel: client(model),
+    options: p.options,
+  };
 }
 
 /**
@@ -120,7 +132,9 @@ export function modelChain(rawEnv: Env = process.env): ModelRef[] {
       continue;
     }
     if (env.NODE_ENV === "production" && DEV_ONLY.includes(name)) {
-      throw new LlmConfigError(`LLM provider "${name}" hanya boleh dipakai untuk development. Di produksi pakai groq atau cloudflare.`);
+      throw new LlmConfigError(
+        `LLM provider "${name}" hanya boleh dipakai untuk development. Di produksi pakai groq atau cloudflare.`,
+      );
     }
     for (const model of providerConfig(name, env).models) {
       const ref = model ? modelRef(name, model, env) : null;

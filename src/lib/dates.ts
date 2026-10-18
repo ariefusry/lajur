@@ -14,19 +14,24 @@ export function fromDateInput(value: string): Date {
 
 /** Calendar days from today to `date`, both in Jakarta time. Negative = already past. */
 export function daysUntil(date: Date, now = new Date()): number {
-  return Math.round(
-    (Date.parse(toDateInput(date)) - Date.parse(toDateInput(now))) / DAY_MS,
-  );
+  return Math.round((Date.parse(toDateInput(date)) - Date.parse(toDateInput(now))) / DAY_MS);
 }
 
 export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("id-ID", { timeZone: TZ, day: "numeric", month: "short", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("id-ID", { timeZone: TZ, day: "numeric", month: "short", year: "numeric" }).format(
+    date,
+  );
 }
 
 /** "YYYY-MM-DDTHH:mm" in Jakarta time (value for <input type="datetime-local">). */
 export function toDateTimeInput(date: Date | null | undefined): string {
   if (!date) return "";
-  const time = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(date);
+  const time = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
   return `${toDateInput(date)}T${time}`;
 }
 
@@ -36,7 +41,15 @@ export function fromDateTimeInput(value: string): Date {
 }
 
 export function formatDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("id-ID", {
-    timeZone: TZ, weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-  }).format(date) + " WIB";
+  return (
+    new Intl.DateTimeFormat("id-ID", {
+      timeZone: TZ,
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date) + " WIB"
+  );
 }

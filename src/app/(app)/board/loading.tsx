@@ -9,10 +9,10 @@ export default function Loading() {
       </div>
       <div className="flex gap-3 overflow-hidden">
         {[3, 2, 1, 2, 1].map((cards, i) => (
-          <div key={i} className="w-[min(16rem,80vw)] shrink-0 space-y-2 rounded-xl bg-muted/50 p-2">
+          <div key={i} className="bg-muted/50 w-[min(16rem,80vw)] shrink-0 space-y-2 rounded-xl p-2">
             <Skeleton className="h-4 w-24" />
             {Array.from({ length: cards }, (_, j) => (
-              <Skeleton key={j} className="h-24 w-full rounded-lg bg-background" />
+              <Skeleton key={j} className="bg-background h-24 w-full rounded-lg" />
             ))}
           </div>
         ))}

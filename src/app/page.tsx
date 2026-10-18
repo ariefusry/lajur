@@ -28,7 +28,16 @@ export const metadata: Metadata = {
     "Catat semua lamaran kerja, deadline, dan tahap seleksi khas Indonesia di satu tempat. Pengingat jadwal tes, cek syarat otomatis, dan analisis CV mana yang paling sering lolos.",
 };
 
-const STAGES = ["Administrasi", "Tes Online/TPA", "Psikotes", "LGD", "Interview HR", "Interview User", "MCU", "Offering"];
+const STAGES = [
+  "Administrasi",
+  "Tes Online/TPA",
+  "Psikotes",
+  "LGD",
+  "Interview HR",
+  "Interview User",
+  "MCU",
+  "Offering",
+];
 
 const FEATURES = [
   {
@@ -64,8 +73,14 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { title: "Tambah dengan AI", text: "Tempel teks lowongan dari JobStreet, Glints, portal BUMN, atau caption Instagram. Atau isi manual." },
-  { title: "Geser saat tahapnya berubah", text: "Lolos administrasi? Diundang psikotes? Pindahkan kartunya, jadwalnya diingatkan." },
+  {
+    title: "Tambah dengan AI",
+    text: "Tempel teks lowongan dari JobStreet, Glints, portal BUMN, atau caption Instagram. Atau isi manual.",
+  },
+  {
+    title: "Geser saat tahapnya berubah",
+    text: "Lolos administrasi? Diundang psikotes? Pindahkan kartunya, jadwalnya diingatkan.",
+  },
   { title: "Lihat polanya", text: "Setelah beberapa lamaran, dashboard menunjukkan apa yang perlu diperbaiki." },
 ];
 
@@ -82,7 +97,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="min-h-svh">
-      <header className="sticky top-0 z-30 border-b bg-background/70 backdrop-blur-xl backdrop-saturate-150">
+      <header className="bg-background/70 sticky top-0 z-30 border-b backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
           <Link href="/" aria-label="Lajur, beranda">
             <Logo className="text-lg" markClassName="size-6" />
@@ -118,13 +133,15 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
 
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-4 pt-16 pb-10 text-center md:pt-24">
-          <p className="text-primary mb-4 text-sm font-medium">Tracker lamaran kerja untuk pencari kerja di Indonesia</p>
+          <p className="text-primary mb-4 text-sm font-medium">
+            Tracker lamaran kerja untuk pencari kerja di Indonesia
+          </p>
           <h1 className="mx-auto max-w-3xl text-4xl leading-[1.08] font-semibold tracking-tight text-balance md:text-6xl">
             Semua lamaran kerjamu, rapi di satu tempat.
           </h1>
           <p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg text-pretty">
-            Catat tahap seleksi dari administrasi sampai offering, jangan lagi lupa deadline dan jadwal tes, dan
-            ketahui versi CV mana yang paling sering lolos.
+            Catat tahap seleksi dari administrasi sampai offering, jangan lagi lupa deadline dan jadwal tes, dan ketahui
+            versi CV mana yang paling sering lolos.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg">
@@ -190,8 +207,12 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
         {/* Features */}
         <section id="fitur" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-10">
           <div className="mb-8 max-w-2xl">
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Semua yang kamu butuhkan selama mencari kerja</h2>
-            <p className="text-muted-foreground mt-2">Bukan spreadsheet lagi. Dibuat untuk dipakai setiap hari, di laptop maupun HP.</p>
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Semua yang kamu butuhkan selama mencari kerja
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              Bukan spreadsheet lagi. Dibuat untuk dipakai setiap hari, di laptop maupun HP.
+            </p>
           </div>
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ icon: Icon, title, text }) => (
@@ -207,7 +228,10 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
         </section>
 
         {/* Board screenshot + how it works */}
-        <section id="cara-kerja" className="mx-auto grid max-w-6xl scroll-mt-20 items-center gap-10 px-4 py-16 lg:grid-cols-2">
+        <section
+          id="cara-kerja"
+          className="mx-auto grid max-w-6xl scroll-mt-20 items-center gap-10 px-4 py-16 lg:grid-cols-2"
+        >
           <div>
             <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Cara kerjanya</h2>
             <ol className="mt-6 space-y-6">

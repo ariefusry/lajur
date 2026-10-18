@@ -81,7 +81,10 @@ async function callModel<T>(ref: ModelRef, args: Args<T>, prompt: string, retry:
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) throw new InvalidOutputError("Jawaban bukan JSON yang valid.");
     // Cloudflare's JSON mode can refuse a schema it couldn't satisfy; treated like any other invalid answer.
-    if (APICallError.isInstance(error) && /JSON Mode couldn't be met/i.test(`${error.message} ${error.responseBody ?? ""}`)) {
+    if (
+      APICallError.isInstance(error) &&
+      /JSON Mode couldn't be met/i.test(`${error.message} ${error.responseBody ?? ""}`)
+    ) {
       throw new InvalidOutputError("JSON Mode couldn't be met");
     }
     throw error;
@@ -118,7 +121,13 @@ export async function generateStructured<T>(args: Args<T>): Promise<AiResult<T>>
     let waited = false;
     for (;;) {
       const started = Date.now();
-      args.onProgress?.({ kind: "attempt", provider: ref.provider, model: ref.model, thinking: retry, fallback: index > 0 });
+      args.onProgress?.({
+        kind: "attempt",
+        provider: ref.provider,
+        model: ref.model,
+        thinking: retry,
+        fallback: index > 0,
+      });
       try {
         const { object, usage } = await callModel(ref, args, prompt, retry);
         const latencyMs = Date.now() - started;
@@ -169,6 +178,21 @@ function errorStatus(error: unknown) {
 }
 
 // Never log prompts, CV text or keys: feature, model, duration, tokens, status only.
-function log(feature: AiFeature, model: string, retry: boolean, ms: number, status: string, usage?: AiResult<unknown>["usage"]) {
-  console.info("ai call", { feature, model, retry, ms, status, tokensIn: usage?.inputTokens, tokensOut: usage?.outputTokens });
+function log(
+  feature: AiFeature,
+  model: string,
+  retry: boolean,
+  ms: number,
+  status: string,
+  usage?: AiResult<unknown>["usage"],
+) {
+  console.info("ai call", {
+    feature,
+    model,
+    retry,
+    ms,
+    status,
+    tokensIn: usage?.inputTokens,
+    tokensOut: usage?.outputTokens,
+  });
 }

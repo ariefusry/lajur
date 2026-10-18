@@ -39,7 +39,10 @@ type Card = {
 };
 
 // Cards are narrow: long source names get a short form.
-const SHORT_SOURCE: Partial<Record<JobSource, string>> = { BUMN_PORTAL: "Portal BUMN", COMPANY_SITE: "Situs perusahaan" };
+const SHORT_SOURCE: Partial<Record<JobSource, string>> = {
+  BUMN_PORTAL: "Portal BUMN",
+  COMPANY_SITE: "Situs perusahaan",
+};
 
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 function usePrefersReducedMotion() {
@@ -137,14 +140,19 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
         style={moreRight ? { maskImage: "linear-gradient(to right, #000 calc(100% - 3rem), transparent)" } : undefined}
       >
         {stages.map((stage) => (
-          <Column key={stage.id} stage={stage} cards={cards.filter((c) => c.currentStageId === stage.id)} justDragged={justDragged} />
+          <Column
+            key={stage.id}
+            stage={stage}
+            cards={cards.filter((c) => c.currentStageId === stage.id)}
+            justDragged={justDragged}
+          />
         ))}
       </div>
       {/* The lifted copy follows the pointer above everything (never clipped by the scroll area),
           then glides into the card's new slot on drop. */}
       <DragOverlay dropAnimation={reducedMotion ? null : { duration: 220, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" }}>
         {activeCard && (
-          <div className="scale-[1.03] rotate-1 cursor-grabbing glass rounded-xl border p-3 text-sm shadow-xl motion-reduce:scale-100 motion-reduce:rotate-0">
+          <div className="glass scale-[1.03] rotate-1 cursor-grabbing rounded-xl border p-3 text-sm shadow-xl motion-reduce:scale-100 motion-reduce:rotate-0">
             <CardBody card={activeCard} />
           </div>
         )}
@@ -160,13 +168,15 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
       ref={setNodeRef}
       aria-label={stage.name}
       className={cn(
-        "flex w-[min(17rem,82vw)] shrink-0 snap-start flex-col gap-2.5 rounded-2xl bg-foreground/[0.04] p-2.5 transition-colors",
-        isOver && "bg-primary/10 ring-2 ring-primary/30",
+        "bg-foreground/[0.04] flex w-[min(17rem,82vw)] shrink-0 snap-start flex-col gap-2.5 rounded-2xl p-2.5 transition-colors",
+        isOver && "bg-primary/10 ring-primary/30 ring-2",
       )}
     >
       <h2 className="flex items-center justify-between px-1.5 pt-0.5 text-sm font-semibold">
         {stage.name}
-        <span className="rounded-full bg-foreground/8 px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">{cards.length}</span>
+        <span className="bg-foreground/8 text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium tabular-nums">
+          {cards.length}
+        </span>
       </h2>
       {cards.map((card) => (
         <ApplicationCard key={card.id} card={card} justDragged={justDragged} />
@@ -178,7 +188,7 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
       )}
       <Link
         href={`/applications/new?stage=${stage.id}`}
-        className="rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+        className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground rounded-lg px-2 py-2 text-sm transition-colors"
       >
         + Tambah
       </Link>
@@ -220,13 +230,20 @@ function CardBody({ card }: { card: Card }) {
         <Badge variant="secondary">{SHORT_SOURCE[card.source] ?? JOB_SOURCE_LABELS[card.source]}</Badge>
         {card.eligibility && <EligibilityBadge status={card.eligibility} />}
         {card.ghosted && (
-          <Badge variant="secondary" className="bg-amber-500/15 text-amber-700 dark:text-amber-300" title="Tanpa kabar 30 hari atau lebih">
+          <Badge
+            variant="secondary"
+            className="bg-amber-500/15 text-amber-700 dark:text-amber-300"
+            title="Tanpa kabar 30 hari atau lebih"
+          >
             Ghosted
           </Badge>
         )}
         {card.deadline && days !== null && (
           <span
-            className={cn("inline-flex items-center gap-1 text-xs", days <= 3 ? "font-medium text-destructive" : "text-muted-foreground")}
+            className={cn(
+              "inline-flex items-center gap-1 text-xs",
+              days <= 3 ? "text-destructive font-medium" : "text-muted-foreground",
+            )}
             title={days < 0 ? "Deadline sudah lewat" : `${days} hari lagi`}
           >
             <CalendarClock className="size-3" />

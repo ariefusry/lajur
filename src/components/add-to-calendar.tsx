@@ -3,7 +3,10 @@ import { googleCalendarUrl } from "@/lib/google-calendar";
 import { cn } from "@/lib/utils";
 
 /** Icon link that opens Google Calendar with the event prefilled (works for any visitor, demo included). */
-export function AddToCalendar({ className, ...event }: Parameters<typeof googleCalendarUrl>[0] & { className?: string }) {
+export function AddToCalendar({
+  className,
+  ...event
+}: Parameters<typeof googleCalendarUrl>[0] & { className?: string }) {
   return (
     <a
       href={googleCalendarUrl(event)}

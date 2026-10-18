@@ -36,7 +36,11 @@ export default async function SettingsPage() {
           Phone: one column in the order Profil, Tahap, Data & akun (the danger zone last). */}
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-start">
         <div className="contents lg:flex lg:flex-col lg:gap-4">
-          <Card title="Profil" description="Dipakai untuk mengecek syarat lowongan (IPK, usia, jurusan)." className="order-1 lg:order-none">
+          <Card
+            title="Profil"
+            description="Dipakai untuk mengecek syarat lowongan (IPK, usia, jurusan)."
+            className="order-1 lg:order-none"
+          >
             <ProfileForm
               defaults={{
                 gpa: profile.gpa?.toFixed(2) ?? "",
@@ -47,7 +51,11 @@ export default async function SettingsPage() {
               }}
             />
           </Card>
-          <Card title="Persetujuan AI" description="Fitur AI hanya aktif setelah kamu setuju." className="order-1 lg:order-none">
+          <Card
+            title="Persetujuan AI"
+            description="Fitur AI hanya aktif setelah kamu setuju."
+            className="order-1 lg:order-none"
+          >
             <AiConsent consentedAt={profile.aiConsentAt?.toISOString() ?? null} readOnly={isReadOnly({ email })} />
           </Card>
           <Card
@@ -59,7 +67,11 @@ export default async function SettingsPage() {
           </Card>
         </div>
 
-        <Card title="Tahap seleksi" description="Kolom di board mengikuti urutan ini." className="order-2 lg:order-none">
+        <Card
+          title="Tahap seleksi"
+          description="Kolom di board mengikuti urutan ini."
+          className="order-2 lg:order-none"
+        >
           <TemplatePicker disabled={applicationCount > 0} />
           <StageEditor stages={stages.map((s) => ({ id: s.id, name: s.name, kind: s.kind }))} />
           <form action={addStage} className="flex flex-wrap gap-2 border-t pt-4">

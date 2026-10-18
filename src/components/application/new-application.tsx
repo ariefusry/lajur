@@ -25,7 +25,11 @@ const WORK_MODE_LABELS = { onsite: "Kerja di kantor", hybrid: "Hybrid", remote: 
 
 /** Posting details the form has no field for, as a first line of the notes draft. */
 function postingNotes(job: ExtractResult["job"]) {
-  const parts = [job.employmentType, job.workMode && WORK_MODE_LABELS[job.workMode], job.salaryRange && `Gaji ${job.salaryRange}`];
+  const parts = [
+    job.employmentType,
+    job.workMode && WORK_MODE_LABELS[job.workMode],
+    job.salaryRange && `Gaji ${job.salaryRange}`,
+  ];
   const line = parts.filter(Boolean).join(" · ");
   return line ? `Dari lowongan: ${line}` : "";
 }
@@ -64,7 +68,13 @@ export function NewApplication({ aiEnabled, aiConsent, stages, resumes, defaults
   return (
     // Desktop: AI column (paste → draft summary + "Cek CV") next to the form.
     // Phone: one column in the order paste/summary, form, "Cek CV".
-    <div className={aiEnabled ? "flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start" : "space-y-6"}>
+    <div
+      className={
+        aiEnabled
+          ? "flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start"
+          : "space-y-6"
+      }
+    >
       {aiEnabled && (
         <div className={cn("contents lg:flex lg:flex-col lg:gap-6", !draft && "lg:sticky lg:top-6")}>
           <div className="order-1 lg:order-none">
@@ -80,7 +90,7 @@ export function NewApplication({ aiEnabled, aiConsent, stages, resumes, defaults
                 <CircleCheck className="mt-0.5 size-5 shrink-0 text-green-600" aria-hidden />
                 <div className="min-w-0 flex-1 basis-56">
                   <h2 className="font-medium">Draf diisi dari lowongan</h2>
-                  <p className="line-clamp-2 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground line-clamp-2 text-sm">
                     {[job.position, job.company].filter(Boolean).join(" · ") || "Tinjau isi form-nya."}
                   </p>
                 </div>

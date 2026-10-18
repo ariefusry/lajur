@@ -31,8 +31,21 @@ export function Card({
 }
 
 /** KPI tile: label, big value, and the count behind it ("3 dari 40"). */
-export function Stat({ label, value, note, href }: { label: string; value: number | string; note?: string; href?: string }) {
-  const className = cn("glass rounded-2xl border p-4", href && "transition-[box-shadow,transform] hover:shadow-md active:scale-[0.98]");
+export function Stat({
+  label,
+  value,
+  note,
+  href,
+}: {
+  label: string;
+  value: number | string;
+  note?: string;
+  href?: string;
+}) {
+  const className = cn(
+    "glass rounded-2xl border p-4",
+    href && "transition-[box-shadow,transform] hover:shadow-md active:scale-[0.98]",
+  );
   const body = (
     <>
       <p className="text-muted-foreground text-xs">{label}</p>

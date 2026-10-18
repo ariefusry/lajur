@@ -41,7 +41,9 @@ export function cvCheckPrompt(posting: ExtractedJob, missing: string[], redacted
     // Readable labels, not enum codes: the model repeats whatever it sees in its tips.
     ...posting.requirements.map((r) => `Syarat (${REQUIREMENT_TYPE_LABELS[r.type].toLowerCase()}): ${r.value}`),
   ].filter(Boolean);
-  const toCheck = missing.length ? missing.map((s) => `- ${s}`).join("\n") : "(kosong: semua skill sudah ditemukan di CV)";
+  const toCheck = missing.length
+    ? missing.map((s) => `- ${s}`).join("\n")
+    : "(kosong: semua skill sudah ditemukan di CV)";
   return `Lowongan:\n${lines.join("\n")}\n\nSkill yang dicek:\n${toCheck}\n\nCV:\n${redactedCv}`;
 }
 
@@ -110,7 +112,8 @@ export async function checkCv({
     };
   } catch (error) {
     if (error instanceof QuotaExceededError || error instanceof AiConsentRequiredError) return withoutAi(error.message);
-    if (!(error instanceof AiUnavailableError)) console.error("cv check failed", error instanceof Error ? error.name : "unknown");
+    if (!(error instanceof AiUnavailableError))
+      console.error("cv check failed", error instanceof Error ? error.name : "unknown");
     return withoutAi("AI sedang tidak tersedia, jadi hanya pencocokan teks yang dipakai.");
   }
 }

@@ -83,7 +83,10 @@ export function demoPdf(lines: string[]) {
  * visitor's demo session) is kept; it's created on first run. Touches nothing outside the demo account.
  * The demo timeline is dated relative to `today` (midnight in Jakarta).
  */
-export async function resetDemoAccount({ db, putPdf, deleteObject }: Deps, today = fromDateInput(toDateInput(new Date()))) {
+export async function resetDemoAccount(
+  { db, putPdf, deleteObject }: Deps,
+  today = fromDateInput(toDateInput(new Date())),
+) {
   const user = await db.user.upsert({
     where: { email: DEMO_EMAIL },
     update: PROFILE,
@@ -126,7 +129,13 @@ export async function resetDemoAccount({ db, putPdf, deleteObject }: Deps, today
             resumeId: app.resume === undefined ? null : resumes[app.resume].id,
             appliedAt,
             deadline: app.deadlineInDays !== undefined ? new Date(today.getTime() + app.deadlineInDays * DAY) : null,
-            history: { create: history.map((h) => ({ stageId: stages[h.stageIndex].id, enteredAt: h.enteredAt, result: h.result })) },
+            history: {
+              create: history.map((h) => ({
+                stageId: stages[h.stageIndex].id,
+                enteredAt: h.enteredAt,
+                result: h.result,
+              })),
+            },
           },
         });
       }

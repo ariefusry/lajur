@@ -37,24 +37,35 @@ export type FollowUpItem = { company: string; position: string; applicationId: s
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export function reminderEmail(name: string | null, items: ReminderItem[], appUrl: string, followUps: FollowUpItem[] = []) {
+export function reminderEmail(
+  name: string | null,
+  items: ReminderItem[],
+  appUrl: string,
+  followUps: FollowUpItem[] = [],
+) {
   const eventLine = (i: ReminderItem) =>
     `${i.kind === "H1" ? "BESOK" : "H-3"} · ${EVENT_TYPE_LABELS[i.type]} · ${i.company} (${i.position}) · ${formatDateTime(i.startsAt)}` +
     (i.locationOrUrl ? ` · ${i.locationOrUrl}` : "");
-  const followUpLine = (f: FollowUpItem) => `${f.company} (${f.position}) · jadwal follow-up ${formatDate(f.nextActionAt)}`;
+  const followUpLine = (f: FollowUpItem) =>
+    `${f.company} (${f.position}) · jadwal follow-up ${formatDate(f.nextActionAt)}`;
   const hasTomorrow = items.some((i) => i.kind === "H1");
   const link = (id: string) => `${appUrl}/applications/${id}`;
 
   const subject = items.length
     ? (hasTomorrow
         ? `Pengingat: ${items.length} jadwal seleksi, ada yang besok`
-        : `Pengingat: ${items.length} jadwal seleksi dalam 3 hari`) + (followUps.length ? ` + ${followUps.length} follow-up` : "")
+        : `Pengingat: ${items.length} jadwal seleksi dalam 3 hari`) +
+      (followUps.length ? ` + ${followUps.length} follow-up` : "")
     : `Pengingat: ${followUps.length} lamaran perlu di-follow-up hari ini`;
 
   const text = [
     `Halo${name ? ` ${name}` : ""},`,
     ...(items.length
-      ? ["", "Jadwal seleksi kamu yang akan datang:", ...items.map((i) => `- ${eventLine(i)}\n  ${link(i.applicationId)}`)]
+      ? [
+          "",
+          "Jadwal seleksi kamu yang akan datang:",
+          ...items.map((i) => `- ${eventLine(i)}\n  ${link(i.applicationId)}`),
+        ]
       : []),
     ...(followUps.length
       ? ["", "Saatnya follow-up:", ...followUps.map((f) => `- ${followUpLine(f)}\n  ${link(f.applicationId)}`)]

@@ -9,7 +9,13 @@ import { ShinyButton } from "@/components/ui/shiny-button";
 import type { CvTweak } from "@/lib/ai/cv-tweaks";
 
 export type CvCheckRow = { skill: string; inResume: boolean; suggestion: string | null; sourceQuote: string | null };
-type CheckResponse = { rows: CvCheckRow[]; tweaks: CvTweak[]; matchedWithoutAi: number; checkedByAi: number; aiNote: string | null };
+type CheckResponse = {
+  rows: CvCheckRow[];
+  tweaks: CvTweak[];
+  matchedWithoutAi: number;
+  checkedByAi: number;
+  aiNote: string | null;
+};
 
 export const CV_CHECK_PRIVACY_NOTE = "Hanya bagian keahlian dan pengalaman (tanpa nama dan kontak) yang dikirim ke AI.";
 
@@ -75,14 +81,15 @@ export function CvCheckResults({ rows, tweaks }: { rows: CvCheckRow[]; tweaks: C
                 {g.inResume ? (
                   <CircleCheck className="mt-0.5 size-4 shrink-0 text-green-600" aria-label="Ada di CV" />
                 ) : (
-                  <CircleX className="mt-0.5 size-4 shrink-0 text-destructive" aria-label="Belum ada di CV" />
+                  <CircleX className="text-destructive mt-0.5 size-4 shrink-0" aria-label="Belum ada di CV" />
                 )}
                 <div className="min-w-0 space-y-0.5">
                   <p className="font-medium">
-                    {g.skill} <span className="font-normal text-muted-foreground">· {g.inResume ? "ada" : "belum ada"}</span>
+                    {g.skill}{" "}
+                    <span className="text-muted-foreground font-normal">· {g.inResume ? "ada" : "belum ada"}</span>
                   </p>
                   {g.sourceQuote && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       Di CV: <q className="italic">{g.sourceQuote}</q>
                     </p>
                   )}
@@ -97,22 +104,24 @@ export function CvCheckResults({ rows, tweaks }: { rows: CvCheckRow[]; tweaks: C
         <div className="space-y-2">
           <div>
             <h3 className="text-sm font-medium">Tulis ulang bagian CV</h3>
-            <p className="text-xs text-muted-foreground">Hanya memoles yang sudah tertulis di CV-mu. Baca lagi sebelum menyalin.</p>
+            <p className="text-muted-foreground text-xs">
+              Hanya memoles yang sudah tertulis di CV-mu. Baca lagi sebelum menyalin.
+            </p>
           </div>
           <ol className="space-y-2">
             {rewrites.map((t, i) => (
-              <li key={i} className="space-y-1.5 rounded-xl border bg-card p-3 text-sm">
+              <li key={i} className="bg-card space-y-1.5 rounded-xl border p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <Badge variant="outline">{t.section}</Badge>
                   <CopyButton text={t.suggestion} />
                 </div>
                 {t.current && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Sekarang: <q className="italic">{t.current}</q>
                   </p>
                 )}
                 <p className="whitespace-pre-line">{t.suggestion}</p>
-                <p className="text-xs text-muted-foreground">{t.reason}</p>
+                <p className="text-muted-foreground text-xs">{t.reason}</p>
               </li>
             ))}
           </ol>
@@ -124,12 +133,12 @@ export function CvCheckResults({ rows, tweaks }: { rows: CvCheckRow[]; tweaks: C
           <ul className="glass divide-y rounded-2xl border">
             {adds.map((t, i) => (
               <li key={i} className="flex gap-3 p-3 text-sm">
-                <CirclePlus className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                <CirclePlus className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
                 <div className="min-w-0 space-y-0.5">
                   <p>
                     <span className="font-medium">{t.section}:</span> {t.suggestion}
                   </p>
-                  <p className="text-xs text-muted-foreground">{t.reason}</p>
+                  <p className="text-muted-foreground text-xs">{t.reason}</p>
                 </div>
               </li>
             ))}
@@ -137,7 +146,9 @@ export function CvCheckResults({ rows, tweaks }: { rows: CvCheckRow[]; tweaks: C
         </div>
       )}
       {rows.length === 0 && tweaks.length === 0 && (
-        <p className="text-sm text-muted-foreground">Tidak ada skill atau saran yang bisa ditampilkan untuk lowongan ini.</p>
+        <p className="text-muted-foreground text-sm">
+          Tidak ada skill atau saran yang bisa ditampilkan untuk lowongan ini.
+        </p>
       )}
     </div>
   );
@@ -181,8 +192,9 @@ export function NewApplicationCvCheck({
           <h2 className="flex items-center gap-2 font-medium">
             <Sparkles className="size-4" /> Cek CV untuk lowongan ini
           </h2>
-          <p className="text-xs text-muted-foreground">
-            Lihat skill yang belum terlihat di CV dan apa yang perlu ditambahkan sebelum melamar. {CV_CHECK_PRIVACY_NOTE}
+          <p className="text-muted-foreground text-xs">
+            Lihat skill yang belum terlihat di CV dan apa yang perlu ditambahkan sebelum melamar.{" "}
+            {CV_CHECK_PRIVACY_NOTE}
           </p>
         </div>
         <ShinyButton size="sm" onClick={run} disabled={pending}>
@@ -192,9 +204,9 @@ export function NewApplicationCvCheck({
       </div>
       {result && (
         <>
-          <p className="text-xs text-muted-foreground">
-            Hasil untuk CV <span className="font-medium text-foreground">{cvName ?? "terpilih"}</span>. Ikut tersimpan bersama
-            lamaran selama CV yang dikirim tetap ini.
+          <p className="text-muted-foreground text-xs">
+            Hasil untuk CV <span className="text-foreground font-medium">{cvName ?? "terpilih"}</span>. Ikut tersimpan
+            bersama lamaran selama CV yang dikirim tetap ini.
           </p>
           <CvCheckResults rows={result.rows} tweaks={result.tweaks} />
           <input type="hidden" form={formId} name="cvCheck" value={JSON.stringify(result)} />

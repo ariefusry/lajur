@@ -45,12 +45,18 @@ const QUOTED_SAMPLE = /["“'‘][^"”'’]{30,}["”'’]/;
  * - is an "add" tip that hands over a made-up CV sentence in quotes instead of saying what to add.
  * At most 8 survive; personal data goes back in.
  */
-export function verifyCvTweaks(tweaks: CvTweak[], redactedCv: string, map: PiiMap, missingSkills: string[] = []): CvTweak[] {
+export function verifyCvTweaks(
+  tweaks: CvTweak[],
+  redactedCv: string,
+  map: PiiMap,
+  missingSkills: string[] = [],
+): CvTweak[] {
   const cv = fold(redactedCv);
   const cvNumbers = new Set(numbers(redactedCv));
   return tweaks
     .filter((t) => {
-      if (t.kind === "rewrite" && !(t.current && fold(t.current).length > 0 && cv.includes(fold(t.current)))) return false;
+      if (t.kind === "rewrite" && !(t.current && fold(t.current).length > 0 && cv.includes(fold(t.current))))
+        return false;
       if (numbers(t.suggestion).some((n) => !cvNumbers.has(n))) return false;
       if (t.kind === "add") return !QUOTED_SAMPLE.test(t.suggestion);
       return !missingSkills.some((skill) => findSkillInText(skill, t.suggestion));

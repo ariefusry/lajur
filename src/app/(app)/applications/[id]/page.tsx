@@ -96,7 +96,10 @@ export default async function ApplicationDetailPage({
   return (
     <div className="max-w-6xl space-y-5">
       <header className="space-y-3">
-        <Link href="/applications" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm">
+        <Link
+          href="/applications"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+        >
           <ArrowLeft className="size-4" aria-hidden /> Semua lamaran
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -121,7 +124,9 @@ export default async function ApplicationDetailPage({
         {/* Phone: the current stage and how far along, as one line + a segmented bar. */}
         <div className="space-y-1.5 sm:hidden">
           <p className="text-sm">
-            <span className={cn("font-semibold", closed ? "text-destructive" : "text-primary")}>{app.currentStage.name}</span>
+            <span className={cn("font-semibold", closed ? "text-destructive" : "text-primary")}>
+              {app.currentStage.name}
+            </span>
             {!closed && currentIndex >= 0 && (
               <span className="text-muted-foreground">
                 {" "}
@@ -149,7 +154,9 @@ export default async function ApplicationDetailPage({
             const done = !current && reached.has(s.id);
             return (
               <li key={s.id} className="flex shrink-0 items-center gap-1">
-                {i > 0 && <span aria-hidden className={cn("h-px w-3", done || current ? "bg-primary/50" : "bg-border")} />}
+                {i > 0 && (
+                  <span aria-hidden className={cn("h-px w-3", done || current ? "bg-primary/50" : "bg-border")} />
+                )}
                 <span
                   aria-current={current ? "step" : undefined}
                   className={cn(
@@ -168,7 +175,10 @@ export default async function ApplicationDetailPage({
           {closed && (
             <li className="flex shrink-0 items-center gap-1">
               <span aria-hidden className="bg-destructive/50 h-px w-3" />
-              <span aria-current="step" className="bg-destructive/10 text-destructive border-destructive/30 rounded-lg border px-2.5 py-1 text-xs font-medium">
+              <span
+                aria-current="step"
+                className="bg-destructive/10 text-destructive border-destructive/30 rounded-lg border px-2.5 py-1 text-xs font-medium"
+              >
                 {app.currentStage.name}
               </span>
             </li>
@@ -187,7 +197,9 @@ export default async function ApplicationDetailPage({
           >
             {t.label}
             {t.key === "jadwal" && upcomingEvents.length > 0 && (
-              <span className="bg-primary/15 text-primary rounded-full px-1.5 text-[11px] tabular-nums">{upcomingEvents.length}</span>
+              <span className="bg-primary/15 text-primary rounded-full px-1.5 text-[11px] tabular-nums">
+                {upcomingEvents.length}
+              </span>
             )}
           </Link>
         ))}
@@ -206,8 +218,8 @@ export default async function ApplicationDetailPage({
             >
               {checks.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  Belum ada syarat tercatat. Lamaran yang dibuat lewat &ldquo;Tambah dengan AI&rdquo; otomatis membaca syarat
-                  seperti IPK, usia, dan jurusan dari lowongan.
+                  Belum ada syarat tercatat. Lamaran yang dibuat lewat &ldquo;Tambah dengan AI&rdquo; otomatis membaca
+                  syarat seperti IPK, usia, dan jurusan dari lowongan.
                 </p>
               ) : (
                 <ul className="-mx-5 -mb-5 divide-y border-t">
@@ -227,7 +239,12 @@ export default async function ApplicationDetailPage({
                       </div>
                       {!readOnly && (
                         <form action={deleteRequirement.bind(null, r.id)}>
-                          <Button type="submit" variant="ghost" size="icon-sm" aria-label={`Hapus syarat ${REQUIREMENT_TYPE_LABELS[r.type]}`}>
+                          <Button
+                            type="submit"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Hapus syarat ${REQUIREMENT_TYPE_LABELS[r.type]}`}
+                          >
                             <Trash2 />
                           </Button>
                         </form>
@@ -242,7 +259,10 @@ export default async function ApplicationDetailPage({
               <Card
                 title="Catatan"
                 action={
-                  <Link href={tabHref("data")} className="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline">
+                  <Link
+                    href={tabHref("data")}
+                    className="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                  >
                     <Pencil className="size-3.5" aria-hidden /> Ubah
                   </Link>
                 }
@@ -263,7 +283,10 @@ export default async function ApplicationDetailPage({
             <Card
               title="Info lamaran"
               action={
-                <Link href={tabHref("data")} className="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline">
+                <Link
+                  href={tabHref("data")}
+                  className="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                >
                   <Pencil className="size-3.5" aria-hidden /> Ubah
                 </Link>
               }
@@ -285,7 +308,12 @@ export default async function ApplicationDetailPage({
                 </Fact>
                 <Fact label="Lowongan">
                   {app.url && (
-                    <a href={app.url} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1 hover:underline">
+                    <a
+                      href={app.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary inline-flex items-center gap-1 hover:underline"
+                    >
                       Buka link <ExternalLink className="size-3.5" aria-hidden />
                     </a>
                   )}
@@ -297,7 +325,10 @@ export default async function ApplicationDetailPage({
       )}
 
       {tab === "riwayat" && (
-        <Card title="Riwayat tahap" description="Setiap perpindahan tahap, dengan hasil dan catatan (pertanyaan wawancara, kesan, alasan gagal).">
+        <Card
+          title="Riwayat tahap"
+          description="Setiap perpindahan tahap, dengan hasil dan catatan (pertanyaan wawancara, kesan, alasan gagal)."
+        >
           <ol className="relative space-y-6 border-l pl-6">
             {app.history.map((h) => (
               <li key={h.id} className="relative space-y-2">
@@ -305,7 +336,11 @@ export default async function ApplicationDetailPage({
                   aria-hidden
                   className={cn(
                     "border-background absolute top-1.5 -left-[1.95rem] size-3 rounded-full border-2",
-                    h.result === "PASSED" ? "bg-green-600" : h.result === "FAILED" ? "bg-destructive" : "bg-muted-foreground",
+                    h.result === "PASSED"
+                      ? "bg-green-600"
+                      : h.result === "FAILED"
+                        ? "bg-destructive"
+                        : "bg-muted-foreground",
                   )}
                 />
                 <div className="flex flex-wrap items-baseline gap-2">
@@ -373,7 +408,11 @@ export default async function ApplicationDetailPage({
                             idPrefix={e.id}
                             action={updateEvent.bind(null, e.id)}
                             submitLabel="Simpan"
-                            defaults={{ type: e.type, startsAt: toDateTimeInput(e.startsAt), locationOrUrl: e.locationOrUrl ?? "" }}
+                            defaults={{
+                              type: e.type,
+                              startsAt: toDateTimeInput(e.startsAt),
+                              locationOrUrl: e.locationOrUrl ?? "",
+                            }}
                           />
                         </div>
                       </details>
@@ -434,7 +473,10 @@ export default async function ApplicationDetailPage({
               }}
             />
           </Card>
-          <Card title="Hapus lamaran" description="Beserta riwayat, jadwal, dan syaratnya. Masih bisa diurungkan sesaat setelah dihapus.">
+          <Card
+            title="Hapus lamaran"
+            description="Beserta riwayat, jadwal, dan syaratnya. Masih bisa diurungkan sesaat setelah dihapus."
+          >
             <DeleteApplicationButton id={app.id} />
           </Card>
         </div>
@@ -482,7 +524,12 @@ function NextStep({
               {next.locationOrUrl && ` · ${next.locationOrUrl}`}
             </p>
           </div>
-          <AddToCalendar title={`${EVENT_TYPE_LABELS[next.type]} · ${app.company}`} start={next.startsAt} details={app.position} location={next.locationOrUrl} />
+          <AddToCalendar
+            title={`${EVENT_TYPE_LABELS[next.type]} · ${app.company}`}
+            start={next.startsAt}
+            details={app.position}
+            location={next.locationOrUrl}
+          />
         </div>
       ) : (
         <p className="text-muted-foreground text-sm">

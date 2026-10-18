@@ -11,4 +11,5 @@ export function followUpDate(now: Date, days: number) {
 }
 
 /** Due today or overdue (Jakarta calendar days). */
-export const isFollowUpDue = (nextActionAt: Date | null, now: Date) => !!nextActionAt && daysUntil(nextActionAt, now) <= 0;
+export const isFollowUpDue = (nextActionAt: Date | null, now: Date) =>
+  !!nextActionAt && daysUntil(nextActionAt, now) <= 0;

@@ -27,7 +27,12 @@ const modelAnswer: ExtractedJob = {
   ],
   requirements: [
     { type: "MIN_GPA", value: "3.00", ageReferenceDate: null, quote: "IPK minimal 3.00 (skala 4.00)" },
-    { type: "MAX_AGE", value: "25", ageReferenceDate: "2026-12-01", quote: "Usia maksimal 25 tahun per 1 Desember 2026" },
+    {
+      type: "MAX_AGE",
+      value: "25",
+      ageReferenceDate: "2026-12-01",
+      quote: "Usia maksimal 25 tahun per 1 Desember 2026",
+    },
     { type: "OTHER", value: "Tidak buta warna", ageReferenceDate: null, quote: "Tidak buta warna" }, // hallucinated
   ],
 };
@@ -60,7 +65,10 @@ describe("verifyQuotes", () => {
   it("nulls a salary or link that isn't written in the posting", () => {
     expect(verified.salaryRange).toBeNull();
     const posting = "Gaji Rp8–10 juta. Daftar di https://karier.contoh.co.id/it";
-    const r = verifyQuotes({ ...modelAnswer, salaryRange: "Rp8–10 juta", sourceUrl: "https://karier.contoh.co.id/it" }, posting);
+    const r = verifyQuotes(
+      { ...modelAnswer, salaryRange: "Rp8–10 juta", sourceUrl: "https://karier.contoh.co.id/it" },
+      posting,
+    );
     expect(r).toMatchObject({ salaryRange: "Rp8–10 juta", sourceUrl: "https://karier.contoh.co.id/it" });
   });
   it("forgives line-break vs space differences inside a quote", () => {
@@ -77,7 +85,14 @@ describe("verifyQuotes", () => {
   it("keeps a skill with a paraphrased quote when the skill itself is in the posting, citing its line", () => {
     const posting = "Kualifikasi:\n- Menguasai React, TypeScript, dan Tailwind CSS\n- Paham REST API dan Git";
     const r = verifyQuotes(
-      { ...modelAnswer, skills: [{ name: "TypeScript", quote: "Menguasai TypeScript" }, { name: "Git", quote: "Paham Git" }, { name: "Docker", quote: "Paham Docker" }] },
+      {
+        ...modelAnswer,
+        skills: [
+          { name: "TypeScript", quote: "Menguasai TypeScript" },
+          { name: "Git", quote: "Paham Git" },
+          { name: "Docker", quote: "Paham Docker" },
+        ],
+      },
       posting,
     );
     expect(r.skills).toEqual([
@@ -96,10 +111,18 @@ describe("ExtractedJob schema", () => {
 
 describe("isEmptyExtraction", () => {
   const empty: ExtractedJob = {
-    company: null, position: null, location: null, deadline: null,
-    employmentType: null, workMode: null, salaryRange: null, sourceUrl: null, language: "id",
+    company: null,
+    position: null,
+    location: null,
+    deadline: null,
+    employmentType: null,
+    workMode: null,
+    salaryRange: null,
+    sourceUrl: null,
+    language: "id",
     quotes: { company: null, position: null, location: null, deadline: null },
-    skills: [], requirements: [],
+    skills: [],
+    requirements: [],
   };
   it("flags an answer with nothing in it", () => expect(isEmptyExtraction(empty)).toBe(true));
   it("anything found counts as non-empty", () => {

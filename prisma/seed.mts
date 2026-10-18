@@ -16,5 +16,7 @@ const result = await resetDemoAccount({
   putPdf: (Key, Body) => s3.send(new PutObjectCommand({ Bucket: BUCKET, Key, Body, ContentType: "application/pdf" })),
   deleteObject: (Key) => s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key })),
 });
-console.log(`Seeded ${DEMO_EMAIL}: ${result.stages} stages, ${result.resumes} CVs, ${result.applications} applications.`);
+console.log(
+  `Seeded ${DEMO_EMAIL}: ${result.stages} stages, ${result.resumes} CVs, ${result.applications} applications.`,
+);
 await db.$disconnect();

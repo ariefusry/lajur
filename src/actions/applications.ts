@@ -209,7 +209,10 @@ export async function moveApplication(id: string, stageId: string): Promise<{ ok
 export async function deleteRequirement(id: string) {
   const user = await requireUser();
   if (isReadOnly(user)) return;
-  const req = await db.requirement.findFirst({ where: { id, application: { userId: user.id } }, select: { applicationId: true } });
+  const req = await db.requirement.findFirst({
+    where: { id, application: { userId: user.id } },
+    select: { applicationId: true },
+  });
   if (!req) return;
   await db.requirement.delete({ where: { id } });
   revalidatePath(`/applications/${req.applicationId}`);

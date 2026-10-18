@@ -48,7 +48,10 @@ export async function updateEvent(id: string, _: FormState, formData: FormData):
 export async function deleteEvent(id: string) {
   const user = await requireUser();
   if (isReadOnly(user)) return;
-  const event = await db.event.findFirst({ where: { id, application: { userId: user.id } }, select: { applicationId: true } });
+  const event = await db.event.findFirst({
+    where: { id, application: { userId: user.id } },
+    select: { applicationId: true },
+  });
   if (!event) return;
   await db.event.delete({ where: { id } });
   done(event.applicationId);

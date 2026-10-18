@@ -63,7 +63,9 @@ describe("redact", () => {
   });
 
   it("falls back to the whole (scrubbed) text when there are no headings", () => {
-    const flat = redact("Budi Santoso\nbudi@mail.com\nPython, SQL, Excel\nAnalis data 2 tahun", { name: "Budi Santoso" }).text;
+    const flat = redact("Budi Santoso\nbudi@mail.com\nPython, SQL, Excel\nAnalis data 2 tahun", {
+      name: "Budi Santoso",
+    }).text;
     expect(flat).toContain("Python, SQL, Excel");
     expect(flat).not.toMatch(/budi|santoso|@/i);
   });
@@ -74,12 +76,21 @@ describe("redact", () => {
 
   it("puts the name back into what the AI wrote", () => {
     expect(out).toContain('kerja [NAME_1] rapi"');
-    expect(rehydrate("Tonjolkan dashboard [NAME_1] di bagian atas.", map)).toBe("Tonjolkan dashboard Rina di bagian atas.");
+    expect(rehydrate("Tonjolkan dashboard [NAME_1] di bagian atas.", map)).toBe(
+      "Tonjolkan dashboard Rina di bagian atas.",
+    );
   });
 });
 
 describe("redactPII", () => {
-  const phones = ["+62 812-3456-7890", "0857 1234 5678", "62-813.9876.5432", "081234567890", "+6281298765432", "0821-1111-2222"];
+  const phones = [
+    "+62 812-3456-7890",
+    "0857 1234 5678",
+    "62-813.9876.5432",
+    "081234567890",
+    "+6281298765432",
+    "0821-1111-2222",
+  ];
 
   it("replaces emails and Indonesian phone numbers in every common format", () => {
     const { text, map } = redactPII(`Email rina@mail.id, HP ${phones.join(" / ")}`);
@@ -88,7 +99,10 @@ describe("redactPII", () => {
   });
 
   it("replaces the known name and address, reusing a placeholder for repeats", () => {
-    const { text } = redactPII("Rina Sari tinggal di Bekasi Timur. Rina suka SQL.", { name: "Rina Sari", address: "Bekasi Timur" });
+    const { text } = redactPII("Rina Sari tinggal di Bekasi Timur. Rina suka SQL.", {
+      name: "Rina Sari",
+      address: "Bekasi Timur",
+    });
     expect(text).toBe("[NAME_1] [NAME_2] tinggal di [ADDRESS_1]. [NAME_1] suka SQL.");
   });
 

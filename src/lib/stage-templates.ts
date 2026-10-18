@@ -2,10 +2,7 @@ import type { StageKind } from "@/generated/prisma/enums";
 
 export type TemplateKey = "BUMN" | "STARTUP" | "UMUM" | "RETAIL" | "CPNS";
 
-export const STAGE_TEMPLATES: Record<
-  TemplateKey,
-  { label: string; stages: { name: string; kind: StageKind }[] }
-> = {
+export const STAGE_TEMPLATES: Record<TemplateKey, { label: string; stages: { name: string; kind: StageKind }[] }> = {
   BUMN: {
     label: "BUMN/Bank",
     stages: [

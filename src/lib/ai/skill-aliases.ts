@@ -111,5 +111,10 @@ export function findSkillInText(skill: string, text: string): string | null {
     .map((a) => `(?<![\\p{L}\\p{N}+#.])${escapeRegExp(a)}(?![\\p{L}\\p{N}+#]|\\.[\\p{L}])`)
     .join("|");
   const re = new RegExp(pattern, "iu");
-  return text.split("\n").find((line) => re.test(line))?.trim() ?? null;
+  return (
+    text
+      .split("\n")
+      .find((line) => re.test(line))
+      ?.trim() ?? null
+  );
 }

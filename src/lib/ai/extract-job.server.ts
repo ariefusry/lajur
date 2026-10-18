@@ -17,7 +17,11 @@ type Hooks = {
  * `text` must already be normalized. Throws AiConsentRequiredError, QuotaExceededError, AiUnavailableError
  * or NothingFoundError.
  */
-export async function extractJob(text: string, userId: string, hooks: Hooks = {}): Promise<{ job: ExtractedJob; cached: boolean }> {
+export async function extractJob(
+  text: string,
+  userId: string,
+  hooks: Hooks = {},
+): Promise<{ job: ExtractedJob; cached: boolean }> {
   const textHash = hashJobText(text);
   const cached = await db.extractionCache.findUnique({ where: { textHash } });
   const hit = cached && ExtractedJob.safeParse(cached.result);
@@ -36,6 +40,10 @@ export async function extractJob(text: string, userId: string, hooks: Hooks = {}
   const job = verifyQuotes(object, text);
   if (isEmptyExtraction(job)) throw new NothingFoundError(); // don't cache an empty answer
   const result = job as unknown as Prisma.InputJsonValue;
-  await db.extractionCache.upsert({ where: { textHash }, create: { textHash, result, model }, update: { result, model } });
+  await db.extractionCache.upsert({
+    where: { textHash },
+    create: { textHash, result, model },
+    update: { result, model },
+  });
   return { job, cached: false };
 }

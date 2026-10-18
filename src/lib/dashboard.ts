@@ -91,7 +91,9 @@ export function appFactsFor(stages: DashStage[], now: Date) {
  * past X; Ditolak/Withdrawn don't count as progress. The administration stage is the first selection stage.
  */
 export function computeDashboard(stages: DashStage[], apps: DashApp[], now = new Date()) {
-  const pipeline = stages.filter((s) => s.kind === "IN_PROGRESS" || s.kind === "OFFER").sort((a, b) => a.order - b.order);
+  const pipeline = stages
+    .filter((s) => s.kind === "IN_PROGRESS" || s.kind === "OFFER")
+    .sort((a, b) => a.order - b.order);
   const orderOf = new Map(pipeline.map((s) => [s.id, s.order]));
   const kindOf = new Map(stages.map((s) => [s.id, s.kind]));
   const furthest = (a: DashApp) => {

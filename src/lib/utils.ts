@@ -1,4 +1,4 @@
-export { cn } from "cn"
+export { cn } from "cn";
 
 // Select trigger (components/ui/select.tsx) styled like shadcn Input.
 export const selectClass =

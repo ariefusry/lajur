@@ -1,15 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { readCvTweaks, verifyCvTweaks, type CvTweak } from "./cv-tweaks";
 
-const CV = "KEAHLIAN\nMicrosoft Excel, analisis data\nPENGALAMAN\nMagang Administrasi Keuangan (2025): menyusun laporan harian dengan Excel untuk tim [NAME_1]";
-const rewrite = (current: string, suggestion: string): CvTweak => ({ kind: "rewrite", section: "Pengalaman", current, suggestion, reason: "r" });
-const add = (suggestion: string): CvTweak => ({ kind: "add", section: "Proyek", current: null, suggestion, reason: "r" });
+const CV =
+  "KEAHLIAN\nMicrosoft Excel, analisis data\nPENGALAMAN\nMagang Administrasi Keuangan (2025): menyusun laporan harian dengan Excel untuk tim [NAME_1]";
+const rewrite = (current: string, suggestion: string): CvTweak => ({
+  kind: "rewrite",
+  section: "Pengalaman",
+  current,
+  suggestion,
+  reason: "r",
+});
+const add = (suggestion: string): CvTweak => ({
+  kind: "add",
+  section: "Proyek",
+  current: null,
+  suggestion,
+  reason: "r",
+});
 
 describe("verifyCvTweaks", () => {
   it("keeps honest rewrites and additions", () => {
     const out = verifyCvTweaks(
       [
-        rewrite("menyusun laporan  harian\ndengan Excel", "Menyusun laporan keuangan harian dengan Microsoft Excel (2025)."),
+        rewrite(
+          "menyusun laporan  harian\ndengan Excel",
+          "Menyusun laporan keuangan harian dengan Microsoft Excel (2025).",
+        ),
         add("Kalau kamu pernah membuat proyek dengan React, tambahkan di bagian Proyek."),
       ],
       CV,
@@ -54,7 +70,9 @@ describe("verifyCvTweaks", () => {
   it("caps at 8 and puts personal data back", () => {
     const many = Array(12).fill(add("Tambahkan ringkasan singkat di atas CV."));
     expect(verifyCvTweaks(many, CV, {})).toHaveLength(8);
-    const [t] = verifyCvTweaks([rewrite("untuk tim [NAME_1]", "Untuk tim [NAME_1] di divisi keuangan.")], CV, { "[NAME_1]": "Rina" });
+    const [t] = verifyCvTweaks([rewrite("untuk tim [NAME_1]", "Untuk tim [NAME_1] di divisi keuangan.")], CV, {
+      "[NAME_1]": "Rina",
+    });
     expect(t).toMatchObject({ current: "untuk tim Rina", suggestion: "Untuk tim Rina di divisi keuangan." });
   });
 });

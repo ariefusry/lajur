@@ -3,9 +3,7 @@
 // Run: pnpm storage:smoke
 import { deleteObject, presignGet, putPdf } from "../src/lib/storage.ts";
 
-const pdf = new TextEncoder().encode(
-  "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n",
-);
+const pdf = new TextEncoder().encode("%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n");
 const key = `smoke/${Date.now()}.pdf`;
 
 await putPdf(key, pdf);

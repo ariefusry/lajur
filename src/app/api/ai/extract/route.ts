@@ -51,7 +51,8 @@ export async function POST(request: Request) {
 
         const { job, cached } = await extractJob(text, userId, {
           onProgress: (e) => {
-            if (e.kind === "attempt") send({ type: "status", status: e.fallback ? "fallback" : e.thinking ? "retrying" : "reading" });
+            if (e.kind === "attempt")
+              send({ type: "status", status: e.fallback ? "fallback" : e.thinking ? "retrying" : "reading" });
           },
           onVerifying: () => send({ type: "status", status: "verifying" }),
         });
@@ -69,7 +70,8 @@ export async function POST(request: Request) {
               : "AI tidak menemukan informasi lowongan di halaman ini. Situsnya mungkin butuh JavaScript atau login, jadi salin teks lowongannya saja.",
           });
         } else {
-          if (!(error instanceof AiUnavailableError)) console.error("ai extract failed", error instanceof Error ? error.name : "unknown");
+          if (!(error instanceof AiUnavailableError))
+            console.error("ai extract failed", error instanceof Error ? error.name : "unknown");
           send({ type: "error", status: 503, error: "AI sedang tidak tersedia, silakan isi manual." });
         }
       } finally {

@@ -20,10 +20,16 @@ export const metadata = { title: "Daftar lamaran · Lajur" };
 
 const SORTS = {
   updated: { label: "Terbaru diubah", orderBy: { updatedAt: "desc" } },
-  applied: { label: "Tanggal melamar", orderBy: [{ appliedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }] },
+  applied: {
+    label: "Tanggal melamar",
+    orderBy: [{ appliedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+  },
   deadline: { label: "Deadline terdekat", orderBy: { deadline: { sort: "asc", nulls: "last" } } },
   company: { label: "Perusahaan (A–Z)", orderBy: { company: "asc" } },
-} satisfies Record<string, { label: string; orderBy: Prisma.ApplicationOrderByWithRelationInput | Prisma.ApplicationOrderByWithRelationInput[] }>;
+} satisfies Record<
+  string,
+  { label: string; orderBy: Prisma.ApplicationOrderByWithRelationInput | Prisma.ApplicationOrderByWithRelationInput[] }
+>;
 
 type Search = { q?: string; stage?: string; sort?: string };
 /** Stage filter value for derived "ghosted" applications (not a real stage). */
@@ -36,7 +42,11 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
   const query = q.trim();
 
   const [stages, applications, total, profile] = await Promise.all([
-    db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" }, select: { id: true, name: true, order: true, kind: true } }),
+    db.stage.findMany({
+      where: { userId: user.id },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true, order: true, kind: true },
+    }),
     db.application.findMany({
       where: {
         userId: user.id,
@@ -190,7 +200,11 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
                       <Deadline date={a.deadline} />
                     </td>
                     <td className="py-2.5 pr-5 pl-2.5">
-                      {a.eligibility ? <EligibilityBadge status={a.eligibility} /> : <span className="text-muted-foreground">–</span>}
+                      {a.eligibility ? (
+                        <EligibilityBadge status={a.eligibility} />
+                      ) : (
+                        <span className="text-muted-foreground">–</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -202,7 +216,10 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
           <ul className="glass divide-y overflow-hidden rounded-2xl border md:hidden">
             {rows.map((a) => (
               <li key={a.id}>
-                <Link href={`/applications/${a.id}`} className="hover:bg-foreground/5 block space-y-1.5 px-4 py-3 transition-colors">
+                <Link
+                  href={`/applications/${a.id}`}
+                  className="hover:bg-foreground/5 block space-y-1.5 px-4 py-3 transition-colors"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{a.company}</p>
@@ -261,7 +278,10 @@ function Deadline({ date }: { date: Date | null }) {
   const days = daysUntil(date);
   return (
     <span
-      className={cn("inline-flex items-center gap-1", days >= 0 && days <= 3 ? "text-destructive font-medium" : "text-muted-foreground")}
+      className={cn(
+        "inline-flex items-center gap-1",
+        days >= 0 && days <= 3 ? "text-destructive font-medium" : "text-muted-foreground",
+      )}
       title={days < 0 ? "Deadline sudah lewat" : `${days} hari lagi`}
     >
       <CalendarClock className="size-3.5" aria-hidden />

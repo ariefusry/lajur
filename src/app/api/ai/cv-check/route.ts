@@ -42,14 +42,18 @@ export async function POST(request: Request) {
       select: { id: true, jobPostingText: true, resume: { select: { extractedText: true } } },
     });
     if (!app) return fail("Lamaran tidak ditemukan.", 404);
-    if (!app.jobPostingText) return fail("Lamaran ini belum punya teks lowongan. Buat lamaran lewat \"Tambah dengan AI\" dulu.", 422);
+    if (!app.jobPostingText)
+      return fail('Lamaran ini belum punya teks lowongan. Buat lamaran lewat "Tambah dengan AI" dulu.', 422);
     if (!app.resume) return fail("Pilih CV yang dikirim di data lamaran dulu.", 422);
     if (!app.resume.extractedText) return fail(UNREADABLE_CV, 422);
     applicationId = app.id;
     postingText = app.jobPostingText;
     cvText = app.resume.extractedText;
   } else {
-    const resume = await db.resume.findFirst({ where: { id: body.data.resumeId, userId }, select: { extractedText: true } });
+    const resume = await db.resume.findFirst({
+      where: { id: body.data.resumeId, userId },
+      select: { extractedText: true },
+    });
     if (!resume) return fail("CV tidak ditemukan.", 404);
     if (!resume.extractedText) return fail(UNREADABLE_CV, 422);
     postingText = body.data.text;
@@ -63,7 +67,8 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof AiConsentRequiredError) return fail(error.message, 403);
     if (error instanceof QuotaExceededError) return fail(error.message, 429);
-    if (error instanceof NothingFoundError) return fail("Tidak ada informasi yang bisa dibaca dari teks lowongan ini.", 422);
+    if (error instanceof NothingFoundError)
+      return fail("Tidak ada informasi yang bisa dibaca dari teks lowongan ini.", 422);
     return fail("Isi lowongan belum terbaca dan AI sedang tidak tersedia. Coba lagi nanti.", 503);
   }
 
@@ -75,7 +80,9 @@ export async function POST(request: Request) {
       db.skillGap.deleteMany({ where: { applicationId } }),
       db.skillGap.createMany({ data: result.rows.map((r) => ({ ...r, applicationId })) }),
       // Keep earlier tweaks when this run couldn't reach the AI (string match only).
-      ...(result.aiNote ? [] : [db.application.update({ where: { id: applicationId }, data: { cvTweaks: result.tweaks } })]),
+      ...(result.aiNote
+        ? []
+        : [db.application.update({ where: { id: applicationId }, data: { cvTweaks: result.tweaks } })]),
     ]);
     revalidatePath(`/applications/${applicationId}`);
   }

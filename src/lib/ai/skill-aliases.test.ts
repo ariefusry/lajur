@@ -43,7 +43,8 @@ describe("non-IT skills", () => {
     expect(findSkillInText("Supply chain", "Staf logistik gudang")).toContain("logistik");
   });
   it("match office, finance, design, language and certification aliases", () => {
-    const office = "KEAHLIAN\nMS Excel, MYOB, Brevet A&B, TOEFL 550, Corel Draw, Auto CAD\nPENGALAMAN\nStaf pembukuan dan pajak di KAP Contoh";
+    const office =
+      "KEAHLIAN\nMS Excel, MYOB, Brevet A&B, TOEFL 550, Corel Draw, Auto CAD\nPENGALAMAN\nStaf pembukuan dan pajak di KAP Contoh";
     expect(findSkillInText("Microsoft Excel", office)).not.toBeNull();
     expect(findSkillInText("Accounting", office)).toContain("pembukuan");
     expect(findSkillInText("Perpajakan", office)).toContain("pajak");

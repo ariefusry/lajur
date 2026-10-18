@@ -22,7 +22,13 @@ describe("applicationSchema", () => {
   });
 
   it("rejects missing company, bad url, bad salary, unknown source", () => {
-    const r = applicationSchema.safeParse({ ...base, company: "", url: "javascript:alert(1)", expectedSalary: "8jt", source: "X" });
+    const r = applicationSchema.safeParse({
+      ...base,
+      company: "",
+      url: "javascript:alert(1)",
+      expectedSalary: "8jt",
+      source: "X",
+    });
     expect(r.success).toBe(false);
     const fields = r.error!.issues.map((i) => i.path[0]);
     expect(fields).toEqual(expect.arrayContaining(["company", "url", "expectedSalary", "source"]));

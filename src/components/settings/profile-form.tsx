@@ -23,14 +23,29 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
     <div className="space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
       {input}
-      {err(name) && <p className="text-xs text-destructive">{err(name)}</p>}
+      {err(name) && <p className="text-destructive text-xs">{err(name)}</p>}
     </div>
   );
 
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
-      {row("gpa", "IPK (skala 4.00)", <Input id="gpa" name="gpa" inputMode="decimal" placeholder="3.45" defaultValue={defaults.gpa} aria-invalid={!!err("gpa") || undefined} />)}
-      {row("birthDate", "Tanggal lahir", <Input id="birthDate" name="birthDate" type="date" defaultValue={defaults.birthDate} />)}
+      {row(
+        "gpa",
+        "IPK (skala 4.00)",
+        <Input
+          id="gpa"
+          name="gpa"
+          inputMode="decimal"
+          placeholder="3.45"
+          defaultValue={defaults.gpa}
+          aria-invalid={!!err("gpa") || undefined}
+        />,
+      )}
+      {row(
+        "birthDate",
+        "Tanggal lahir",
+        <Input id="birthDate" name="birthDate" type="date" defaultValue={defaults.birthDate} />,
+      )}
       {row(
         "degree",
         "Pendidikan terakhir",
@@ -42,7 +57,11 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
         />,
       )}
       {row("major", "Jurusan", <Input id="major" name="major" placeholder="Akuntansi" defaultValue={defaults.major} />)}
-      {row("domicile", "Domisili", <Input id="domicile" name="domicile" placeholder="Bekasi" defaultValue={defaults.domicile} />)}
+      {row(
+        "domicile",
+        "Domisili",
+        <Input id="domicile" name="domicile" placeholder="Bekasi" defaultValue={defaults.domicile} />,
+      )}
       <div className="sm:col-span-2">
         <Button type="submit" disabled={pending}>
           {pending ? "Menyimpan…" : "Simpan profil"}

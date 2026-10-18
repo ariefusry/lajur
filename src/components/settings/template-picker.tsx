@@ -44,7 +44,13 @@ export function TemplatePicker({ disabled }: { disabled: boolean }) {
             label: `Template ${STAGE_TEMPLATES[key].label}`,
           }))}
         />
-        <Button type="button" variant="outline" className="h-10 pointer-coarse:h-11" disabled={pending} onClick={() => setAsking(true)}>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 pointer-coarse:h-11"
+          disabled={pending}
+          onClick={() => setAsking(true)}
+        >
           Pakai
         </Button>
       </div>

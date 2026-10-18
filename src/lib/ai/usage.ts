@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { toDateInput } from "@/lib/dates";
 import { isDemoEmail } from "@/lib/demo";
 
-
 export class QuotaExceededError extends Error {
   constructor() {
     super("Kuota AI hari ini habis, isi manual dulu ya");

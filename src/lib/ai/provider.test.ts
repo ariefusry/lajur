@@ -36,7 +36,13 @@ async function load(env: Record<string, string | undefined> = {}) {
   return import("./provider");
 }
 
-const args = { schema: z.object({ ok: z.boolean() }), system: "sys", prompt: "job text", feature: "EXTRACT_JOB" as const, userId: "u1" };
+const args = {
+  schema: z.object({ ok: z.boolean() }),
+  system: "sys",
+  prompt: "job text",
+  feature: "EXTRACT_JOB" as const,
+  userId: "u1",
+};
 const usage = { inputTokens: 900, outputTokens: 120, totalTokens: 1020 };
 const answer = (output: unknown) => ({ text: JSON.stringify(output), usage });
 const http = (status: number, extra: Partial<ConstructorParameters<typeof APICallError>[0]> = {}) =>
@@ -75,7 +81,9 @@ describe("generateStructured", () => {
 
   it("invalid JSON → one retry on the same model with more reasoning and the error fed back → success", async () => {
     const { generateStructured } = await load();
-    generateText.mockResolvedValueOnce({ text: '{"ok": "bukan boolean"}', usage }).mockResolvedValueOnce(answer({ ok: true }));
+    generateText
+      .mockResolvedValueOnce({ text: '{"ok": "bukan boolean"}', usage })
+      .mockResolvedValueOnce(answer({ ok: true }));
     await expect(generateStructured(args)).resolves.toMatchObject({ provider: "groq" });
     expect(calls()).toEqual([`groq:${GROQ}:low`, `groq:${GROQ}:medium`]);
     expect(generateText.mock.calls[1][0].prompt).toMatch(/tidak valid terhadap skema/);
@@ -83,7 +91,13 @@ describe("generateStructured", () => {
 
   it("treats an unparsable answer from the SDK (NoObjectGeneratedError) as invalid output", async () => {
     const { generateStructured } = await load();
-    const noObject = new NoObjectGeneratedError({ message: "x", text: "maaf", response: undefined!, usage: undefined!, finishReason: "stop" });
+    const noObject = new NoObjectGeneratedError({
+      message: "x",
+      text: "maaf",
+      response: undefined!,
+      usage: undefined!,
+      finishReason: "stop",
+    });
     generateText.mockRejectedValueOnce(noObject).mockResolvedValueOnce(answer({ ok: true }));
     await expect(generateStructured(args)).resolves.toMatchObject({ provider: "groq" });
     expect(calls()).toHaveLength(2);
@@ -91,14 +105,21 @@ describe("generateStructured", () => {
 
   it("429 from Groq without a short retry-after → falls back to Cloudflare", async () => {
     const { generateStructured } = await load();
-    generateText.mockRejectedValueOnce(http(429, { responseHeaders: { "retry-after": "30" } })).mockResolvedValueOnce(answer({ ok: true }));
-    await expect(generateStructured(args)).resolves.toMatchObject({ model: `cloudflare:${CF}`, provider: "cloudflare" });
+    generateText
+      .mockRejectedValueOnce(http(429, { responseHeaders: { "retry-after": "30" } }))
+      .mockResolvedValueOnce(answer({ ok: true }));
+    await expect(generateStructured(args)).resolves.toMatchObject({
+      model: `cloudflare:${CF}`,
+      provider: "cloudflare",
+    });
     expect(calls()).toEqual([`groq:${GROQ}:low`, `cloudflare:${CF}`]);
   });
 
   it("429 with a short retry-after is waited out once on the same model", async () => {
     const { generateStructured } = await load();
-    generateText.mockRejectedValueOnce(http(429, { responseHeaders: { "retry-after": "0" } })).mockResolvedValueOnce(answer({ ok: true }));
+    generateText
+      .mockRejectedValueOnce(http(429, { responseHeaders: { "retry-after": "0" } }))
+      .mockResolvedValueOnce(answer({ ok: true }));
     await expect(generateStructured(args)).resolves.toMatchObject({ provider: "groq" });
     expect(calls()).toEqual([`groq:${GROQ}:low`, `groq:${GROQ}:low`]);
   });
@@ -158,14 +179,23 @@ describe("generateStructured", () => {
 
 describe("dev-only providers", () => {
   it("NVIDIA in production throws a clear config error and turns AI off", async () => {
-    const { generateStructured, aiEnabled } = await load({ NODE_ENV: "production", LLM_PRIMARY: "nvidia", LLM_FALLBACK: "" });
+    const { generateStructured, aiEnabled } = await load({
+      NODE_ENV: "production",
+      LLM_PRIMARY: "nvidia",
+      LLM_FALLBACK: "",
+    });
     await expect(generateStructured(args)).rejects.toThrow(/hanya boleh dipakai untuk development/);
     expect(aiEnabled()).toBe(false);
     expect(generateText).not.toHaveBeenCalled();
   });
 
   it("OpenRouter as production fallback is refused too", async () => {
-    const { aiEnabled } = await load({ NODE_ENV: "production", LLM_FALLBACK: "openrouter", OPENROUTER_API_KEY: "or", OPENROUTER_MODEL: "x/y:free" });
+    const { aiEnabled } = await load({
+      NODE_ENV: "production",
+      LLM_FALLBACK: "openrouter",
+      OPENROUTER_API_KEY: "or",
+      OPENROUTER_MODEL: "x/y:free",
+    });
     expect(aiEnabled()).toBe(false);
   });
 
@@ -183,7 +213,9 @@ describe("aiEnabled / model config", () => {
   it("is off without keys or providers", async () => {
     expect((await load({ GROQ_API_KEY: "", CLOUDFLARE_API_TOKEN: "" })).aiEnabled()).toBe(false);
     expect((await load({ LLM_PRIMARY: "", LLM_FALLBACK: "" })).aiEnabled()).toBe(false);
-    expect((await load({ LLM_PRIMARY: "cloudflare", LLM_FALLBACK: "", CLOUDFLARE_ACCOUNT_ID: "" })).aiEnabled()).toBe(false);
+    expect((await load({ LLM_PRIMARY: "cloudflare", LLM_FALLBACK: "", CLOUDFLARE_ACCOUNT_ID: "" })).aiEnabled()).toBe(
+      false,
+    );
   });
   it("ignores a BOM or stray whitespace around env values", async () => {
     const { generateStructured } = await load({ LLM_PRIMARY: " groq\n", GROQ_MODEL: `﻿${GROQ}` });
@@ -200,6 +232,8 @@ describe("aiEnabled / model config", () => {
     const vendor = ["an", "thropic"].join(""); // keep the literal out of the repo (check:llm-provider)
     expect((await load({ GROQ_MODEL: `${vendor}/x`, LLM_FALLBACK: "" })).aiEnabled()).toBe(false);
     expect((await load({ LLM_PRIMARY: "somewhere", LLM_FALLBACK: "" })).aiEnabled()).toBe(false);
-    expect((await load({ LLM_PRIMARY: "nvidia", LLM_FALLBACK: "", NVIDIA_BASE_URL: "https://evil.example/v1" })).aiEnabled()).toBe(false);
+    expect(
+      (await load({ LLM_PRIMARY: "nvidia", LLM_FALLBACK: "", NVIDIA_BASE_URL: "https://evil.example/v1" })).aiEnabled(),
+    ).toBe(false);
   });
 });

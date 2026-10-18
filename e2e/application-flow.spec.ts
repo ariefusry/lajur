@@ -50,7 +50,9 @@ test("demo user creates an application, moves it on the board, and sees it on th
 
   // Forward then back again is a correction: the timeline must not repeat stages
   for (const column of ["Tes Online/TPA", "Administrasi"]) {
-    const moved = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/board");
+    const moved = page.waitForResponse(
+      (r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/board",
+    );
     await dragCard(page, COMPANY, column);
     expect((await moved).ok()).toBe(true);
   }
@@ -62,10 +64,14 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible();
   const detailUrl = page.url();
   // Stage progress in the header marks the current stage
-  await expect(page.getByRole("list", { name: "Progres tahap" }).locator('[aria-current="step"]')).toHaveText("Administrasi");
+  await expect(page.getByRole("list", { name: "Progres tahap" }).locator('[aria-current="step"]')).toHaveText(
+    "Administrasi",
+  );
   // The history lives on its own tab (opened by URL: same-path soft navigation doesn't complete against the
   // locally isolated build, though it does on Vercel; the tab links themselves are checked there).
-  await expect(page.getByRole("navigation", { name: "Bagian lamaran" }).getByRole("link", { name: "Riwayat tahap" })).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Bagian lamaran" }).getByRole("link", { name: "Riwayat tahap" }),
+  ).toBeVisible();
   await page.goto(`${detailUrl}?tab=riwayat`);
   const timeline = page.locator("section", { has: page.getByRole("heading", { name: "Riwayat tahap" }) });
   await expect(timeline.getByText("Wishlist")).toBeVisible();

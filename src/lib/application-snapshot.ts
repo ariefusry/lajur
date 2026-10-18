@@ -1,11 +1,5 @@
 import { z } from "zod";
-import {
-  EligibilityStatus,
-  EventType,
-  JobSource,
-  RequirementType,
-  StageResult,
-} from "@/generated/prisma/enums";
+import { EligibilityStatus, EventType, JobSource, RequirementType, StageResult } from "@/generated/prisma/enums";
 import { StoredCvTweaks } from "@/lib/ai/cv-tweaks";
 
 /**

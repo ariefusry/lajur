@@ -32,14 +32,22 @@ async function run(ref: ModelRef, retry: boolean, fx: (typeof JOB_FIXTURES)[numb
       types: e.requirementTypes.every((t) => types.has(t)),
       gpa: e.gpa === null ? !req("MIN_GPA") : num(req("MIN_GPA")?.value) === Number(e.gpa),
       maxAge: e.maxAge === null ? !req("MAX_AGE") : num(req("MAX_AGE")?.value) === Number(e.maxAge),
-      oneEach: ["MIN_GPA", "MAX_AGE", "MIN_DEGREE"].every((t) => v.requirements.filter((r) => r.type === t).length <= 1),
+      oneEach: ["MIN_GPA", "MAX_AGE", "MIN_DEGREE"].every(
+        (t) => v.requirements.filter((r) => r.type === t).length <= 1,
+      ),
       ageRef: e.ageReferenceDate === null || req("MAX_AGE")?.ageReferenceDate === e.ageReferenceDate,
       skills: e.skills.every((re) => v.skills.some((s) => re.test(s.name))),
     };
     return {
-      ...base, ms: r.ms, tokens: `${r.tokensIn ?? "?"}+${r.tokensOut ?? "?"}`,
+      ...base,
+      ms: r.ms,
+      tokens: `${r.tokensIn ?? "?"}+${r.tokensOut ?? "?"}`,
       score: `${Object.values(checks).filter(Boolean).length}/${Object.keys(checks).length}`,
-      failed: Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k).join(",") || "-",
+      failed:
+        Object.entries(checks)
+          .filter(([, ok]) => !ok)
+          .map(([k]) => k)
+          .join(",") || "-",
       quotesKept: `${v.skills.length + v.requirements.length}/${raw.skills.length + raw.requirements.length}`,
     };
   } catch (error) {
@@ -49,9 +57,11 @@ async function run(ref: ModelRef, retry: boolean, fx: (typeof JOB_FIXTURES)[numb
 
 // Sequential on purpose: free endpoints reject bursts.
 const results = [];
-for (const ref of refs) for (const retry of retryModes) for (const fx of JOB_FIXTURES) {
-  const r = await run(ref, retry, fx);
-  console.log(JSON.stringify(r));
-  results.push(r);
-}
+for (const ref of refs)
+  for (const retry of retryModes)
+    for (const fx of JOB_FIXTURES) {
+      const r = await run(ref, retry, fx);
+      console.log(JSON.stringify(r));
+      results.push(r);
+    }
 console.table(results);

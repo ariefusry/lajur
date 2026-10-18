@@ -13,7 +13,9 @@ export function configuredRefs(only?: readonly string[]) {
     if (only && !only.includes(name)) continue;
     const p = providerConfig(name);
     const models = p.models.filter((m): m is string => !!m);
-    const missing = [!p.apiKey && "API key", !p.baseURL && "base URL/account ID", !models.length && "model"].filter(Boolean);
+    const missing = [!p.apiKey && "API key", !p.baseURL && "base URL/account ID", !models.length && "model"].filter(
+      Boolean,
+    );
     if (missing.length) {
       skipped.push(`${name}: belum ada ${missing.join(", ")} di .env.local`);
       continue;

@@ -3,7 +3,13 @@ import { toCsv } from "./csv";
 
 describe("toCsv", () => {
   it("BOM, CRLF rows, quoting of commas, quotes and newlines; empty for null", () => {
-    const csv = toCsv(["a", "b"], [["PT A, Tbk", 'kata "kunci"'], ["baris\nbaru", null]]);
+    const csv = toCsv(
+      ["a", "b"],
+      [
+        ["PT A, Tbk", 'kata "kunci"'],
+        ["baris\nbaru", null],
+      ],
+    );
     expect(csv).toBe('﻿a,b\r\n"PT A, Tbk","kata ""kunci"""\r\n"baris\nbaru",\r\n');
   });
 

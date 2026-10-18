@@ -4,7 +4,8 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-const ALT = "Cara kerja Lajur: tempel lowongan, AI mengisi form dengan kutipan bukti, cek syarat dan CV, lalu geser kartu di board";
+const ALT =
+  "Cara kerja Lajur: tempel lowongan, AI mengisi form dengan kutipan bukti, cek syarat dan CV, lalu geser kartu di board";
 
 /**
  * Silent product loop for the landing's "Cara kerja" section (≈1.7 MB each). Only the current theme's file is
@@ -44,8 +45,20 @@ export function HowItWorksVideo() {
   const theme = resolvedTheme === "dark" ? "dark" : "light";
   return (
     <div ref={box} className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border">
-      <Image src="/landing/how-it-works-light.jpg" alt={ALT} fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover dark:hidden" />
-      <Image src="/landing/how-it-works-dark.jpg" alt={ALT} fill sizes="(min-width: 1024px) 560px, 100vw" className="hidden object-cover dark:block" />
+      <Image
+        src="/landing/how-it-works-light.jpg"
+        alt={ALT}
+        fill
+        sizes="(min-width: 1024px) 560px, 100vw"
+        className="object-cover dark:hidden"
+      />
+      <Image
+        src="/landing/how-it-works-dark.jpg"
+        alt={ALT}
+        fill
+        sizes="(min-width: 1024px) 560px, 100vw"
+        className="hidden object-cover dark:block"
+      />
       {near && !reducedMotion && resolvedTheme && (
         <video
           key={theme}

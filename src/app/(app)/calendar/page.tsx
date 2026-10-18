@@ -15,7 +15,10 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 // Phone cells fit ~6 characters: drop legal-form noise so the recognisable part shows ("PT Bank Mandiri (Persero) Tbk" → "Bank Mandiri").
 const shortCompany = (name: string) =>
-  name.replace(/^(PT|CV)\.?\s+/i, "").replace(/\s*\(Persero\)|\s+Tbk\.?/gi, "").trim() || name;
+  name
+    .replace(/^(PT|CV)\.?\s+/i, "")
+    .replace(/\s*\(Persero\)|\s+Tbk\.?/gi, "")
+    .trim() || name;
 
 type Item = {
   key: string;
@@ -104,19 +107,30 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
       <div className="glass grid grid-cols-7 overflow-hidden rounded-2xl border text-xs">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="border-b bg-muted/50 p-2 text-center font-medium">
+          <div key={d} className="bg-muted/50 border-b p-2 text-center font-medium">
             {d}
           </div>
         ))}
         {Array.from({ length: leading }, (_, i) => (
-          <div key={`pad-${i}`} className="min-h-16 border-b border-l bg-muted/20 first:border-l-0 md:min-h-24" />
+          <div key={`pad-${i}`} className="bg-muted/20 min-h-16 border-b border-l first:border-l-0 md:min-h-24" />
         ))}
         {Array.from({ length: daysInMonth }, (_, i) => {
           const day = `${monthKey}-${pad(i + 1)}`;
           const dayItems = byDay.get(day) ?? [];
           return (
-            <div key={day} className={cn("min-h-16 space-y-1 border-b border-l p-1 md:min-h-24", (leading + i) % 7 === 0 && "border-l-0")}>
-              <span className={cn("inline-flex size-6 items-center justify-center rounded-full", day === today && "bg-primary text-primary-foreground")}>
+            <div
+              key={day}
+              className={cn(
+                "min-h-16 space-y-1 border-b border-l p-1 md:min-h-24",
+                (leading + i) % 7 === 0 && "border-l-0",
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-flex size-6 items-center justify-center rounded-full",
+                  day === today && "bg-primary text-primary-foreground",
+                )}
+              >
                 {i + 1}
               </span>
               {dayItems.slice(0, 3).map((it) => (
@@ -141,7 +155,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                     ))}
                 </Link>
               ))}
-              {dayItems.length > 3 && <p className="px-1 text-muted-foreground">+{dayItems.length - 3} lagi</p>}
+              {dayItems.length > 3 && <p className="text-muted-foreground px-1">+{dayItems.length - 3} lagi</p>}
             </div>
           );
         })}
@@ -150,7 +164,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       <section className="space-y-2">
         <h2 className="font-medium">Agenda bulan ini</h2>
         {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Tidak ada jadwal. Tambahkan jadwal tes atau interview dari halaman detail lamaran.
           </p>
         ) : (
@@ -159,13 +173,18 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               <li key={it.key} className="flex items-center gap-1 pr-2">
                 <Link
                   href={`/applications/${it.applicationId}`}
-                  className="grid min-w-0 flex-1 gap-x-3 gap-y-0.5 p-3 text-sm hover:bg-muted/50 sm:grid-cols-[10rem_1fr_auto] sm:items-center"
+                  className="hover:bg-muted/50 grid min-w-0 flex-1 gap-x-3 gap-y-0.5 p-3 text-sm sm:grid-cols-[10rem_1fr_auto] sm:items-center"
                 >
                   <span className="min-w-0 truncate font-medium sm:order-2">{it.company}</span>
-                  <span className={cn("text-xs sm:order-1 sm:text-sm", it.isDeadline ? "text-destructive" : "text-muted-foreground sm:text-foreground")}>
+                  <span
+                    className={cn(
+                      "text-xs sm:order-1 sm:text-sm",
+                      it.isDeadline ? "text-destructive" : "text-muted-foreground sm:text-foreground",
+                    )}
+                  >
                     {it.label}
                   </span>
-                  <span className="text-xs text-muted-foreground sm:order-3 sm:text-sm">{formatDateTime(it.at)}</span>
+                  <span className="text-muted-foreground text-xs sm:order-3 sm:text-sm">{formatDateTime(it.at)}</span>
                 </Link>
                 <AddToCalendar
                   title={`${it.label} · ${it.company}`}

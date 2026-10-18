@@ -51,9 +51,7 @@ export function EventForm({
             required
             options={optionsFrom(EVENT_TYPE_LABELS)}
           />
-          {err("type") && (
-            <p className="text-destructive text-xs">{err("type")}</p>
-          )}
+          {err("type") && <p className="text-destructive text-xs">{err("type")}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-startsAt`}>Tanggal & jam (WIB)</Label>
@@ -64,9 +62,7 @@ export function EventForm({
             defaultValue={defaults.startsAt}
             required
           />
-          {err("startsAt") && (
-            <p className="text-destructive text-xs">{err("startsAt")}</p>
-          )}
+          {err("startsAt") && <p className="text-destructive text-xs">{err("startsAt")}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-loc`}>Lokasi / link</Label>
@@ -80,11 +76,7 @@ export function EventForm({
         <Button type="submit" disabled={pending}>
           {pending ? "Menyimpan…" : submitLabel}
         </Button>
-        {state.message && !state.ok && (
-          <p className="text-destructive text-sm @2xl:col-span-4">
-            {state.message}
-          </p>
-        )}
+        {state.message && !state.ok && <p className="text-destructive text-sm @2xl:col-span-4">{state.message}</p>}
       </form>
     </div>
   );

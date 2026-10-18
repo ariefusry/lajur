@@ -43,12 +43,27 @@ export async function GET(request: Request) {
         followUpRemindedAt: null,
         currentStage: { kind: { in: ["WISHLIST", "IN_PROGRESS", "OFFER"] } },
       },
-      select: { id: true, company: true, position: true, nextActionAt: true, followUpRemindedAt: true, user: userSelect },
+      select: {
+        id: true,
+        company: true,
+        position: true,
+        nextActionAt: true,
+        followUpRemindedAt: true,
+        user: userSelect,
+      },
     }),
   ]);
 
-  const perUser = new Map<string, { user: User; events: { event: (typeof events)[number]; kind: ReminderItem["kind"] }[]; followUps: typeof followUpApps }>();
-  const bucket = (user: User) => perUser.get(user.id) ?? perUser.set(user.id, { user, events: [], followUps: [] }).get(user.id)!;
+  const perUser = new Map<
+    string,
+    {
+      user: User;
+      events: { event: (typeof events)[number]; kind: ReminderItem["kind"] }[];
+      followUps: typeof followUpApps;
+    }
+  >();
+  const bucket = (user: User) =>
+    perUser.get(user.id) ?? perUser.set(user.id, { user, events: [], followUps: [] }).get(user.id)!;
   let due = 0;
   for (const e of events) {
     const kind = dueReminder(e, now);
@@ -69,7 +84,10 @@ export async function GET(request: Request) {
     const claimedEvents: typeof userEvents = [];
     for (const item of userEvents) {
       const field = eventField(item.kind);
-      const { count } = await db.event.updateMany({ where: { id: item.event.id, [field]: null }, data: { [field]: now } });
+      const { count } = await db.event.updateMany({
+        where: { id: item.event.id, [field]: null },
+        data: { [field]: now },
+      });
       if (count) claimedEvents.push(item);
     }
     const claimedFollowUps: typeof followUps = [];
@@ -112,7 +130,10 @@ export async function GET(request: Request) {
         await db.event.updateMany({ where: { id: event.id, [field]: now }, data: { [field]: null } });
       }
       for (const a of claimedFollowUps) {
-        await db.application.updateMany({ where: { id: a.id, followUpRemindedAt: now }, data: { followUpRemindedAt: null } });
+        await db.application.updateMany({
+          where: { id: a.id, followUpRemindedAt: now },
+          data: { followUpRemindedAt: null },
+        });
       }
     } else {
       sent++;

@@ -101,7 +101,8 @@
   --bjork-surface-hover: color-mix(in oklch, var(--foreground) 8%, transparent);
   --bjork-field: color-mix(in oklch, var(--card) 85%, white);
   --bjork-shadow-surface:
-    inset 0 7px 14px rgb(255 255 255 / 0.03), inset 0 0.5px 0.5px rgb(255 255 255 / 0.06), 0 14px 20px -6px rgb(0 0 0 / 0.45);
+    inset 0 7px 14px rgb(255 255 255 / 0.03), inset 0 0.5px 0.5px rgb(255 255 255 / 0.06),
+    0 14px 20px -6px rgb(0 0 0 / 0.45);
   --bjork-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.5), inset 0 0.5px 0 rgb(255 255 255 / 0.08);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -145,8 +146,16 @@
     /* Soft colour fields behind the content so the translucent cards have something to frost. */
     background-image:
       radial-gradient(55rem 38rem at 0% -10%, color-mix(in oklch, var(--primary) 13%, transparent), transparent 70%),
-      radial-gradient(45rem 32rem at 100% 10%, color-mix(in oklch, oklch(0.7 0.16 300) 11%, transparent), transparent 70%),
-      radial-gradient(50rem 34rem at 60% 110%, color-mix(in oklch, oklch(0.75 0.13 190) 10%, transparent), transparent 70%);
+      radial-gradient(
+        45rem 32rem at 100% 10%,
+        color-mix(in oklch, oklch(0.7 0.16 300) 11%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        50rem 34rem at 60% 110%,
+        color-mix(in oklch, oklch(0.75 0.13 190) 10%, transparent),
+        transparent 70%
+      );
     background-attachment: fixed;
   }
   html {
@@ -259,7 +268,11 @@
     --space: calc(var(--position) * 2);
     width: var(--size);
     height: var(--size);
-    background: radial-gradient(circle at var(--position) var(--position), white calc(var(--position) / 4), transparent 0)
+    background: radial-gradient(
+        circle at var(--position) var(--position),
+        white calc(var(--position) / 4),
+        transparent 0
+      )
       padding-box;
     background-size: var(--space) var(--space);
     background-repeat: space;

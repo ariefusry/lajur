@@ -15,7 +15,10 @@ export function isPrivateAddress(ip: string): boolean {
   }
   const [a, b] = ip.split(".").map(Number);
   return (
-    a === 0 || a === 10 || a === 127 || a >= 224 ||
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    a >= 224 ||
     (a === 100 && b >= 64 && b <= 127) ||
     (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) ||
@@ -96,7 +99,9 @@ export function jobPostingFromJsonLd(html: string): string {
   const nodes: JsonLd[] = blocks.flatMap(([, json]) => {
     try {
       const data = JSON.parse(json);
-      return (Array.isArray(data) ? data : [data, ...(Array.isArray(data?.["@graph"]) ? data["@graph"] : [])]) as JsonLd[];
+      return (
+        Array.isArray(data) ? data : [data, ...(Array.isArray(data?.["@graph"]) ? data["@graph"] : [])]
+      ) as JsonLd[];
     } catch {
       return [];
     }
@@ -141,7 +146,8 @@ export async function fetchJobPageText(raw: string): Promise<string> {
       url = await assertPublicUrl(new URL(res.headers.get("location")!, url).toString());
       continue;
     }
-    if (!res.ok) throw new FetchPageError(`Situs menolak permintaan (HTTP ${res.status}). Salin teks lowongannya saja.`);
+    if (!res.ok)
+      throw new FetchPageError(`Situs menolak permintaan (HTTP ${res.status}). Salin teks lowongannya saja.`);
     if (!/text\/(html|plain)/.test(res.headers.get("content-type") ?? "")) {
       throw new FetchPageError("Halaman bukan teks/HTML. Salin teks lowongannya saja.");
     }
@@ -151,7 +157,9 @@ export async function fetchJobPageText(raw: string): Promise<string> {
     // Structured JobPosting first (complete even on JS-rendered pages), the page title (often names the
     // company), then the most job-like part of the visible text.
     const title = htmlToText(body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").trim();
-    const visible = htmlToText(body).replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n");
+    const visible = htmlToText(body)
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n\s*\n+/g, "\n");
     return [jobPostingFromJsonLd(body), title && `Judul halaman: ${title}`, focusJobText(visible, 18_000)]
       .filter(Boolean)
       .join("\n\n");

@@ -77,9 +77,14 @@ const CACHE_VERSION = "2";
 
 /** Cache key. The prompt is part of it, so editing EXTRACT_SYSTEM invalidates old extractions automatically. */
 export function hashJobText(normalized: string) {
-  return createHash("sha256").update(CACHE_VERSION).update("\0").update(EXTRACT_SYSTEM).update("\0").update(normalized).digest("hex");
+  return createHash("sha256")
+    .update(CACHE_VERSION)
+    .update("\0")
+    .update(EXTRACT_SYSTEM)
+    .update("\0")
+    .update(normalized)
+    .digest("hex");
 }
-
 
 /**
  * Quotes must be exact substrings of the posting (line breaks vs spaces are forgiven).
@@ -112,5 +117,7 @@ export function verifyQuotes(job: ExtractedJob, text: string): ExtractedJob {
 
 /** True when the model found nothing usable (e.g. a JS-only page or a login wall was fetched instead of the ad). */
 export function isEmptyExtraction(job: ExtractedJob) {
-  return !job.company && !job.position && !job.location && !job.deadline && !job.skills.length && !job.requirements.length;
+  return (
+    !job.company && !job.position && !job.location && !job.deadline && !job.skills.length && !job.requirements.length
+  );
 }

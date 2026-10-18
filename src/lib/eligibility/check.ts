@@ -34,7 +34,9 @@ export function numberForDegree(value: string, degree: Degree | null): number {
 /** Full years at `ref`. Born 29 Feb → birthday counts from 1 Mar in non-leap years. */
 export function ageOn(birth: Date, ref: Date): number {
   const [ry, rm, rd] = toDateInput(ref).split("-").map(Number); // reference day in Jakarta
-  const by = birth.getUTCFullYear(), bm = birth.getUTCMonth() + 1, bd = birth.getUTCDate();
+  const by = birth.getUTCFullYear(),
+    bm = birth.getUTCMonth() + 1,
+    bd = birth.getUTCDate();
   return ry - by - (rm < bm || (rm === bm && rd < bd) ? 1 : 0);
 }
 
@@ -73,7 +75,12 @@ const MAJOR_SYNONYMS = [
   ["perhotelan", "hospitality", "pariwisata", "tourism"],
 ];
 const ALL_MAJORS = /semua jurusan|segala jurusan|seluruh jurusan|all majors|any major/;
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 function majorMatches(profileMajor: string, value: string) {
   const v = ` ${norm(value)} `;
@@ -81,8 +88,9 @@ function majorMatches(profileMajor: string, value: string) {
   // Exact synonym first, else the longest synonym contained in the profile major
   // ("Manajemen Logistik" → logistik group via "manajemen logistik", not the shorter "manajemen").
   const exact = MAJOR_SYNONYMS.find((g) => g.includes(p));
-  const contained = MAJOR_SYNONYMS.flatMap((g) => g.filter((syn) => p.includes(syn)).map((syn) => ({ g, len: syn.length })))
-    .sort((a, b) => b.len - a.len)[0]?.g;
+  const contained = MAJOR_SYNONYMS.flatMap((g) =>
+    g.filter((syn) => p.includes(syn)).map((syn) => ({ g, len: syn.length })),
+  ).sort((a, b) => b.len - a.len)[0]?.g;
   const group = exact ?? contained ?? [p];
   return group.some((syn) => v.includes(` ${syn} `));
 }
@@ -114,7 +122,8 @@ export function checkRequirement(req: RequirementInput, profile: EligibilityProf
     case "MIN_GPA": {
       const min = numberForDegree(req.value, profile.degree);
       if (Number.isNaN(min)) return { status: "UNKNOWN", reason: "Nilai IPK minimal tidak terbaca." };
-      if (profile.gpa === null) return { status: "UNKNOWN", reason: "Isi IPK di Pengaturan untuk mengecek syarat ini." };
+      if (profile.gpa === null)
+        return { status: "UNKNOWN", reason: "Isi IPK di Pengaturan untuk mengecek syarat ini." };
       // Compare in hundredths to dodge float noise (3.00 vs 2.9999…).
       return Math.round(profile.gpa * 100) >= Math.round(min * 100)
         ? { status: "MEETS", reason: `IPK kamu ${profile.gpa.toFixed(2)} ≥ ${min.toFixed(2)}.` }
@@ -123,7 +132,8 @@ export function checkRequirement(req: RequirementInput, profile: EligibilityProf
     case "MAX_AGE": {
       const max = numberForDegree(req.value, profile.degree);
       if (Number.isNaN(max)) return { status: "UNKNOWN", reason: "Batas usia tidak terbaca." };
-      if (!profile.birthDate) return { status: "UNKNOWN", reason: "Isi tanggal lahir di Pengaturan untuk mengecek syarat ini." };
+      if (!profile.birthDate)
+        return { status: "UNKNOWN", reason: "Isi tanggal lahir di Pengaturan untuk mengecek syarat ini." };
       const ref = req.ageReferenceDate ?? today;
       const age = ageOn(profile.birthDate, ref);
       const when = req.ageReferenceDate ? `per ${toDateInput(req.ageReferenceDate)}` : "hari ini";
@@ -136,12 +146,16 @@ export function checkRequirement(req: RequirementInput, profile: EligibilityProf
       if (!profile.major) return { status: "UNKNOWN", reason: "Isi jurusan di Pengaturan untuk mengecek syarat ini." };
       return majorMatches(profile.major, req.value)
         ? { status: "MEETS", reason: `Jurusan ${profile.major} sesuai.` }
-        : { status: "WARNING", reason: `Jurusan ${profile.major} tidak tercantum. Cek apakah termasuk "jurusan terkait".` };
+        : {
+            status: "WARNING",
+            reason: `Jurusan ${profile.major} tidak tercantum. Cek apakah termasuk "jurusan terkait".`,
+          };
     }
     case "MIN_DEGREE": {
       const min = parseMinDegree(req.value);
       if (!min) return { status: "UNKNOWN", reason: "Jenjang pendidikan minimal tidak terbaca." };
-      if (!profile.degree) return { status: "UNKNOWN", reason: "Isi pendidikan terakhir di Pengaturan untuk mengecek syarat ini." };
+      if (!profile.degree)
+        return { status: "UNKNOWN", reason: "Isi pendidikan terakhir di Pengaturan untuk mengecek syarat ini." };
       return DEGREE_RANK[profile.degree] >= DEGREE_RANK[min]
         ? { status: "MEETS", reason: `Pendidikan ${profile.degree} memenuhi minimal ${min}.` }
         : { status: "FAILS", reason: `Pendidikan ${profile.degree} di bawah minimal ${min}.` };

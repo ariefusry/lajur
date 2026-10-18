@@ -61,7 +61,7 @@ export function ApplicationForm({
       <Label htmlFor={name}>{label}</Label>
       {input}
       {evidence && name in evidence && defaults[name] && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {evidence[name] ? (
             <>
               Bukti: <q className="italic">{evidence[name]}</q>
@@ -72,7 +72,7 @@ export function ApplicationForm({
         </p>
       )}
       {err(name) && (
-        <p id={`${name}-error`} className="text-xs text-destructive">
+        <p id={`${name}-error`} className="text-destructive text-xs">
           {err(name)}
         </p>
       )}
@@ -130,18 +130,31 @@ export function ApplicationForm({
         "Link lowongan",
         <Input {...a11y("url")} type="url" placeholder="https://" defaultValue={defaults.url} />,
       )}
-      {field("deadline", "Deadline pendaftaran", <Input {...a11y("deadline")} type="date" defaultValue={defaults.deadline} />)}
-      {field("appliedAt", "Tanggal melamar", <Input {...a11y("appliedAt")} type="date" defaultValue={defaults.appliedAt} />)}
+      {field(
+        "deadline",
+        "Deadline pendaftaran",
+        <Input {...a11y("deadline")} type="date" defaultValue={defaults.deadline} />,
+      )}
+      {field(
+        "appliedAt",
+        "Tanggal melamar",
+        <Input {...a11y("appliedAt")} type="date" defaultValue={defaults.appliedAt} />,
+      )}
       {field(
         "expectedSalary",
         "Gaji yang diharapkan (Rp/bulan)",
-        <Input {...a11y("expectedSalary")} inputMode="numeric" placeholder="8000000" defaultValue={defaults.expectedSalary} />,
+        <Input
+          {...a11y("expectedSalary")}
+          inputMode="numeric"
+          placeholder="8000000"
+          defaultValue={defaults.expectedSalary}
+        />,
       )}
       <div className={span}>
         {field("notes", "Catatan", <Textarea {...a11y("notes")} rows={4} defaultValue={defaults.notes} />)}
       </div>
       {children && <div className={span}>{children}</div>}
-      {state.message && !state.ok && <p className={cn("text-sm text-destructive", span)}>{state.message}</p>}
+      {state.message && !state.ok && <p className={cn("text-destructive text-sm", span)}>{state.message}</p>}
       <div className={span}>
         <Button type="submit" disabled={pending}>
           {pending ? "Menyimpan…" : submitLabel}

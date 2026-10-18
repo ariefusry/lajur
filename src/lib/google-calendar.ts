@@ -10,7 +10,13 @@ const day = (d: Date) => toDateInput(d).replaceAll("-", ""); // Jakarta calendar
  * "Add to Google Calendar" link (prefilled event form, nothing is sent until the user saves it there).
  * Timed events last one hour; all-day events (deadlines) cover the Jakarta date of `start`.
  */
-export function googleCalendarUrl(e: { title: string; start: Date; allDay?: boolean; details?: string; location?: string | null }) {
+export function googleCalendarUrl(e: {
+  title: string;
+  start: Date;
+  allDay?: boolean;
+  details?: string;
+  location?: string | null;
+}) {
   const dates = e.allDay
     ? `${day(e.start)}/${day(new Date(e.start.getTime() + DAY_MS))}`
     : `${stamp(e.start)}/${stamp(new Date(e.start.getTime() + HOUR_MS))}`;

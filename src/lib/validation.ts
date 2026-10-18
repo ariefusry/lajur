@@ -5,7 +5,12 @@ import { fromDateInput, fromDateTimeInput } from "@/lib/dates";
 
 // FormData gives strings; empty optional fields become null.
 const optionalText = (max: number) =>
-  z.string().trim().max(max, `Maksimal ${max} karakter`).default("").transform((v) => v || null);
+  z
+    .string()
+    .trim()
+    .max(max, `Maksimal ${max} karakter`)
+    .default("")
+    .transform((v) => v || null);
 
 const optionalDate = z
   .string()
@@ -30,7 +35,10 @@ export const applicationSchema = z.object({
   position: z.string().trim().min(1, "Posisi wajib diisi").max(200),
   source: z.enum(JobSource, "Pilih sumber lowongan"),
   currentStageId: z.string().min(1, "Pilih tahap"),
-  resumeId: z.string().default("").transform((v) => v || null),
+  resumeId: z
+    .string()
+    .default("")
+    .transform((v) => v || null),
   url: z
     .string()
     .trim()
@@ -50,7 +58,6 @@ export const applicationSchema = z.object({
   notes: optionalText(10_000),
 });
 
-
 export const profileSchema = z.object({
   gpa: z
     .string()
@@ -61,7 +68,10 @@ export const profileSchema = z.object({
     .transform((v) => (v ? v : null)),
   birthDate: optionalDate,
   major: optionalText(100),
-  degree: z.union([z.literal(""), z.enum(Degree)]).default("").transform((v) => v || null),
+  degree: z
+    .union([z.literal(""), z.enum(Degree)])
+    .default("")
+    .transform((v) => v || null),
   domicile: optionalText(100),
 });
 
@@ -105,7 +115,10 @@ export const STAGE_RESULT_LABELS: Record<StageResult, string> = {
 };
 
 export const stageHistorySchema = z.object({
-  result: z.union([z.literal(""), z.enum(StageResult)]).default("").transform((v) => v || null),
+  result: z
+    .union([z.literal(""), z.enum(StageResult)])
+    .default("")
+    .transform((v) => v || null),
   notes: optionalText(10_000),
 });
 

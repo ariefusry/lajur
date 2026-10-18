@@ -18,14 +18,24 @@ describe("verifySkillGap", () => {
       ["Pivot Table", "Docker", "Kubernetes"],
       {
         results: [
-          { skill: "pivot table", inResume: true, suggestion: "Sebutkan contoh laporannya.", quote: "laporan pivot di  spreadsheet" },
+          {
+            skill: "pivot table",
+            inResume: true,
+            suggestion: "Sebutkan contoh laporannya.",
+            quote: "laporan pivot di  spreadsheet",
+          },
           { skill: "Docker", inResume: true, suggestion: "Tambahkan proyek.", quote: "Docker compose untuk 5 layanan" }, // invented
         ],
       },
       cv,
     );
     expect(rows).toEqual([
-      { skill: "Pivot Table", inResume: true, suggestion: "Sebutkan contoh laporannya.", sourceQuote: "laporan pivot di  spreadsheet" },
+      {
+        skill: "Pivot Table",
+        inResume: true,
+        suggestion: "Sebutkan contoh laporannya.",
+        sourceQuote: "laporan pivot di  spreadsheet",
+      },
       { skill: "Docker", inResume: false, suggestion: "Tambahkan proyek.", sourceQuote: null },
       { skill: "Kubernetes", inResume: false, suggestion: null, sourceQuote: null }, // no answer from the model
     ]);

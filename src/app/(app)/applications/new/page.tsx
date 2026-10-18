@@ -9,15 +9,15 @@ import { getEligibilityProfile } from "@/lib/eligibility/profile";
 
 export const metadata = { title: "Lamaran baru · Lajur" };
 
-export default async function NewApplicationPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ stage?: string }>;
-}) {
+export default async function NewApplicationPage({ searchParams }: { searchParams: Promise<{ stage?: string }> }) {
   const user = await requireUser();
   const [stages, resumes, profile, aiConsent] = await Promise.all([
     db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" }, select: { id: true, name: true } }),
-    db.resume.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, select: { id: true, versionName: true } }),
+    db.resume.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, versionName: true },
+    }),
     getEligibilityProfile(user.id),
     hasAiConsent(user.id),
   ]);
@@ -26,7 +26,11 @@ export default async function NewApplicationPage({
   if (stages.length === 0) {
     return (
       <p className="text-sm">
-        Belum ada tahap seleksi. Pilih template dulu di <Link href="/settings" className="underline">Pengaturan</Link>.
+        Belum ada tahap seleksi. Pilih template dulu di{" "}
+        <Link href="/settings" className="underline">
+          Pengaturan
+        </Link>
+        .
       </p>
     );
   }

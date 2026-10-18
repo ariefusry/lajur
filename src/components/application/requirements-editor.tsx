@@ -52,7 +52,11 @@ export function RequirementsEditor({
   const draft: Draft = {
     jobPostingText: text,
     requirements: rows.map(({ type, value, sourceQuote, ageReferenceDate, editedByUser }) => ({
-      type, value, sourceQuote, ageReferenceDate, editedByUser,
+      type,
+      value,
+      sourceQuote,
+      ageReferenceDate,
+      editedByUser,
     })),
   };
 
@@ -63,17 +67,21 @@ export function RequirementsEditor({
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Syarat dari lowongan</h3>
         {rows.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Tidak ada syarat administratif yang ditemukan.</p>
+          <p className="text-muted-foreground text-xs">Tidak ada syarat administratif yang ditemukan.</p>
         ) : (
           <ul className="space-y-2">
             {rows.map((r) => {
               const check = checkRequirement(
-                { type: r.type, value: r.value, ageReferenceDate: r.ageReferenceDate ? new Date(`${r.ageReferenceDate}T00:00:00Z`) : null },
+                {
+                  type: r.type,
+                  value: r.value,
+                  ageReferenceDate: r.ageReferenceDate ? new Date(`${r.ageReferenceDate}T00:00:00Z`) : null,
+                },
                 eligibilityProfile,
                 new Date(),
               );
               return (
-                <li key={r.key} className="space-y-1.5 rounded-lg border bg-card p-2">
+                <li key={r.key} className="bg-card space-y-1.5 rounded-lg border p-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <Select
                       value={r.type}
@@ -100,7 +108,7 @@ export function RequirementsEditor({
                       <X />
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Bukti: <q className="italic">{r.sourceQuote}</q>
                     {r.ageReferenceDate && ` · usia dihitung per ${r.ageReferenceDate}`}
                   </p>
@@ -122,7 +130,7 @@ export function RequirementsEditor({
               </Badge>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">Cocokkan skill ini dengan CV-mu lewat &ldquo;Cek CV&rdquo;.</p>
+          <p className="text-muted-foreground text-xs">Cocokkan skill ini dengan CV-mu lewat &ldquo;Cek CV&rdquo;.</p>
         </div>
       )}
     </div>

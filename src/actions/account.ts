@@ -59,7 +59,9 @@ export async function exportApplicationsCsv(): Promise<{ filename: string; csv: 
       toDateInput(a.nextActionAt),
       toDateInput(a.lastFollowUpAt),
       a.history
-        .map((h) => `${h.stage.name} (${formatDate(h.enteredAt)}${h.result ? `, ${STAGE_RESULT_LABELS[h.result]}` : ""})`)
+        .map(
+          (h) => `${h.stage.name} (${formatDate(h.enteredAt)}${h.result ? `, ${STAGE_RESULT_LABELS[h.result]}` : ""})`,
+        )
         .join(" → "),
       a.events.map((e) => `${EVENT_TYPE_LABELS[e.type]}: ${formatDateTime(e.startsAt)}`).join("; "),
       a.notes,

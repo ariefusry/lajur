@@ -3,7 +3,12 @@
 import { LoaderCircle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CV_CHECK_PRIVACY_NOTE, CvCheckResults, requestCvCheck, type CvCheckRow } from "@/components/application/cv-check";
+import {
+  CV_CHECK_PRIVACY_NOTE,
+  CvCheckResults,
+  requestCvCheck,
+  type CvCheckRow,
+} from "@/components/application/cv-check";
 import { ShinyButton } from "@/components/ui/shiny-button";
 import type { CvTweak } from "@/lib/ai/cv-tweaks";
 
@@ -38,7 +43,7 @@ export function CvCheckSection({
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="font-medium">Cek CV</h2>
-          <p className="text-xs text-muted-foreground">{CV_CHECK_PRIVACY_NOTE}</p>
+          <p className="text-muted-foreground text-xs">{CV_CHECK_PRIVACY_NOTE}</p>
         </div>
         {!blocker && !readOnly && (
           <ShinyButton size="sm" onClick={check} disabled={pending}>
@@ -51,7 +56,7 @@ export function CvCheckSection({
       {checked ? (
         <CvCheckResults rows={gaps} tweaks={tweaks} />
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {blocker ??
             (readOnly
               ? "Cek CV tidak tersedia di mode demo."

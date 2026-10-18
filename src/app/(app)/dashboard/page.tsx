@@ -5,7 +5,15 @@ import { Card, Stat, pct } from "@/components/dashboard/cards";
 import { Button } from "@/components/ui/button";
 import { ShinyButton } from "@/components/ui/shiny-button";
 import { requireUser } from "@/lib/auth";
-import { appFactsFor, computeDashboard, GHOSTED_DAYS, MIN_SAMPLE, QUIET_DAYS, rate, weeklyCounts } from "@/lib/dashboard";
+import {
+  appFactsFor,
+  computeDashboard,
+  GHOSTED_DAYS,
+  MIN_SAMPLE,
+  QUIET_DAYS,
+  rate,
+  weeklyCounts,
+} from "@/lib/dashboard";
 import { db } from "@/lib/db";
 import { isFollowUpDue } from "@/lib/follow-up";
 import { daysUntil, formatDate, formatDateTime, fromDateInput, toDateInput } from "@/lib/dates";
@@ -142,7 +150,9 @@ export default async function DashboardPage() {
     })),
     // Follow-ups scheduled for the coming days (due ones are in the follow-up card instead).
     ...withFacts
-      .filter((a) => isOpen(a.kind) && a.nextActionAt && !isFollowUpDue(a.nextActionAt, now) && a.nextActionAt < horizon)
+      .filter(
+        (a) => isOpen(a.kind) && a.nextActionAt && !isFollowUpDue(a.nextActionAt, now) && a.nextActionAt < horizon,
+      )
       .map((a) => ({
         key: `f${a.id}`,
         appId: a.id,
@@ -210,10 +220,30 @@ export default async function DashboardPage() {
       </div>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Ringkasan">
-        <Stat label="Lamaran minggu ini" value={thisWeek} note={`minggu lalu: ${lastWeek}`} href="/applications?sort=applied" />
-        <Stat label="Response rate" value={pct(rate(o.responded, o.applied))} note={outOf(o.responded, o.applied)} href="/analytics" />
-        <Stat label="Interview rate" value={pct(rate(o.interviewed, o.applied))} note={outOf(o.interviewed, o.applied)} href="/analytics" />
-        <Stat label="Menunggu respons" value={o.waiting} note={`dari ${activeLive} lamaran aktif`} href="/applications?sort=applied" />
+        <Stat
+          label="Lamaran minggu ini"
+          value={thisWeek}
+          note={`minggu lalu: ${lastWeek}`}
+          href="/applications?sort=applied"
+        />
+        <Stat
+          label="Response rate"
+          value={pct(rate(o.responded, o.applied))}
+          note={outOf(o.responded, o.applied)}
+          href="/analytics"
+        />
+        <Stat
+          label="Interview rate"
+          value={pct(rate(o.interviewed, o.applied))}
+          note={outOf(o.interviewed, o.applied)}
+          href="/analytics"
+        />
+        <Stat
+          label="Menunggu respons"
+          value={o.waiting}
+          note={`dari ${activeLive} lamaran aktif`}
+          href="/applications?sort=applied"
+        />
       </section>
 
       {/* What needs attention: dates coming up, and applications going quiet before they turn ghosted. */}
@@ -228,7 +258,9 @@ export default async function DashboardPage() {
           }
         >
           {upcoming.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Tidak ada jadwal atau deadline dalam {AHEAD_DAYS} hari ke depan.</p>
+            <p className="text-muted-foreground text-sm">
+              Tidak ada jadwal atau deadline dalam {AHEAD_DAYS} hari ke depan.
+            </p>
           ) : (
             <ul className="-mx-5 -mb-5 divide-y border-t">
               {upcoming.map((u) => {
@@ -254,7 +286,12 @@ export default async function DashboardPage() {
                         {days <= 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`}
                       </span>
                     </Link>
-                    <AddToCalendar title={`${u.what} · ${u.title}`} start={u.at} allDay={!u.withTime} location={u.location} />
+                    <AddToCalendar
+                      title={`${u.what} · ${u.title}`}
+                      start={u.at}
+                      allDay={!u.withTime}
+                      location={u.location}
+                    />
                   </li>
                 );
               })}
@@ -318,7 +355,11 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-3">
-        <Card title="Pipeline" description="Posisi semua lamaran saat ini. Klik untuk melihat daftarnya." className="lg:col-span-2">
+        <Card
+          title="Pipeline"
+          description="Posisi semua lamaran saat ini. Klik untuk melihat daftarnya."
+          className="lg:col-span-2"
+        >
           <ul className="space-y-1">
             {pipeline.map((p) => (
               <li key={p.key}>
@@ -347,7 +388,11 @@ export default async function DashboardPage() {
 
         <div className="flex flex-col gap-4">
           <Card title="Lamaran per minggu" description={`${WEEKS} minggu terakhir, menurut tanggal melamar.`}>
-            <div className="flex h-24 items-end gap-1" role="img" aria-label={`Lamaran per minggu: ${weekly.join(", ")}`}>
+            <div
+              className="flex h-24 items-end gap-1"
+              role="img"
+              aria-label={`Lamaran per minggu: ${weekly.join(", ")}`}
+            >
               {weekly.map((n, i) => (
                 <span
                   key={i}

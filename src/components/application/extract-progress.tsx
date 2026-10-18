@@ -20,14 +20,14 @@ const HEADLINE: Record<Status, string> = {
  */
 export function ExtractProgress({ status, elapsed }: { status: Status; elapsed: number }) {
   return (
-    <div className="space-y-1.5 rounded-xl border bg-card p-3">
+    <div className="bg-card space-y-1.5 rounded-xl border p-3">
       <p className="flex items-center gap-2 text-sm font-medium">
         <LoaderCircle className="size-4 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden />
         {/* Only the step is announced, not the ticking seconds. */}
         <span aria-live="polite" title={HEADLINE[status]} className="min-w-0 truncate">
           {HEADLINE[status]}
         </span>
-        <span className="ml-auto shrink-0 whitespace-nowrap text-xs font-normal text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground ml-auto shrink-0 text-xs font-normal whitespace-nowrap tabular-nums">
           {elapsed} dtk
         </span>
       </p>
