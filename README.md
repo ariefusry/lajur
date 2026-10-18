@@ -164,6 +164,8 @@ Lengkapi `.env.local` sesuai [`.env.example`](.env.example): Google OAuth (`AUTH
 - Project terhubung ke repo GitHub: push ke `master` → deploy produksi. Region fungsi `sin1`, sama dengan database.
 - Build command (`vercel.json`): `prisma generate && prisma migrate deploy && next build`, jadi migrasi baru otomatis diterapkan.
 - Env produksi memakai branch Neon `production`. `DEMO_READ_ONLY=true` membuat akun demo hanya bisa dilihat: semua server action dan route penulisan menolak, dan fitur AI dimatikan untuk demo.
+- Akun demo di-reset setiap hari pukul 06.00 WIB oleh Vercel Cron (`/api/cron/demo-reset`, butuh `CRON_SECRET`). Isinya dibuat ulang dengan tanggal relatif terhadap hari itu, jadi demo selalu terlihat baru. Baris user-nya dipertahankan, jadi sesi pengunjung tidak terputus. Logikanya sama dengan `pnpm db:seed` (`src/lib/demo-reset.ts`).
+- `vercel env run` tidak bisa membaca `DATABASE_URL` produksi (variabel sensitif), jadi perintah DB dari laptop selalu mengenai database di `.env.local`. Untuk menulis ke produksi, pakai cron atau build Vercel.
 - Redirect URI Google: `https://<domain>/api/auth/callback/google`.
 
 ## Keamanan dan privasi

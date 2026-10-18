@@ -2,5 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["sin1"],
   "buildCommand": "prisma generate && prisma migrate deploy && next build",
-  "crons": [{ "path": "/api/cron/reminders", "schedule": "0 0 * * *" }]
+  "crons": [
+    { "path": "/api/cron/reminders", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/demo-reset", "schedule": "0 23 * * *" }
+  ]
 }
