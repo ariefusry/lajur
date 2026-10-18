@@ -46,6 +46,8 @@ export function Select({
   ...triggerProps
 }: SelectProps) {
   const [inner, setInner] = useState(defaultValue);
+  // Set when the browser rejects the form because this required field is empty; cleared by choosing a value.
+  const [missing, setMissing] = useState(false);
   const current = value ?? inner;
   const hasEmptyOption = options.some((o) => o.value === "");
 
@@ -56,12 +58,14 @@ export function Select({
         onValueChange={(v) => {
           const real = v === EMPTY ? "" : v;
           setInner(real);
+          setMissing(false);
           onValueChange?.(real);
         }}
         disabled={disabled}
       >
         <SelectPrimitive.Trigger
           {...triggerProps}
+          aria-invalid={triggerProps["aria-invalid"] || (missing && required) || undefined}
           className={cn(
             selectClass,
             "data-placeholder:text-muted-foreground flex items-center justify-between gap-2 text-left disabled:opacity-50",
@@ -106,6 +110,7 @@ export function Select({
           value={current}
           required={required}
           onChange={() => {}}
+          onInvalid={() => setMissing(true)}
           tabIndex={-1}
           aria-hidden
           className="pointer-events-none absolute size-px opacity-0"
