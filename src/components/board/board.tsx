@@ -130,7 +130,7 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
     >
       <div
         ref={scroller}
-        className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:snap-none md:px-0"
+        className="-mx-4 -mt-1 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-4 md:-mx-1 md:snap-none md:px-1"
         style={moreRight ? { maskImage: "linear-gradient(to right, #000 calc(100% - 3rem), transparent)" } : undefined}
       >
         {stages.map((stage) => (

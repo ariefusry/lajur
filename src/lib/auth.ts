@@ -19,9 +19,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
-    // Default pipeline on first login; user can switch template in Settings.
+    // Generic pipeline on first login (fits any field); user can switch to BUMN/Bank, Retail, CPNS or Startup in Settings.
     async createUser({ user }) {
-      if (user.id) await db.stage.createMany({ data: templateStageRows("BUMN", user.id) });
+      if (user.id) await db.stage.createMany({ data: templateStageRows("UMUM", user.id) });
     },
   },
 });
