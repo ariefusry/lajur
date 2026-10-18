@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
-import { deleteApplication, deleteRequirement, updateApplication } from "@/actions/applications";
+import { deleteRequirement, updateApplication } from "@/actions/applications";
 import { createEvent, deleteEvent, updateEvent, updateStageHistory } from "@/actions/events";
 import { ApplicationForm } from "@/components/application/application-form";
 import { DeleteApplicationButton } from "@/components/application/delete-button";
@@ -230,7 +230,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
             />
           </section>
 
-          <DeleteApplicationButton action={deleteApplication.bind(null, app.id)} />
+          <DeleteApplicationButton id={app.id} />
         </div>
       </div>
     </div>

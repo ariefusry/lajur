@@ -66,4 +66,16 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await page.getByRole("button", { name: "Ya, hapus" }).click(); // inline confirmation
   await expect(page).toHaveURL(/\/board$/);
   await expect(page.getByText(COMPANY)).toHaveCount(0);
+
+  // "Urungkan" brings it back, still in Administrasi, with its history
+  await page.getByRole("button", { name: "Urungkan" }).click();
+  await expect(page.getByRole("region", { name: "Administrasi" }).getByText(COMPANY)).toBeVisible();
+  await page.goto(detailUrl);
+  await expect(timeline.getByText("Wishlist")).toBeVisible();
+
+  // Delete for real (the undo toast is ignored)
+  await page.getByRole("button", { name: "Hapus lamaran" }).click();
+  await page.getByRole("button", { name: "Ya, hapus" }).click();
+  await expect(page).toHaveURL(/\/board$/);
+  await expect(page.getByText(COMPANY)).toHaveCount(0);
 });

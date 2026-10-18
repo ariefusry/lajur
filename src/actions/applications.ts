@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
+import { applicationSnapshotSchema, type ApplicationSnapshot } from "@/lib/application-snapshot";
 import { applicationSchema, draftSchema, type FormState } from "@/lib/validation";
 
 function parse(formData: FormData) {
@@ -83,12 +84,81 @@ export async function updateApplication(id: string, _: FormState, formData: Form
   return { ok: true, message: "Perubahan disimpan." };
 }
 
-export async function deleteApplication(id: string) {
+/** Deletes the application and returns a snapshot so the UI can offer "Urungkan" (see restoreApplication). */
+export async function deleteApplication(
+  id: string,
+): Promise<{ ok: true; snapshot: ApplicationSnapshot } | { ok: false; message: string }> {
   const user = await requireUser();
-  if (isReadOnly(user)) return;
-  await db.application.deleteMany({ where: { id, userId: user.id } });
+  if (isReadOnly(user)) return { ok: false, message: DEMO_READ_ONLY_MESSAGE };
+  const app = await db.application.findFirst({
+    where: { id, userId: user.id },
+    include: { history: true, events: true, requirements: true, skillGaps: true },
+  });
+  if (!app) return { ok: false, message: "Lamaran tidak ditemukan." };
+  await db.application.delete({ where: { id: app.id } });
   revalidatePath("/board");
-  redirect("/board");
+  return {
+    ok: true,
+    snapshot: {
+      ...app,
+      history: app.history.map(({ stageId, enteredAt, result, notes }) => ({ stageId, enteredAt, result, notes })),
+      events: app.events.map(({ type, startsAt, locationOrUrl, remindedH3At, remindedH1At }) => ({
+        type,
+        startsAt,
+        locationOrUrl,
+        remindedH3At,
+        remindedH1At,
+      })),
+      requirements: app.requirements.map(({ type, value, sourceQuote, status, reason, editedByUser }) => ({
+        type,
+        value,
+        sourceQuote,
+        status,
+        reason,
+        editedByUser,
+      })),
+      skillGaps: app.skillGaps.map(({ skill, inResume, suggestion, sourceQuote }) => ({
+        skill,
+        inResume,
+        suggestion,
+        sourceQuote,
+      })),
+    },
+  };
+}
+
+/** "Urungkan": recreate a just-deleted application (same id) from its snapshot, for the logged-in user only. */
+export async function restoreApplication(input: unknown): Promise<{ ok: boolean; message: string }> {
+  const user = await requireUser();
+  if (isReadOnly(user)) return { ok: false, message: DEMO_READ_ONLY_MESSAGE };
+  const parsed = applicationSnapshotSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Data pemulihan tidak valid." };
+  const { history, events, requirements, skillGaps, resumeId, ...app } = parsed.data;
+
+  const stageIds = [...new Set([app.currentStageId, ...history.map((h) => h.stageId)])];
+  if ((await db.stage.count({ where: { id: { in: stageIds }, userId: user.id } })) !== stageIds.length) {
+    return { ok: false, message: "Tahap seleksinya sudah berubah, lamaran tidak bisa dipulihkan." };
+  }
+  // The CV may have been deleted in the meantime: restore without the link rather than fail.
+  const resumeStillThere = resumeId ? (await db.resume.count({ where: { id: resumeId, userId: user.id } })) > 0 : false;
+
+  try {
+    await db.application.create({
+      data: {
+        ...app,
+        userId: user.id,
+        resumeId: resumeStillThere ? resumeId : null,
+        history: { create: history },
+        events: { create: events },
+        requirements: { create: requirements },
+        skillGaps: { create: skillGaps },
+      },
+    });
+  } catch {
+    return { ok: false, message: "Gagal memulihkan lamaran (mungkin sudah dipulihkan)." };
+  }
+  revalidatePath("/board");
+  return { ok: true, message: "Lamaran dipulihkan." };
 }
 
 /** Kanban drop: move to another stage and record history atomically. */

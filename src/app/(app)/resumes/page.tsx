@@ -37,7 +37,7 @@ export default async function ResumesPage() {
         ) : (
           <ul className="divide-y rounded-xl border bg-card">
             {resumes.map((r) => (
-              <li key={r.id} className="flex items-center gap-3 p-3">
+              <li key={r.id} className="flex flex-wrap items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{r.versionName}</p>
                   <p className="text-muted-foreground text-xs">

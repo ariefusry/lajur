@@ -54,6 +54,12 @@ function usePrefersReducedMotion() {
 
 export function Board({ stages, initialApplications }: { stages: Stage[]; initialApplications: Card[] }) {
   const [cards, setCards] = useState(initialApplications);
+  // Adopt fresh server data (after a refresh, undo or revalidation) instead of keeping the first render's list.
+  const [seen, setSeen] = useState(initialApplications);
+  if (initialApplications !== seen) {
+    setSeen(initialApplications);
+    setCards(initialApplications);
+  }
   const [activeId, setActiveId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const reducedMotion = usePrefersReducedMotion();
