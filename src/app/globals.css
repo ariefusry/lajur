@@ -212,7 +212,7 @@
     font-weight: 500;
     white-space: nowrap;
     border: 1px solid transparent;
-    border-radius: 999px;
+    border-radius: var(--radius-lg); /* same 12 px as every other control */
     color: var(--shiny-cta-fg);
     background:
       linear-gradient(var(--shiny-cta-bg), var(--shiny-cta-bg)) padding-box,
