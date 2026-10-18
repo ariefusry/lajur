@@ -185,6 +185,12 @@ describe("aiEnabled / model config", () => {
     expect((await load({ LLM_PRIMARY: "", LLM_FALLBACK: "" })).aiEnabled()).toBe(false);
     expect((await load({ LLM_PRIMARY: "cloudflare", LLM_FALLBACK: "", CLOUDFLARE_ACCOUNT_ID: "" })).aiEnabled()).toBe(false);
   });
+  it("ignores a BOM or stray whitespace around env values", async () => {
+    const { generateStructured } = await load({ LLM_PRIMARY: " groq\n", GROQ_MODEL: `﻿${GROQ}` });
+    generateText.mockResolvedValueOnce(answer({ ok: true }));
+    await expect(generateStructured(args)).resolves.toMatchObject({ model: `groq:${GROQ}` });
+    expect(calls()).toEqual([`groq:${GROQ}:low`]);
+  });
   it("skips a provider whose key is missing", async () => {
     const { generateStructured } = await load({ GROQ_API_KEY: "" });
     generateText.mockResolvedValueOnce(answer({ ok: true }));

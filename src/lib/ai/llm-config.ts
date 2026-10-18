@@ -16,6 +16,9 @@ const DEV_ONLY: readonly ProviderName[] = ["nvidia", "openrouter"];
 
 type Env = Record<string, string | undefined>;
 
+// Values piped in by some shells arrive with a BOM or stray whitespace (a BOM in GROQ_MODEL made Groq answer 404).
+const clean = (env: Env): Env => Object.fromEntries(Object.entries(env).map(([k, v]) => [k, v?.trim()]));
+
 type ProviderConfig = {
   apiKey: string | undefined;
   baseURL: string | null; // null: misconfigured, provider disabled
@@ -35,7 +38,8 @@ function nvidiaBaseUrl(raw: string | undefined) {
   }
 }
 
-export function providerConfig(name: ProviderName, env: Env = process.env): ProviderConfig {
+export function providerConfig(name: ProviderName, rawEnv: Env = process.env): ProviderConfig {
+  const env = clean(rawEnv);
   switch (name) {
     case "groq":
       return {
@@ -105,7 +109,8 @@ export function modelRef(provider: ProviderName, model: string, env: Env = proce
  * The models to try, in order: every model of LLM_PRIMARY, then those of LLM_FALLBACK. Providers without a key
  * are skipped. Throws LlmConfigError when production is pointed at a dev-only provider.
  */
-export function modelChain(env: Env = process.env): ModelRef[] {
+export function modelChain(rawEnv: Env = process.env): ModelRef[] {
+  const env = clean(rawEnv);
   const refs: ModelRef[] = [];
   for (const raw of [env.LLM_PRIMARY, env.LLM_FALLBACK]) {
     if (!raw) continue;

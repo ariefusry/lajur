@@ -5,12 +5,13 @@ import type { ExtractEvent } from "@/lib/ai/extract-events";
 
 type Status = Extract<ExtractEvent, { type: "status" }>["status"];
 
+// Short enough for one line in the 26rem panel.
 const HEADLINE: Record<Status, string> = {
   fetching: "Mengambil halaman lowongan…",
   reading: "AI sedang membaca lowongan…",
-  retrying: "Hasil belum rapi, AI membaca ulang lebih teliti…",
-  fallback: "Server AI utama sibuk, pindah ke server cadangan…",
-  verifying: "Mencocokkan kutipan dengan teks lowongan…",
+  retrying: "AI membaca ulang lebih teliti…",
+  fallback: "Mencoba model AI cadangan…",
+  verifying: "Mencocokkan kutipan…",
 };
 
 /**
@@ -21,12 +22,16 @@ export function AiFindings({ status, elapsed }: { status: Status; elapsed: numbe
   return (
     <div className="space-y-1.5 rounded-xl border bg-card p-3">
       <p className="flex items-center gap-2 text-sm font-medium">
-        <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
+        <LoaderCircle className="size-4 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden />
         {/* Only the step is announced, not the ticking seconds. */}
-        <span aria-live="polite">{HEADLINE[status]}</span>
-        <span className="ml-auto text-xs font-normal text-muted-foreground tabular-nums">{elapsed} dtk</span>
+        <span aria-live="polite" title={HEADLINE[status]} className="min-w-0 truncate">
+          {HEADLINE[status]}
+        </span>
+        <span className="ml-auto shrink-0 whitespace-nowrap text-xs font-normal text-muted-foreground tabular-nums">
+          {elapsed} dtk
+        </span>
       </p>
-      <p className="text-muted-foreground text-xs">Hasilnya langsung diisikan ke form sebagai draf untuk kamu tinjau.</p>
+      <p className="text-muted-foreground truncate text-xs">Hasilnya langsung diisikan ke form sebagai draf.</p>
     </div>
   );
 }
