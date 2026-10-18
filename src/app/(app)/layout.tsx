@@ -1,4 +1,4 @@
-import { BarChart3, LogOut, Settings } from "lucide-react";
+import { BarChart3, Heart, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { NavLinks, TabBar } from "@/components/nav-links";
@@ -28,6 +28,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <p className="text-muted-foreground truncate text-xs" title={user.email ?? ""}>
             {user.name ?? user.email}
           </p>
+          <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+            <Link href="/donasi">
+              <Heart className="text-rose-500" /> Dukung Lajur
+            </Link>
+          </Button>
           <ThemeToggle withLabel />
           <form action={signOutAction}>
             <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
@@ -43,6 +48,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Logo markClassName="size-5" />
         </Link>
         <div className="flex items-center">
+          <Button asChild variant="ghost" size="icon-sm" aria-label="Dukung Lajur" className="hover:text-rose-500">
+            <Link href="/donasi">
+              <Heart />
+            </Link>
+          </Button>
           <Button asChild variant="ghost" size="icon-sm" aria-label="Analytics">
             <Link href="/analytics">
               <BarChart3 />

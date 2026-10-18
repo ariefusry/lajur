@@ -300,9 +300,14 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
           <span className="inline-flex items-center gap-2">
             <Logo markClassName="size-4" /> · dibuat untuk pencari kerja di Indonesia
           </span>
-          <Link href="/login" className="hover:text-foreground">
-            Masuk
-          </Link>
+          <span className="flex gap-4">
+            <Link href="/donasi" className="hover:text-foreground">
+              Donasi
+            </Link>
+            <Link href="/login" className="hover:text-foreground">
+              Masuk
+            </Link>
+          </span>
         </div>
       </footer>
     </div>
