@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_REDACTED_CHARS, redact } from "./redact";
+import { MAX_REDACTED_CHARS, redact, redactPII, rehydrate } from "./redact";
 
 const CV = `Rina Kartika Sari
 rina.kartika+cv@contohmail.com | +62 812-3456-7890 | 0857 1234 5678 | 62-813.9876.5432
@@ -28,7 +28,7 @@ Lajur - tracker lamaran kerja (Next.js, Prisma), demo di lajur.vercel.app
 REFERENSI
 Budi Santoso - 0811 2222 3333`;
 
-const out = redact(CV, "Rina Kartika Sari");
+const { text: out, map } = redact(CV, { name: "Rina Kartika Sari" });
 
 describe("redact", () => {
   it("leaves no email, phone number, URL or ID number", () => {
@@ -40,7 +40,7 @@ describe("redact", () => {
 
   it("leaves no part of the owner's name, in any case", () => {
     expect(out).not.toMatch(/rina|kartika|sari/i);
-    const lower = redact("KEAHLIAN\nSQL (rina) dan RINA-style", "Rina");
+    const lower = redact("KEAHLIAN\nSQL (rina) dan RINA-style", { name: "Rina" }).text;
     expect(lower).not.toMatch(/rina/i);
   });
 
@@ -59,16 +59,47 @@ describe("redact", () => {
 
   it("keeps years and short numbers", () => {
     expect(out).toContain("2024 - 2025");
-    expect(redact("PENGALAMAN\nMenangani 1200 transaksi per hari", null)).toContain("1200");
+    expect(redact("PENGALAMAN\nMenangani 1200 transaksi per hari").text).toContain("1200");
   });
 
   it("falls back to the whole (scrubbed) text when there are no headings", () => {
-    const flat = redact("Budi Santoso\nbudi@mail.com\nPython, SQL, Excel\nAnalis data 2 tahun", "Budi Santoso");
+    const flat = redact("Budi Santoso\nbudi@mail.com\nPython, SQL, Excel\nAnalis data 2 tahun", { name: "Budi Santoso" }).text;
     expect(flat).toContain("Python, SQL, Excel");
     expect(flat).not.toMatch(/budi|santoso|@/i);
   });
 
   it("caps the output length", () => {
-    expect(redact(`SKILLS\n${"SQL, ".repeat(5000)}`, null).length).toBeLessThanOrEqual(MAX_REDACTED_CHARS);
+    expect(redact(`SKILLS\n${"SQL, ".repeat(5000)}`).text.length).toBeLessThanOrEqual(MAX_REDACTED_CHARS);
+  });
+
+  it("puts the name back into what the AI wrote", () => {
+    expect(out).toContain('kerja [NAME_1] rapi"');
+    expect(rehydrate("Tonjolkan dashboard [NAME_1] di bagian atas.", map)).toBe("Tonjolkan dashboard Rina di bagian atas.");
+  });
+});
+
+describe("redactPII", () => {
+  const phones = ["+62 812-3456-7890", "0857 1234 5678", "62-813.9876.5432", "081234567890", "+6281298765432", "0821-1111-2222"];
+
+  it("replaces emails and Indonesian phone numbers in every common format", () => {
+    const { text, map } = redactPII(`Email rina@mail.id, HP ${phones.join(" / ")}`);
+    expect(text).toBe("Email [EMAIL_1], HP [PHONE_1] / [PHONE_2] / [PHONE_3] / [PHONE_4] / [PHONE_5] / [PHONE_6]");
+    expect(Object.values(map)).toEqual(["rina@mail.id", ...phones]);
+  });
+
+  it("replaces the known name and address, reusing a placeholder for repeats", () => {
+    const { text } = redactPII("Rina Sari tinggal di Bekasi Timur. Rina suka SQL.", { name: "Rina Sari", address: "Bekasi Timur" });
+    expect(text).toBe("[NAME_1] [NAME_2] tinggal di [ADDRESS_1]. [NAME_1] suka SQL.");
+  });
+
+  it("round-trips: rehydrate(redactPII(x)) gives x back", () => {
+    const input = `Halo, saya Rina Kartika (rina.k@contoh.com, ${phones[0]}), domisili Bekasi, NIK 3275012345678901.`;
+    const { text, map } = redactPII(input, { name: "Rina Kartika", address: "Bekasi" });
+    expect(text).not.toMatch(/rina|kartika|bekasi|@|3275|812/i);
+    expect(rehydrate(text, map)).toBe(input);
+  });
+
+  it("leaves placeholders it doesn't know alone", () => {
+    expect(rehydrate("[NAME_9] dan [nama]", {})).toBe("[NAME_9] dan [nama]");
   });
 });

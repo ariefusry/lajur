@@ -10,6 +10,11 @@ const modelAnswer: ExtractedJob = {
   position: "Associate Software Engineer",
   location: "Bandung, Jawa Barat",
   deadline: "2026-11-10",
+  employmentType: null,
+  workMode: null,
+  salaryRange: "Rp15 juta", // hallucinated
+  sourceUrl: null,
+  language: "id",
   quotes: {
     company: "PT Telkom Indonesia (Persero) Tbk",
     position: "Posisi: Associate Software Engineer",
@@ -33,8 +38,8 @@ describe("normalizeJobText", () => {
     expect(normalizeJobText(messy)).toBe("PT A\n\nPosisi: IT Staff");
     expect(hashJobText(normalizeJobText(messy))).toBe(hashJobText(normalizeJobText("PT A\n\nPosisi: IT Staff")));
   });
-  it("caps length at 20k chars", () => {
-    expect(normalizeJobText("a".repeat(25_000))).toHaveLength(20_000);
+  it("caps length at 12k chars (Groq free tier: 8K tokens/minute)", () => {
+    expect(normalizeJobText("a".repeat(25_000))).toHaveLength(12_000);
   });
 });
 
@@ -51,6 +56,12 @@ describe("verifyQuotes", () => {
     const bad = verifyQuotes({ ...modelAnswer, quotes: { ...modelAnswer.quotes, location: "Jakarta" } }, text);
     expect(bad.quotes.location).toBeNull();
     expect(bad.location).toBe("Bandung, Jawa Barat"); // value stays as a draft; UI shows it without evidence
+  });
+  it("nulls a salary or link that isn't written in the posting", () => {
+    expect(verified.salaryRange).toBeNull();
+    const posting = "Gaji Rp8–10 juta. Daftar di https://karier.contoh.co.id/it";
+    const r = verifyQuotes({ ...modelAnswer, salaryRange: "Rp8–10 juta", sourceUrl: "https://karier.contoh.co.id/it" }, posting);
+    expect(r).toMatchObject({ salaryRange: "Rp8–10 juta", sourceUrl: "https://karier.contoh.co.id/it" });
   });
   it("forgives line-break vs space differences inside a quote", () => {
     const r = verifyQuotes(
@@ -75,6 +86,7 @@ describe("ExtractedJob schema", () => {
 describe("isEmptyExtraction", () => {
   const empty: ExtractedJob = {
     company: null, position: null, location: null, deadline: null,
+    employmentType: null, workMode: null, salaryRange: null, sourceUrl: null, language: "id",
     quotes: { company: null, position: null, location: null, deadline: null },
     skills: [], requirements: [],
   };
