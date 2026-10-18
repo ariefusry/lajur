@@ -17,6 +17,7 @@ import { isReadOnly } from "@/lib/demo";
 import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
 import { formatDate, formatDateTime, toDateInput, toDateTimeInput } from "@/lib/dates";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS, REQUIREMENT_TYPE_LABELS, STAGE_RESULT_LABELS } from "@/lib/validation";
 
@@ -162,6 +163,12 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
                           {e.locationOrUrl && ` · ${e.locationOrUrl}`}
                         </p>
                       </div>
+                      <AddToCalendar
+                        title={`${EVENT_TYPE_LABELS[e.type]} · ${app.company}`}
+                        start={e.startsAt}
+                        details={app.position}
+                        location={e.locationOrUrl}
+                      />
                       <form action={deleteEvent.bind(null, e.id)}>
                         <Button type="submit" variant="ghost" size="icon-sm" aria-label="Hapus jadwal">
                           <Trash2 />

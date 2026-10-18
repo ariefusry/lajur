@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDashboard, type DashApp, type DashStage } from "./dashboard";
+import { computeDashboard, weeklyCounts, type DashApp, type DashStage } from "./dashboard";
 import { DEMO_APPS, demoTimeline } from "./demo-data";
 import { STAGE_TEMPLATES } from "./stage-templates";
 
@@ -26,7 +26,7 @@ const d = computeDashboard(stages, apps);
 describe("computeDashboard on the demo data (matches the hand count)", () => {
   it("totals", () => {
     // Current stages: wishlist 2, in progress 8, offering 1, ditolak 4.
-    expect(d.totals).toEqual({ applications: 15, active: 8, offers: 1, rejected: 4 });
+    expect(d.totals).toEqual({ applications: 15, wishlist: 2, active: 8, offers: 1, rejected: 4 });
     expect(d.adminStage).toBe("Administrasi");
   });
 
@@ -70,6 +70,11 @@ describe("computeDashboard on the demo data (matches the hand count)", () => {
     expect(by).toEqual({ cv0: [7, 7, 6], cv1: [6, 6, 4] });
   });
 
+  it("where rejections happen", () => {
+    // eFishery at Administrasi, PLN at Tes Online, BNI at Psikotes, Gojek at Interview User: one each, pipeline order.
+    expect(d.failedAt).toEqual([1, 2, 3, 6].map((i) => ({ stage: stages[i].name, count: 1 })));
+  });
+
   it("median response time", () => {
     // First move after applying = 3 + (i % 5) days for the 11 apps with ≥2 history entries:
     // 3,4,5,7,3,4,5,6,4,5,7 → sorted 3,3,4,4,4,5,5,5,6,7,7 → median 5.
@@ -94,5 +99,14 @@ describe("computeDashboard edge cases", () => {
     const r = computeDashboard(stages, [skip, later]);
     expect(r.funnel.slice(0, 4).map((f) => f.count)).toEqual([2, 2, 1, 1]); // Tes/Psikotes counted for the skipper
     expect(r.responseTime.medianDays).toBe(3); // (2 + 4) / 2
+  });
+});
+
+describe("weeklyCounts", () => {
+  it("buckets by whole weeks back from now, oldest first", () => {
+    const now = new Date("2026-10-18T12:00:00Z");
+    const ago = (days: number) => new Date(now.getTime() - days * 86_400_000);
+    // 0 and 6 days ago = this week; 7 = last week; 27 = 4th week back; 28+ and future dates fall outside 4 weeks.
+    expect(weeklyCounts([ago(0), ago(6), ago(7), ago(27), ago(28), ago(-1)], now, 4)).toEqual([1, 0, 1, 2]);
   });
 });

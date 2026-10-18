@@ -73,18 +73,39 @@ export function computeDashboard(stages: DashStage[], apps: DashApp[]) {
     return days >= 0 ? [days] : [];
   });
 
+  // Where rejected applications stopped: their furthest selection stage.
+  const failedAt = pipeline
+    .map((stage) => ({
+      stage: stage.name,
+      count: apps.filter((a, i) => kindOf.get(a.currentStageId) === "REJECTED" && reachedOf[i] === stage.order).length,
+    }))
+    .filter((f) => f.count > 0)
+    .sort((a, b) => b.count - a.count);
+
   const currentKinds = apps.map((a) => kindOf.get(a.currentStageId));
   return {
     totals: {
       applications: apps.length,
+      wishlist: currentKinds.filter((k) => k === "WISHLIST").length,
       active: currentKinds.filter((k) => k === "IN_PROGRESS").length,
       offers: currentKinds.filter((k) => k === "OFFER").length,
       rejected: currentKinds.filter((k) => k === "REJECTED" || k === "WITHDRAWN").length,
     },
     adminStage: admin?.name ?? null,
     funnel,
+    failedAt,
     bySource: groupBy((a) => a.source),
     byResume: groupBy((a) => a.resumeId),
     responseTime: { medianDays: median(responseDays), sample: responseDays.length },
   };
+}
+
+/** Applications per week for the last `weeks` weeks, oldest first (index weeks-1 = the 7 days up to `now`). */
+export function weeklyCounts(dates: Date[], now: Date, weeks = 12) {
+  const counts = Array<number>(weeks).fill(0);
+  for (const d of dates) {
+    const ago = Math.floor((now.getTime() - d.getTime()) / (7 * DAY_MS));
+    if (ago >= 0 && ago < weeks) counts[weeks - 1 - ago]++;
+  }
+  return counts;
 }

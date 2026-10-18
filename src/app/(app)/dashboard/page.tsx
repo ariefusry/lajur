@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { Button } from "@/components/ui/button";
 import type { JobSource } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
-import { computeDashboard, type PassRate } from "@/lib/dashboard";
+import { computeDashboard, weeklyCounts, type PassRate } from "@/lib/dashboard";
 import { db } from "@/lib/db";
 import { daysUntil, formatDate, formatDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,10 @@ const RANGES = [
 ] as const;
 
 const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x * 100)}%`);
+const DAY_MS = 86_400_000;
+/** An active application with no stage change for this long probably needs a follow-up (or closing). */
+const STALE_DAYS = 14;
+const WEEKS = 12;
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const user = await requireUser();
@@ -32,6 +37,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     db.application.findMany({
       where: { userId: user.id },
       select: {
+        id: true,
+        company: true,
+        position: true,
         createdAt: true,
         source: true,
         resumeId: true,
@@ -48,7 +56,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       where: { startsAt: { gte: now }, application: { userId: user.id } },
       orderBy: { startsAt: "asc" },
       take: 6,
-      select: { id: true, type: true, startsAt: true, application: { select: { id: true, company: true } } },
+      select: {
+        id: true,
+        type: true,
+        startsAt: true,
+        locationOrUrl: true,
+        application: { select: { id: true, company: true } },
+      },
     }),
     db.application.findMany({
       where: {
@@ -73,6 +87,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       what: EVENT_TYPE_LABELS[e.type],
       at: e.startsAt,
       withTime: true,
+      location: e.locationOrUrl,
     })),
     ...deadlines.map((a) => ({
       key: `d${a.id}`,
@@ -81,6 +96,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       what: "Deadline pendaftaran",
       at: a.deadline!,
       withTime: false,
+      location: null,
     })),
   ]
     .sort((a, b) => a.at.getTime() - b.at.getTime())
@@ -108,6 +124,33 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const d = computeDashboard(stages, apps);
   const resumeName = new Map(resumes.map((r) => [r.id, r.versionName]));
   const maxFunnel = Math.max(1, ...d.funnel.map((f) => f.count));
+  const maxFailed = Math.max(1, ...d.failedAt.map((f) => f.count));
+
+  // Always the last 12 weeks of all applications (the period filter is for the analysis, not this trend).
+  const weekly = weeklyCounts(
+    allApps.map((a) => a.appliedAt ?? a.createdAt),
+    now,
+    WEEKS,
+  );
+  const maxWeekly = Math.max(1, ...weekly);
+  const last4 = weekly.slice(-4).reduce((sum, n) => sum + n, 0);
+
+  const stageById = new Map(stages.map((s) => [s.id, s]));
+  const stale = allApps
+    .filter((a) => stageById.get(a.currentStageId)?.kind === "IN_PROGRESS")
+    .map((a) => {
+      const last = Math.max((a.appliedAt ?? a.createdAt).getTime(), ...a.history.map((h) => h.enteredAt.getTime()));
+      return { ...a, idleDays: Math.floor((now.getTime() - last) / DAY_MS) };
+    })
+    .filter((a) => a.idleDays >= STALE_DAYS)
+    .sort((a, b) => b.idleDays - a.idleDays);
+
+  const status = [
+    { label: "Wishlist", count: d.totals.wishlist, color: "bg-muted-foreground/40" },
+    { label: "Berjalan", count: d.totals.active, color: "bg-primary" },
+    { label: "Offering", count: d.totals.offers, color: "bg-green-600" },
+    { label: "Ditolak / mundur", count: d.totals.rejected, color: "bg-destructive/70" },
+  ];
 
   return (
     <div className="max-w-7xl space-y-8">
@@ -141,6 +184,29 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         />
       </section>
 
+      <section className="space-y-2" aria-label="Status lamaran">
+        <div className="bg-muted flex h-3 overflow-hidden rounded-full">
+          {status
+            .filter((x) => x.count > 0)
+            .map((x) => (
+              <span
+                key={x.label}
+                className={cn("h-full", x.color)}
+                style={{ width: `${(x.count / Math.max(1, d.totals.applications)) * 100}%` }}
+                title={`${x.label}: ${x.count}`}
+              />
+            ))}
+        </div>
+        <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          {status.map((x) => (
+            <li key={x.label} className="flex items-center gap-1.5">
+              <span className={cn("size-2 rounded-full", x.color)} aria-hidden />
+              {x.label} <span className="text-foreground font-medium tabular-nums">{x.count}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <section className="space-y-3">
           <div>
@@ -172,6 +238,31 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </ol>
 
           <div className="space-y-3 pt-6">
+            <div>
+              <h2 className="font-medium">Paling sering gagal di</h2>
+              <p className="text-muted-foreground text-xs">Tahap terakhir yang dicapai lamaran yang ditolak.</p>
+            </div>
+            {d.failedAt.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Belum ada lamaran yang ditolak pada periode ini.</p>
+            ) : (
+              <ol className="space-y-2">
+                {d.failedAt.map((f) => (
+                  <li key={f.stage} className="grid grid-cols-[minmax(6rem,9rem)_1fr_auto] items-center gap-3 text-sm">
+                    <span className="truncate">{f.stage}</span>
+                    <span className="bg-muted h-2 rounded-full" aria-hidden>
+                      <span
+                        className="bg-destructive/70 block h-full origin-left rounded-full motion-safe:animate-[bar-grow_700ms_cubic-bezier(0.2,0.8,0.2,1)_both]"
+                        style={{ width: `${(f.count / maxFailed) * 100}%` }}
+                      />
+                    </span>
+                    <span className="w-8 text-right font-medium tabular-nums">{f.count}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-6">
             <h2 className="font-medium">Segera tiba</h2>
             {upcoming.length === 0 ? (
               <p className="text-muted-foreground text-sm">
@@ -182,10 +273,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 {upcoming.map((u) => {
                   const days = daysUntil(u.at);
                   return (
-                    <li key={u.key}>
+                    <li key={u.key} className="flex items-center pr-2">
                       <Link
                         href={`/applications/${u.appId}`}
-                        className="hover:bg-foreground/5 flex items-center gap-3 p-3 transition-colors"
+                        className="hover:bg-foreground/5 flex min-w-0 flex-1 items-center gap-3 p-3 transition-colors"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{u.title}</p>
@@ -202,6 +293,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                           {days <= 0 ? "Hari ini" : `${days} hari lagi`}
                         </span>
                       </Link>
+                      <AddToCalendar
+                        title={`${u.what} · ${u.title}`}
+                        start={u.at}
+                        allDay={!u.withTime}
+                        location={u.location}
+                      />
                     </li>
                   );
                 })}
@@ -211,6 +308,66 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </section>
 
         <div className="space-y-8">
+          <section className="space-y-3">
+            <div>
+              <h2 className="font-medium">Aktivitas melamar</h2>
+              <p className="text-muted-foreground text-xs">
+                Lamaran per minggu, {WEEKS} minggu terakhir · {last4} lamaran dalam 4 minggu terakhir.
+              </p>
+            </div>
+            <div className="flex h-24 items-end gap-1" role="img" aria-label={`Lamaran per minggu: ${weekly.join(", ")}`}>
+              {weekly.map((n, i) => (
+                <span
+                  key={i}
+                  className={cn("min-h-1 flex-1 rounded-t-sm", n ? "bg-primary" : "bg-muted")}
+                  style={{ height: `${(n / maxWeekly) * 100}%` }}
+                  title={`${i === WEEKS - 1 ? "Minggu ini" : `${WEEKS - 1 - i} minggu lalu`}: ${n} lamaran`}
+                />
+              ))}
+            </div>
+            <div className="text-muted-foreground flex justify-between text-xs">
+              <span>{WEEKS - 1} minggu lalu</span>
+              <span>Minggu ini</span>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div>
+              <h2 className="font-medium">Belum ada kabar</h2>
+              <p className="text-muted-foreground text-xs">
+                Lamaran berjalan tanpa perpindahan tahap selama {STALE_DAYS} hari atau lebih. Saatnya follow-up, atau
+                pindahkan ke Ditolak kalau sudah tidak ada harapan.
+              </p>
+            </div>
+            {stale.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Semua lamaran yang berjalan masih bergerak.</p>
+            ) : (
+              <ul className="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+                {stale.slice(0, 5).map((a) => (
+                  <li key={a.id}>
+                    <Link
+                      href={`/applications/${a.id}`}
+                      className="hover:bg-foreground/5 flex items-center gap-3 p-3 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{a.company}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {stageById.get(a.currentStageId)?.name} · {a.position}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-amber-700 dark:text-amber-300">
+                        {a.idleDays} hari
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+                {stale.length > 5 && (
+                  <li className="text-muted-foreground p-3 text-xs">+{stale.length - 5} lamaran lain</li>
+                )}
+              </ul>
+            )}
+          </section>
+
           <PassTable
             title="Per sumber lowongan"
             empty="Belum ada data."

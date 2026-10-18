@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { AddToCalendar } from "@/components/add-to-calendar";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -16,7 +17,16 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const shortCompany = (name: string) =>
   name.replace(/^(PT|CV)\.?\s+/i, "").replace(/\s*\(Persero\)|\s+Tbk\.?/gi, "").trim() || name;
 
-type Item ={ key: string; at: Date; label: string; company: string; applicationId: string; isDeadline: boolean };
+type Item = {
+  key: string;
+  at: Date;
+  label: string;
+  company: string;
+  applicationId: string;
+  isDeadline: boolean;
+  location?: string | null;
+  allDay?: boolean;
+};
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const user = await requireUser();
@@ -53,11 +63,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       company: e.application.company,
       applicationId: e.application.id,
       isDeadline: e.type === "DEADLINE",
+      location: e.locationOrUrl,
     })),
     ...deadlines.map((a) => ({
       key: `deadline-${a.id}`,
       at: a.deadline!,
       label: "Deadline pendaftaran",
+      allDay: true,
       company: a.company,
       applicationId: a.id,
       isDeadline: true,
@@ -144,10 +156,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         ) : (
           <ul className="max-w-2xl divide-y rounded-xl border bg-card">
             {items.map((it) => (
-              <li key={it.key}>
+              <li key={it.key} className="flex items-center gap-1 pr-2">
                 <Link
                   href={`/applications/${it.applicationId}`}
-                  className="grid gap-x-3 gap-y-0.5 p-3 text-sm hover:bg-muted/50 sm:grid-cols-[10rem_1fr_auto] sm:items-center"
+                  className="grid min-w-0 flex-1 gap-x-3 gap-y-0.5 p-3 text-sm hover:bg-muted/50 sm:grid-cols-[10rem_1fr_auto] sm:items-center"
                 >
                   <span className="min-w-0 truncate font-medium sm:order-2">{it.company}</span>
                   <span className={cn("text-xs sm:order-1 sm:text-sm", it.isDeadline ? "text-destructive" : "text-muted-foreground sm:text-foreground")}>
@@ -155,6 +167,12 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   </span>
                   <span className="text-xs text-muted-foreground sm:order-3 sm:text-sm">{formatDateTime(it.at)}</span>
                 </Link>
+                <AddToCalendar
+                  title={`${it.label} · ${it.company}`}
+                  start={it.at}
+                  allDay={it.allDay}
+                  location={it.location}
+                />
               </li>
             ))}
           </ul>
