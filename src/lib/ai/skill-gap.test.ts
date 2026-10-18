@@ -13,7 +13,6 @@ describe("matchSkills", () => {
 });
 
 describe("verifySkillGap", () => {
-  const redacted = "KEAHLIAN\nTypeScript, React.js, Postgres\nPENGALAMAN\nMembuat laporan pivot di spreadsheet";
   it("keeps found skills only when the quote is really in the redacted CV", () => {
     const rows = verifySkillGap(
       ["Pivot Table", "Docker", "Kubernetes"],
@@ -23,7 +22,7 @@ describe("verifySkillGap", () => {
           { skill: "Docker", inResume: true, suggestion: "Tambahkan proyek.", quote: "Docker compose untuk 5 layanan" }, // invented
         ],
       },
-      redacted,
+      cv,
     );
     expect(rows).toEqual([
       { skill: "Pivot Table", inResume: true, suggestion: "Sebutkan contoh laporannya.", sourceQuote: "laporan pivot di  spreadsheet" },

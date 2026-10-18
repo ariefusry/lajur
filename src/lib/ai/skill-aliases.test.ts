@@ -6,15 +6,6 @@ TypeScript, React.js, Postgres, Microsoft Excel, C#, Node.js
 PENGALAMAN
 Membangun REST API dengan Express; deploy ke Google Cloud`;
 
-describe("non-IT skills", () => {
-  it("match without the AI", () => {
-    expect(findSkillInText("Sales", "Pengalaman penjualan retail 2 tahun")).toBe("Pengalaman penjualan retail 2 tahun");
-    expect(findSkillInText("Payroll", "Mengelola penggajian 120 karyawan")).toContain("penggajian");
-    expect(findSkillInText("Leadership", "Ketua panitia, kepemimpinan tim 15 orang")).toContain("kepemimpinan");
-    expect(findSkillInText("Supply chain", "Staf logistik gudang")).toContain("logistik");
-  });
-});
-
 describe("findSkillInText", () => {
   it("matches aliases in both directions, case-insensitively", () => {
     expect(findSkillInText("PostgreSQL", cv)).toContain("Postgres");
@@ -45,15 +36,21 @@ describe("findSkillInText", () => {
 });
 
 describe("non-IT skills", () => {
-  const cv = "KEAHLIAN\nMS Excel, MYOB, Brevet A&B, TOEFL 550, Corel Draw, Auto CAD\nPENGALAMAN\nStaf pembukuan dan pajak di KAP Contoh";
-  it("matches office, finance, design, language and certification aliases", () => {
-    expect(findSkillInText("Microsoft Excel", cv)).not.toBeNull();
-    expect(findSkillInText("Accounting", cv)).toContain("pembukuan");
-    expect(findSkillInText("Perpajakan", cv)).toContain("pajak");
-    expect(findSkillInText("Bahasa Inggris", cv)).toContain("TOEFL");
-    expect(findSkillInText("CorelDRAW", cv)).not.toBeNull();
-    expect(findSkillInText("AutoCAD", cv)).not.toBeNull();
-    expect(findSkillInText("Brevet B", cv)).not.toBeNull();
-    expect(findSkillInText("SAP", cv)).toBeNull();
+  it("match Indonesian terms without the AI", () => {
+    expect(findSkillInText("Sales", "Pengalaman penjualan retail 2 tahun")).toBe("Pengalaman penjualan retail 2 tahun");
+    expect(findSkillInText("Payroll", "Mengelola penggajian 120 karyawan")).toContain("penggajian");
+    expect(findSkillInText("Leadership", "Ketua panitia, kepemimpinan tim 15 orang")).toContain("kepemimpinan");
+    expect(findSkillInText("Supply chain", "Staf logistik gudang")).toContain("logistik");
+  });
+  it("match office, finance, design, language and certification aliases", () => {
+    const office = "KEAHLIAN\nMS Excel, MYOB, Brevet A&B, TOEFL 550, Corel Draw, Auto CAD\nPENGALAMAN\nStaf pembukuan dan pajak di KAP Contoh";
+    expect(findSkillInText("Microsoft Excel", office)).not.toBeNull();
+    expect(findSkillInText("Accounting", office)).toContain("pembukuan");
+    expect(findSkillInText("Perpajakan", office)).toContain("pajak");
+    expect(findSkillInText("Bahasa Inggris", office)).toContain("TOEFL");
+    expect(findSkillInText("CorelDRAW", office)).not.toBeNull();
+    expect(findSkillInText("AutoCAD", office)).not.toBeNull();
+    expect(findSkillInText("Brevet B", office)).not.toBeNull();
+    expect(findSkillInText("SAP", office)).toBeNull();
   });
 });

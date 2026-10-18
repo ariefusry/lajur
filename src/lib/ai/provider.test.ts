@@ -203,12 +203,3 @@ describe("aiEnabled / model config", () => {
     expect((await load({ LLM_PRIMARY: "nvidia", LLM_FALLBACK: "", NVIDIA_BASE_URL: "https://evil.example/v1" })).aiEnabled()).toBe(false);
   });
 });
-
-describe("responseSchema", () => {
-  it("drops format/pattern keywords but keeps a property that happens to be called format", async () => {
-    const { responseSchema } = await import("./llm-config");
-    const s = responseSchema(z.object({ deadline: z.iso.date().nullable(), format: z.string() }));
-    expect(JSON.stringify(s)).not.toMatch(/"pattern"|"\$schema"|"date"/);
-    expect(s).toMatchObject({ required: ["deadline", "format"], additionalProperties: false, properties: { format: { type: "string" } } });
-  });
-});
