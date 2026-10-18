@@ -23,7 +23,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      # Fails if anything in the repo uses the forbidden LLM vendor (CLAUDE.md rule 10).
+      # Fails if anything in the repo uses an LLM vendor that isn't allowed.
       - run: pnpm check:llm-provider
 
   e2e:

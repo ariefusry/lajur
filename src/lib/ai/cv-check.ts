@@ -53,7 +53,7 @@ export type CvCheckResult = {
 };
 
 /**
- * CV vs posting (CLAUDE.md 7.5): skills the CV names (or an alias of) are found without AI; one AI call then
+ * CV vs posting: skills the CV names (or an alias of) are found without AI; one AI call then
  * checks the rest for equivalent terms and writes up to 8 CV tweaks. Only the redacted CV leaves the server,
  * and the user's own data is put back into the answer afterwards.
  */

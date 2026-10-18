@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gagal jika repo memakai SDK/API Anthropic. Pemilik repo melarangnya (CLAUDE.md aturan 10).
+# Gagal jika repo memakai SDK/API Anthropic. Pemilik repo melarangnya.
 set -euo pipefail
 if git grep -nIiE 'anthropic|api\.anthropic\.com' -- . \
      ':!CLAUDE.md' ':!.claude/' ':!scripts/check-llm-provider.sh'; then

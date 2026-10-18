@@ -50,7 +50,6 @@ export const applicationSchema = z.object({
   notes: optionalText(10_000),
 });
 
-export type ApplicationInput = z.infer<typeof applicationSchema>;
 
 export const profileSchema = z.object({
   gpa: z

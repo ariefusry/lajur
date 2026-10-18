@@ -2,6 +2,7 @@
 // Node directly) and the daily cron (/api/cron/demo-reset), so: no path aliases for values, and DB/storage are
 // passed in instead of imported (lib/db and lib/storage are server-only).
 import type { PrismaClient } from "../generated/prisma/client.ts";
+import { fromDateInput, toDateInput } from "./dates.ts";
 import { DEMO_APPS, DEMO_RESUMES, demoTimeline } from "./demo-data.ts";
 import { DEMO_EMAIL } from "./demo.ts";
 import { templateStageRows } from "./stage-templates.ts";
@@ -77,15 +78,12 @@ export function demoPdf(lines: string[]) {
   return new TextEncoder().encode(out);
 }
 
-/** Today's midnight in Jakarta: the demo timeline is dated relative to it. */
-export const jakartaToday = (now = new Date()) =>
-  new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(now)}T00:00:00+07:00`);
-
 /**
  * Wipes and rebuilds the demo account's stages, CVs and 15 applications. The user row itself (and so any
  * visitor's demo session) is kept; it's created on first run. Touches nothing outside the demo account.
+ * The demo timeline is dated relative to `today` (midnight in Jakarta).
  */
-export async function resetDemoAccount({ db, putPdf, deleteObject }: Deps, today = jakartaToday()) {
+export async function resetDemoAccount({ db, putPdf, deleteObject }: Deps, today = fromDateInput(toDateInput(new Date()))) {
   const user = await db.user.upsert({
     where: { email: DEMO_EMAIL },
     update: PROFILE,

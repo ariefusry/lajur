@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// CLAUDE.md Fase 5: login demo → buat lamaran → geser tahap → cek dashboard.
+// Main flow: demo login → new application → move it across stages → check the dashboard.
 // Runs on the seeded demo account (15 applications) and deletes what it creates, so it can be re-run.
 
 const COMPANY = `PT Uji E2E ${Date.now()}`;

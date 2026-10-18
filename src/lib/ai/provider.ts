@@ -57,7 +57,7 @@ export type AiResult<T> = {
 };
 
 /*
- * Not streamed: Groq's strict json_schema and Cloudflare's JSON mode don't support streaming (decided 2026-10-19).
+ * Not streamed: Groq's strict json_schema and Cloudflare's JSON mode don't support streaming.
  * Providers without response_format support get the schema in the prompt; either way the answer is Zod-checked.
  */
 async function callModel<T>(ref: ModelRef, args: Args<T>, prompt: string, retry: boolean) {

@@ -13,7 +13,7 @@ type Hooks = {
 };
 
 /**
- * Cache → consent + quota → LLM → keep only items whose quote is in the text → cache (CLAUDE.md 7.3).
+ * Cache → consent + quota → LLM → keep only items whose quote is in the text → cache.
  * `text` must already be normalized. Throws AiConsentRequiredError, QuotaExceededError, AiUnavailableError
  * or NothingFoundError.
  */

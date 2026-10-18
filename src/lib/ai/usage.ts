@@ -16,7 +16,7 @@ function jakartaDay() {
   return new Date(`${toDateInput(new Date())}T00:00:00Z`);
 }
 
-// ponytail: check-then-call isn't atomic; two parallel requests can overshoot by one. Fine for a daily soft cap.
+// Check-then-call isn't atomic, so two parallel requests can overshoot by one. Fine for a daily soft cap.
 export async function assertQuota(userId: string) {
   const [user, used] = await Promise.all([
     db.user.findUnique({ where: { id: userId }, select: { email: true } }),

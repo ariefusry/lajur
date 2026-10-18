@@ -23,7 +23,7 @@ export function isPrivateAddress(ip: string): boolean {
   );
 }
 
-// ponytail: resolve-then-fetch leaves a DNS-rebinding window; pin the resolved IP if this ever handles untrusted traffic at scale.
+// Resolve-then-fetch leaves a DNS-rebinding window; pin the resolved IP if this ever handles untrusted traffic at scale.
 async function assertPublicUrl(raw: string) {
   let url: URL;
   try {
@@ -71,7 +71,7 @@ export function focusJobText(text: string, max: number): string {
   const LEAD = 1500; // keep the title/heading just above the first keyword
   let best = 0;
   let bestScore = -1;
-  // ponytail: O(hits²) scan; fine for a few hundred keyword hits per page.
+  // O(hits²), fine for a few hundred keyword hits per page.
   for (const h of hits) {
     const start = Math.min(Math.max(0, h.at - LEAD), text.length - max);
     const inWindow = hits.filter((x) => x.at >= start && x.at < start + max);

@@ -94,7 +94,7 @@ export async function applyTemplate(key: TemplateKey): Promise<FormState> {
   const user = await requireUser();
   if (isReadOnly(user)) return { message: DEMO_READ_ONLY_MESSAGE };
   if (!(key in STAGE_TEMPLATES)) return { message: "Template tidak dikenal." };
-  // ponytail: only on an empty board; mapping existing applications to new stages can come later if needed.
+  // Only on an empty board: existing applications would need mapping onto the new stages.
   if (await db.application.count({ where: { userId: user.id } })) {
     return { message: "Template hanya bisa diganti selama belum ada lamaran. Ubah tahap satu per satu di bawah." };
   }

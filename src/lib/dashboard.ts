@@ -86,7 +86,7 @@ export function appFactsFor(stages: DashStage[], now: Date) {
 }
 
 /**
- * All dashboard and analytics numbers, computed on the server from the user's stages and applications (CLAUDE.md 7.7).
+ * All dashboard and analytics numbers, computed on the server from the user's stages and applications.
  * "Reached stage X" = the furthest selection stage (IN_PROGRESS/OFFER) in the application's history is at or
  * past X; Ditolak/Withdrawn don't count as progress. The administration stage is the first selection stage.
  */

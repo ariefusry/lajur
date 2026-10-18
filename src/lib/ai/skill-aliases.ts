@@ -1,3 +1,5 @@
+import { escapeRegExp, fold } from "../text.ts";
+
 // Skill names that mean the same thing. Matching against the CV tries every alias of the skill's group,
 // so "Postgres" in a posting matches "PostgreSQL" in a CV and vice versa.
 const GROUPS: string[][] = [
@@ -93,12 +95,9 @@ const GROUPS: string[][] = [
   ["tableau"],
 ];
 
-const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 /** All spellings to look for when checking whether a CV mentions `skill`. */
 export function skillAliases(skill: string): string[] {
-  const s = norm(skill);
+  const s = fold(skill);
   const group = GROUPS.find((g) => g.includes(s));
   return group ?? [s];
 }

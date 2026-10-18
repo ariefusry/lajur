@@ -1,8 +1,9 @@
 /**
- * Strips personal data from CV text before any of it reaches an LLM (CLAUDE.md rule 7a / 7.5).
- * Free model endpoints may train on what they receive, so only the skills/experience-type sections leave,
- * with address lines dropped and contact details, ID numbers and the owner's name/address swapped for placeholders.
+ * Strips personal data from CV text before any of it reaches an LLM: only the skills/experience-type sections
+ * leave, with address lines dropped and contact details, ID numbers and the owner's name/address swapped for
+ * placeholders.
  */
+import { escapeRegExp } from "@/lib/text";
 
 export const MAX_REDACTED_CHARS = 6000;
 
@@ -47,7 +48,6 @@ function relevantSections(lines: string[]): string[] {
   return kept;
 }
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Whole-word, case-insensitive match of any of the given words. */
 function wordsRegExp(words: string[]) {
@@ -59,7 +59,7 @@ function wordsRegExp(words: string[]) {
 export type PiiMap = Record<string, string>;
 export type KnownPii = { name?: string | null; address?: string | null };
 
-const PLACEHOLDER = /\[(?:EMAIL|PHONE|URL|ID|NAME|ADDRESS)_\d+\]/g;
+export const PLACEHOLDER = /\[(?:EMAIL|PHONE|URL|ID|NAME|ADDRESS)_\d+\]/g;
 
 /**
  * Swaps personal data for numbered placeholders ([EMAIL_1], [PHONE_1], [NAME_1], …): emails, Indonesian phone

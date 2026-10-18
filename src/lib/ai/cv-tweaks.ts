@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { rehydrate, type PiiMap } from "@/lib/ai/redact";
+import { PLACEHOLDER, rehydrate, type PiiMap } from "@/lib/ai/redact";
 import { findSkillInText } from "@/lib/ai/skill-aliases";
-import { squash } from "@/lib/ai/skill-gap";
+import { fold } from "@/lib/text";
 
 export const MAX_CV_TWEAKS = 8;
 
@@ -33,7 +33,6 @@ export function readCvTweaks(value: unknown): CvTweak[] {
   return StoredCvTweaks.safeParse(value).data ?? [];
 }
 
-const PLACEHOLDER = /\[[A-Z]+_\d+\]/g;
 const numbers = (s: string) => s.replace(PLACEHOLDER, "").match(/\d+(?:[.,]\d+)*/g) ?? [];
 // An "add" tip carrying a ready-made CV sentence in quotes ("misalnya: \"Frontend developer dengan pengalaman …\"").
 const QUOTED_SAMPLE = /["“'‘][^"”'’]{30,}["”'’]/;
@@ -47,11 +46,11 @@ const QUOTED_SAMPLE = /["“'‘][^"”'’]{30,}["”'’]/;
  * At most 8 survive; personal data goes back in.
  */
 export function verifyCvTweaks(tweaks: CvTweak[], redactedCv: string, map: PiiMap, missingSkills: string[] = []): CvTweak[] {
-  const cv = squash(redactedCv);
+  const cv = fold(redactedCv);
   const cvNumbers = new Set(numbers(redactedCv));
   return tweaks
     .filter((t) => {
-      if (t.kind === "rewrite" && !(t.current && squash(t.current).length > 0 && cv.includes(squash(t.current)))) return false;
+      if (t.kind === "rewrite" && !(t.current && fold(t.current).length > 0 && cv.includes(fold(t.current)))) return false;
       if (numbers(t.suggestion).some((n) => !cvNumbers.has(n))) return false;
       if (t.kind === "add") return !QUOTED_SAMPLE.test(t.suggestion);
       return !missingSkills.some((skill) => findSkillInText(skill, t.suggestion));

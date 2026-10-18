@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { squash } from "../text.ts";
 import { findSkillInText } from "./skill-aliases.ts";
 
 // ~3.5K tokens: with the prompt and the answer this stays inside Groq's free 8K tokens/minute.
@@ -72,7 +73,6 @@ export function normalizeJobText(text: string) {
 }
 
 // Bump when verifyQuotes changes: the cache holds verified results, so old entries keep the old verdicts.
-// 2: paraphrased skill quotes are kept via the skill's own line (2026-10-19).
 const CACHE_VERSION = "2";
 
 /** Cache key. The prompt is part of it, so editing EXTRACT_SYSTEM invalidates old extractions automatically. */
@@ -80,10 +80,9 @@ export function hashJobText(normalized: string) {
   return createHash("sha256").update(CACHE_VERSION).update("\0").update(EXTRACT_SYSTEM).update("\0").update(normalized).digest("hex");
 }
 
-// Quotes must be exact substrings; whitespace differences (line breaks vs spaces) are forgiven.
-const squash = (s: string) => s.replace(/\s+/g, " ").trim();
 
 /**
+ * Quotes must be exact substrings of the posting (line breaks vs spaces are forgiven).
  * Drops skills/requirements whose quote isn't in the posting; nulls unverifiable scalar quotes, and a salary
  * or link that isn't written in the posting (the easiest fields to make up). A skill whose quote was
  * paraphrased ("Menguasai TypeScript" from "Menguasai React, TypeScript, dan Tailwind CSS") is kept when the

@@ -3,7 +3,7 @@ import type { JSONValue, LanguageModel } from "ai";
 import { z } from "zod";
 
 /*
- * LLM providers allowed by CLAUDE.md rule 10. Production: Groq (primary) and Cloudflare Workers AI (fallback).
+ * Allowed LLM providers. Production: Groq (primary) and Cloudflare Workers AI (fallback).
  * NVIDIA API Catalog and OpenRouter are dev-only: the NVIDIA trial ToS bars production use, and both free tiers
  * may train on what they receive. No imports from server-only or "@/" aliases, so scripts/ can use this too.
  *
@@ -98,7 +98,7 @@ export function modelRef(provider: ProviderName, model: string, env: Env = proce
   const p = providerConfig(provider, env);
   if (!p.apiKey || !p.baseURL) return null;
   if (FORBIDDEN_MODEL.test(model)) {
-    console.warn(`AI: ignoring model "${model}", this vendor is not allowed (CLAUDE.md rule 10)`);
+    console.warn(`AI: ignoring model "${model}", this vendor is not allowed`);
     return null;
   }
   const client = createOpenAICompatible({ name: provider, baseURL: p.baseURL, apiKey: p.apiKey, supportsStructuredOutputs: p.structured });

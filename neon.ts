@@ -5,7 +5,7 @@ export default defineConfig({
   auth: false,
   buckets: {
     // "private" is the default; use "public_read" for anonymous reads
-    resumes: { access: "private" }, // CV files; must stay private (CLAUDE.md 7.2)
+    resumes: { access: "private" }, // CV files; must stay private
   },
   // Branch policy: per-branch tuning
   branch: (branch) => {
