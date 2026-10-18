@@ -48,12 +48,22 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await page.reload();
   await expect(page.getByRole("region", { name: "Administrasi" }).getByText(COMPANY)).toBeVisible();
 
+  // Forward then back again is a correction: the timeline must not repeat stages
+  for (const column of ["Tes Online/TPA", "Administrasi"]) {
+    const moved = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/board");
+    await dragCard(page, COMPANY, column);
+    expect((await moved).ok()).toBe(true);
+  }
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Administrasi" }).getByText(COMPANY)).toBeVisible();
+
   // History recorded on the detail page
   await page.getByRole("region", { name: "Administrasi" }).getByText(COMPANY).click();
   await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible();
   const timeline = page.locator("section", { has: page.getByRole("heading", { name: "Timeline tahap" }) });
   await expect(timeline.getByText("Wishlist")).toBeVisible();
-  await expect(timeline.getByText("Administrasi", { exact: true })).toBeVisible();
+  await expect(timeline.getByText("Administrasi", { exact: true })).toHaveCount(1);
+  await expect(timeline.getByText("Tes Online/TPA", { exact: true })).toHaveCount(0);
   const detailUrl = page.url();
 
   // 4. Cek dashboard: one more application in total

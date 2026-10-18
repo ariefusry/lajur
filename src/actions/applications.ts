@@ -173,6 +173,20 @@ export async function moveApplication(id: string, stageId: string): Promise<{ ok
       ]);
       if (!app || !stage) throw new Error("not found");
       if (app.currentStageId === stageId) return;
+      const history = await tx.stageHistory.findMany({
+        where: { applicationId: id },
+        orderBy: { enteredAt: "asc" },
+        select: { id: true, stageId: true, notes: true },
+      });
+      // Dragged back to a stage it already went through = a correction (or back-and-forth): drop the steps after
+      // it instead of logging the same stages again. Steps with notes are kept, so nothing written is lost.
+      const back = history.findLastIndex((h) => h.stageId === stageId);
+      const later = back === -1 ? [] : history.slice(back + 1);
+      if (back !== -1 && later.every((h) => !h.notes?.trim())) {
+        await tx.stageHistory.deleteMany({ where: { id: { in: later.map((h) => h.id) } } });
+        await tx.application.update({ where: { id }, data: { currentStageId: stageId } });
+        return;
+      }
       await tx.application.update({
         where: { id },
         data: { currentStageId: stageId, history: { create: { stageId } } },
