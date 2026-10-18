@@ -1,5 +1,6 @@
 import { CalendarClock, FileText, KanbanSquare, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { redirect } from "next/navigation";
 import { signInAsDemo } from "@/actions/demo";
 import { Button } from "@/components/ui/button";
@@ -24,8 +25,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div className="space-y-8">
         <div className="space-y-3">
           <h1 className="text-4xl font-semibold tracking-tight">
-            <Link href="/" className="hover:opacity-80">
-              Lamarin
+            <Link href="/" className="hover:opacity-80" aria-label="Lamarin, beranda">
+              <Logo className="gap-3" markClassName="size-10" />
             </Link>
           </h1>
           <p className="text-muted-foreground max-w-md text-lg">

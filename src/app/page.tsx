@@ -12,6 +12,7 @@ import {
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { redirect } from "next/navigation";
 import { signInAsDemo } from "@/actions/demo";
 import { Button } from "@/components/ui/button";
@@ -81,8 +82,8 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
     <div className="min-h-svh">
       <header className="sticky top-0 z-30 border-b bg-background/70 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
-            Lamarin
+          <Link href="/" aria-label="Lamarin, beranda">
+            <Logo className="text-lg" markClassName="size-6" />
           </Link>
           <nav aria-label="Bagian halaman" className="text-muted-foreground hidden items-center gap-6 text-sm md:flex">
             <a href="#fitur" className="hover:text-foreground transition-colors">
@@ -266,7 +267,9 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
 
       <footer className="border-t">
         <div className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs">
-          <span>Lamarin · dibuat untuk pencari kerja di Indonesia</span>
+          <span className="inline-flex items-center gap-2">
+            <Logo markClassName="size-4" /> · dibuat untuk pencari kerja di Indonesia
+          </span>
           <Link href="/login" className="hover:text-foreground">
             Masuk
           </Link>
