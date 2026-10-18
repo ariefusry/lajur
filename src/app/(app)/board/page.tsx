@@ -3,6 +3,7 @@ import { Board } from "@/components/board/board";
 import { Button } from "@/components/ui/button";
 import { ViewSwitch } from "@/components/view-switch";
 import { requireUser } from "@/lib/auth";
+import { appFactsFor } from "@/lib/dashboard";
 import { db } from "@/lib/db";
 import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
@@ -15,7 +16,7 @@ export default async function BoardPage() {
     db.stage.findMany({
       where: { userId: user.id },
       orderBy: { order: "asc" },
-      select: { id: true, name: true, kind: true },
+      select: { id: true, name: true, order: true, kind: true },
     }),
     db.application.findMany({
       where: { userId: user.id },
@@ -27,14 +28,18 @@ export default async function BoardPage() {
         source: true,
         deadline: true,
         currentStageId: true,
+        appliedAt: true,
+        history: { select: { stageId: true, enteredAt: true } },
         requirements: { select: { type: true, value: true, ageReferenceDate: true } },
       },
     }),
     getEligibilityProfile(user.id),
   ]);
   const today = new Date();
-  const cards = applications.map(({ requirements, ...app }) => ({
+  const factsOf = appFactsFor(stages, today);
+  const cards = applications.map(({ requirements, history, appliedAt, ...app }) => ({
     ...app,
+    ghosted: factsOf({ currentStageId: app.currentStageId, appliedAt, history }).ghosted,
     eligibility: overallStatus(requirements.map((r) => checkRequirement(r, profile, today).status)),
   }));
 

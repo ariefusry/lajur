@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ViewSwitch } from "@/components/view-switch";
 import type { Prisma } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/auth";
+import { appFactsFor, GHOSTED_DAYS } from "@/lib/dashboard";
 import { daysUntil, formatDate } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
@@ -25,6 +26,8 @@ const SORTS = {
 } satisfies Record<string, { label: string; orderBy: Prisma.ApplicationOrderByWithRelationInput | Prisma.ApplicationOrderByWithRelationInput[] }>;
 
 type Search = { q?: string; stage?: string; sort?: string };
+/** Stage filter value for derived "ghosted" applications (not a real stage). */
+const GHOSTED = "ghosted";
 
 export default async function ApplicationsPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await requireUser();
@@ -33,11 +36,11 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
   const query = q.trim();
 
   const [stages, applications, total, profile] = await Promise.all([
-    db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" }, select: { id: true, name: true, kind: true } }),
+    db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" }, select: { id: true, name: true, order: true, kind: true } }),
     db.application.findMany({
       where: {
         userId: user.id,
-        ...(stage && { currentStageId: stage }),
+        ...(stage && stage !== GHOSTED && { currentStageId: stage }),
         ...(query && {
           OR: [
             { company: { contains: query, mode: "insensitive" } },
@@ -56,6 +59,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
         deadline: true,
         appliedAt: true,
         currentStageId: true,
+        history: { select: { stageId: true, enteredAt: true } },
         resume: { select: { versionName: true } },
         requirements: { select: { type: true, value: true, ageReferenceDate: true } },
       },
@@ -65,11 +69,15 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
   ]);
   const stageById = new Map(stages.map((s) => [s.id, s]));
   const today = new Date();
-  const rows = applications.map(({ requirements, ...a }) => ({
-    ...a,
-    stage: stageById.get(a.currentStageId),
-    eligibility: overallStatus(requirements.map((r) => checkRequirement(r, profile, today).status)),
-  }));
+  const factsOf = appFactsFor(stages, today);
+  const rows = applications
+    .map(({ requirements, ...a }) => ({
+      ...a,
+      stage: stageById.get(a.currentStageId),
+      ghosted: factsOf(a).ghosted,
+      eligibility: overallStatus(requirements.map((r) => checkRequirement(r, profile, today).status)),
+    }))
+    .filter((a) => stage !== GHOSTED || a.ghosted);
   const filtered = Boolean(query || stage);
 
   return (
@@ -97,7 +105,11 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
             name="stage"
             defaultValue={stage}
             className="w-full sm:w-44"
-            options={[{ value: "", label: "Semua tahap" }, ...stages.map((s) => ({ value: s.id, label: s.name }))]}
+            options={[
+              { value: "", label: "Semua tahap" },
+              ...stages.map((s) => ({ value: s.id, label: s.name })),
+              { value: GHOSTED, label: "Ghosted" },
+            ]}
           />
         </label>
         <label className="relative flex-1 sm:flex-none">
@@ -165,7 +177,10 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
                       </p>
                     </td>
                     <td className="p-2.5">
-                      <StageBadge name={a.stage?.name} kind={a.stage?.kind} />
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StageBadge name={a.stage?.name} kind={a.stage?.kind} />
+                        {a.ghosted && <GhostedBadge />}
+                      </div>
                     </td>
                     <td className="text-muted-foreground p-2.5">{JOB_SOURCE_LABELS[a.source]}</td>
                     <td className="text-muted-foreground p-2.5 whitespace-nowrap">
@@ -193,7 +208,10 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
                       <p className="truncate font-medium">{a.company}</p>
                       <p className="text-muted-foreground truncate text-xs">{a.position}</p>
                     </div>
-                    <StageBadge name={a.stage?.name} kind={a.stage?.kind} />
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <StageBadge name={a.stage?.name} kind={a.stage?.kind} />
+                      {a.ghosted && <GhostedBadge />}
+                    </div>
                   </div>
                   <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                     <span>{JOB_SOURCE_LABELS[a.source]}</span>
@@ -207,6 +225,18 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
         </>
       )}
     </div>
+  );
+}
+
+function GhostedBadge() {
+  return (
+    <Badge
+      variant="secondary"
+      className="bg-amber-500/15 text-amber-700 dark:text-amber-300"
+      title={`Tanpa kabar ${GHOSTED_DAYS} hari atau lebih`}
+    >
+      Ghosted
+    </Badge>
   );
 }
 

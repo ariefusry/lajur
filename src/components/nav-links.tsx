@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, FileText, KanbanSquare, LayoutDashboard, Plus, Settings } from "lucide-react";
+import { BarChart3, CalendarDays, FileText, KanbanSquare, LayoutDashboard, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/board", label: "Lamaran", icon: KanbanSquare, also: "/applications" },
   { href: "/applications/new", label: "Lamaran baru", icon: Plus },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/calendar", label: "Kalender", icon: CalendarDays },
   { href: "/resumes", label: "CV", icon: FileText },
   { href: "/settings", label: "Pengaturan", icon: Settings },
@@ -47,7 +48,8 @@ export function NavLinks() {
 /** Phone navigation: a fixed bottom tab bar (thumb reach), with "new application" as the centre action. */
 export function TabBar() {
   const pathname = usePathname();
-  const tabs = LINKS.filter((l) => l.href !== "/settings");
+  // Five tabs max: Settings sits in the header, Analytics is reached from the dashboard (whose tab stays lit there).
+  const tabs = LINKS.filter((l) => l.href !== "/settings" && l.href !== "/analytics");
   return (
     <nav
       aria-label="Navigasi utama"
@@ -55,7 +57,7 @@ export function TabBar() {
     >
       <ul className="mx-auto grid max-w-md grid-cols-5">
         {tabs.map(({ href, label, icon: Icon }) => {
-          const active = isActive(pathname, href);
+          const active = isActive(pathname, href) || (href === "/dashboard" && isActive(pathname, "/analytics"));
           const primary = href === "/applications/new";
           return (
             <li key={href}>

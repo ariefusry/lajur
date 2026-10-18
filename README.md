@@ -14,7 +14,8 @@ Tracker lamaran kerja dengan bantuan AI, untuk pencari kerja di Indonesia yang m
 - **Versi CV:** unggah PDF, tautkan ke lamaran, lihat lewat tautan sementara 60 detik.
 - **Gap skill:** skill yang diminta lowongan vs CV-mu. Pencocokan teks dulu; AI hanya untuk sisanya, dan hanya menerima bagian keahlian/pengalaman yang sudah disamarkan (tanpa nama dan kontak).
 - **Kalender dan pengingat email** H-3 dan H-1 untuk tes, interview, dan deadline.
-- **Dashboard:** funnel seleksi, tingkat lolos administrasi per sumber lowongan dan per versi CV, median waktu respons perusahaan.
+- **Dashboard (apa yang harus dikerjakan hari ini):** jadwal dan deadline 7 hari ke depan, lamaran yang mulai tanpa kabar, pipeline saat ini (termasuk ghosted), lamaran per minggu, aktivitas terbaru.
+- **Analytics (strategi mana yang berhasil):** response, interview, dan offer rate, persentase ghosted, funnel seleksi, tahap yang paling sering membuat gagal, serta respons dan lolos administrasi per sumber lowongan dan per versi CV.
 
 | Board | Detail lamaran |
 |---|---|
@@ -246,13 +247,16 @@ Reasoning tidak menaikkan skor di tugas ekstraksi ini, tapi 4–5× lebih lambat
 3. Sisanya + CV yang sudah melewati `redact()` (`src/lib/ai/redact.ts`: hanya bagian keahlian/pengalaman/proyek/organisasi; email, nomor HP, URL, NIK/angka panjang, baris alamat, dan setiap kata nama pemilik dihapus; maks. 6.000 karakter) dikirim ke LLM. Klaim "ada di CV" tanpa kutipan yang benar-benar ada di teks redaksi diturunkan jadi ❌. Kalau CV tidak punya judul bagian yang dikenali, seluruh teks yang sudah dibersihkan dipakai supaya analisis tetap jalan.
 4. Tanpa AI (key kosong, kuota habis, server down), hasil pencocokan teks tetap disimpan.
 
-### Dashboard
+### Dashboard dan Analytics
 
-Semua angka dihitung di server oleh fungsi murni `computeDashboard` (`src/lib/dashboard.ts`), lalu dirender sebagai HTML/CSS biasa (bar satu warna + label langsung + tabel), tanpa library chart dan tanpa JS di client. Recharts belum dipakai; tambahkan kalau perlu grafik tren waktu.
+Dashboard (`/dashboard`) menjawab "hari ini harus ngapain"; Analytics (`/analytics`) menjawab "strategi mana yang berhasil". Semua angka dihitung di server oleh fungsi murni `computeDashboard` (`src/lib/dashboard.ts`), lalu dirender sebagai HTML/CSS biasa (bar satu warna + label langsung + tabel), tanpa library chart dan tanpa JS di client. Recharts belum dipakai; tambahkan kalau perlu grafik tren waktu.
 
 - **Funnel:** lamaran yang pernah mencapai tiap tahap seleksi (tahap terjauh yang IN_PROGRESS/OFFER di `StageHistory`; Ditolak tidak dihitung sebagai kemajuan) + persentase lanjut dari tahap sebelumnya.
 - **Lolos administrasi** (per sumber, per versi CV): sudah melewati tahap seleksi pertama, dihitung dari lamaran yang sudah sampai tahap itu.
-- **Waktu respons:** median hari dari `appliedAt` ke perpindahan tahap pertama.
+- **Melamar** = tanggal melamar, atau saat pertama masuk tahap seleksi. **Respons** = perpindahan tahap pertama sesudahnya (ditolak juga dihitung). **Waktu respons** = median selisih keduanya.
+- **Interview rate:** pernah sampai tahap yang namanya berisi "Interview"/"Wawancara". **Offer rate:** pernah sampai tahap OFFER.
+- **Ghosted** (dihitung, tidak disimpan): masih di tahap seleksi tanpa perpindahan tahap 30 hari atau lebih; 14–29 hari tampil sebagai "mulai tanpa kabar". Kartu tidak dipindah otomatis, jadi data asli tetap utuh; badge "Ghosted" muncul di board dan daftar, dan hilang begitu kartunya digeser.
+- **Sampel kecil:** persentase baru tampil kalau ada minimal 5 lamaran di belakangnya; sebelum itu hanya jumlahnya ("3/4").
 
 `src/lib/dashboard.test.ts` memakai data demo yang sama dengan `pnpm db:seed` dan mencocokkan setiap angka dengan hitungan manual (funnel 13 → 10 → 8 → 6 → 5 → 4 → 2 → 1, median 5 hari, dst.).
 

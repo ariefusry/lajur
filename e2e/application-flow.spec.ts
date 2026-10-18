@@ -24,7 +24,6 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await page.getByRole("button", { name: "Masuk sebagai demo" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-  const totalBefore = Number(await page.getByText("Total lamaran").locator("..").locator("p").nth(1).innerText());
 
   // 2. Buat lamaran (lands in the first column, Wishlist)
   await page.goto("/applications/new");
@@ -67,9 +66,13 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await expect(timeline.getByText("Tes Online/TPA", { exact: true })).toHaveCount(0);
   const detailUrl = page.url();
 
-  // 4. Cek dashboard: one more application in total
+  // 4. Cek dashboard: the move shows up in recent activity; the list view has it too
   await page.goto("/dashboard");
-  await expect(page.getByText("Total lamaran").locator("..").getByText(String(totalBefore + 1), { exact: true })).toBeVisible();
+  const activity = page.locator("section", { has: page.getByRole("heading", { name: "Aktivitas terbaru" }) });
+  await expect(activity.getByText(COMPANY).first()).toBeVisible();
+  await page.goto(`/applications?q=${encodeURIComponent(COMPANY)}`);
+  await expect(page.getByText("1 dari")).toBeVisible();
+  await expect(page.getByRole("link", { name: COMPANY }).first()).toBeVisible();
 
   // Cleanup
   await page.goto(detailUrl);

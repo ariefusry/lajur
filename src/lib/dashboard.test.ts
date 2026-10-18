@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDashboard, weeklyCounts, type DashApp, type DashStage } from "./dashboard";
+import { appFactsFor, computeDashboard, rate, weeklyCounts, type DashApp, type DashStage } from "./dashboard";
 import { DEMO_APPS, demoTimeline } from "./demo-data";
 import { STAGE_TEMPLATES } from "./stage-templates";
 
@@ -16,7 +16,7 @@ const apps: DashApp[] = DEMO_APPS.map((app, i) => {
     history: history.map((h) => ({ stageId: `s${h.stageIndex}`, enteredAt: h.enteredAt })),
   };
 });
-const d = computeDashboard(stages, apps);
+const d = computeDashboard(stages, apps, today);
 
 /*
  * Hand count from DEMO_APPS (furthest selection stage per app, 1 = Administrasi … 8 = Offering):
@@ -25,8 +25,8 @@ const d = computeDashboard(stages, apps);
  */
 describe("computeDashboard on the demo data (matches the hand count)", () => {
   it("totals", () => {
-    // Current stages: wishlist 2, in progress 8, offering 1, ditolak 4.
-    expect(d.totals).toEqual({ applications: 15, wishlist: 2, active: 8, offers: 1, rejected: 4 });
+    // Current stages: wishlist 2, in progress 8 (6 of them ghosted, see below), offering 1, ditolak 4.
+    expect(d.totals).toEqual({ applications: 15, wishlist: 2, active: 8, ghosted: 6, offers: 1, rejected: 4 });
     expect(d.adminStage).toBe("Administrasi");
   });
 
@@ -70,6 +70,31 @@ describe("computeDashboard on the demo data (matches the hand count)", () => {
     expect(by).toEqual({ cv0: [7, 7, 6], cv1: [6, 6, 4] });
   });
 
+  it("outcomes: response, interview, offer, ghosted, waiting", () => {
+    // Sent: 13 (all but the two wishlist ones, KAI and Angkasa Pura).
+    // No reaction yet: Pertamina and Astra (still at Administrasi) → 11 responded (rejections count as a reaction).
+    // Reached an Interview stage: Telkom, Tokopedia, Gojek, BSI, Traveloka → 5. Offering: Traveloka.
+    // Last news (applied 60-2i days ago, one stage per 3+(i%5) days): Mandiri 54, BRI 54, Telkom 36,
+    // Pertamina 54, BCA 41, Astra 42 days → ghosted 6; Tokopedia 21 and BSI 14 → only quiet.
+    // Waiting = active, not ghosted, no reaction yet → none.
+    expect(d.outcomes).toEqual({ applied: 13, responded: 11, interviewed: 5, offered: 1, ghosted: 6, waiting: 0 });
+  });
+
+  it("per source: sent and responded", () => {
+    const by = Object.fromEntries(d.bySource.map((s) => [s.key, [s.applied, s.responded]]));
+    expect(by.BUMN_PORTAL).toEqual([5, 4]); // Angkasa Pura not sent; Pertamina no reaction
+    expect(by.KALIBRR).toEqual([1, 0]); // Astra
+    expect(by.INSTAGRAM).toEqual([0, 0]); // KAI still wishlist
+  });
+
+  it("per-application facts: quiet vs ghosted", () => {
+    const facts = apps.map(appFactsFor(stages, today));
+    expect(facts.filter((f) => f.quiet).map((f) => f.idleDays)).toEqual([21, 14]); // Tokopedia, BSI
+    expect(facts[0]).toMatchObject({ idleDays: 54, ghosted: true, quiet: false }); // Mandiri
+    expect(facts[10]).toMatchObject({ appliedOn: null, ghosted: false }); // KAI, wishlist: never ghosted
+    expect(facts[12]).toMatchObject({ offered: true, interviewed: true, ghosted: false }); // Traveloka
+  });
+
   it("where rejections happen", () => {
     // eFishery at Administrasi, PLN at Tes Online, BNI at Psikotes, Gojek at Interview User: one each, pipeline order.
     expect(d.failedAt).toEqual([1, 2, 3, 6].map((i) => ({ stage: stages[i].name, count: 1 })));
@@ -84,11 +109,12 @@ describe("computeDashboard on the demo data (matches the hand count)", () => {
 
 describe("computeDashboard edge cases", () => {
   it("empty account", () => {
-    const e = computeDashboard(stages, []);
+    const e = computeDashboard(stages, [], today);
     expect(e.totals.applications).toBe(0);
     expect(e.funnel.every((f) => f.count === 0)).toBe(true);
     expect(e.bySource).toEqual([]);
     expect(e.responseTime).toEqual({ medianDays: null, sample: 0 });
+    expect(e.outcomes).toEqual({ applied: 0, responded: 0, interviewed: 0, offered: 0, ghosted: 0, waiting: 0 });
   });
   it("skipped stages still count as reached; even sample count averages the middle pair", () => {
     const skip: DashApp = {
@@ -96,9 +122,17 @@ describe("computeDashboard edge cases", () => {
       history: [{ stageId: "s1", enteredAt: new Date("2026-01-01") }, { stageId: "s4", enteredAt: new Date("2026-01-03") }],
     };
     const later = { ...skip, history: [skip.history[0], { stageId: "s2", enteredAt: new Date("2026-01-05") }] };
-    const r = computeDashboard(stages, [skip, later]);
+    const r = computeDashboard(stages, [skip, later], today);
     expect(r.funnel.slice(0, 4).map((f) => f.count)).toEqual([2, 2, 1, 1]); // Tes/Psikotes counted for the skipper
     expect(r.responseTime.medianDays).toBe(3); // (2 + 4) / 2
+  });
+});
+
+describe("rate", () => {
+  it("only gives a percentage from 5 applications up", () => {
+    expect(rate(4, 5)).toBeCloseTo(0.8);
+    expect(rate(1, 4)).toBeNull();
+    expect(rate(0, 0)).toBeNull();
   });
 });
 

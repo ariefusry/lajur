@@ -34,6 +34,8 @@ type Card = {
   deadline: Date | null;
   currentStageId: string;
   eligibility: EligibilityStatus | null;
+  /** No news for 30+ days while in a selection stage (derived on the server). */
+  ghosted: boolean;
 };
 
 // Cards are narrow: long source names get a short form.
@@ -88,7 +90,8 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
     if (!card || card.currentStageId === toStage) return;
 
     const before = cards;
-    setCards((cs) => cs.map((c) => (c.id === id ? { ...c, currentStageId: toStage } : c)));
+    // A move is news, so the card is no longer ghosted.
+    setCards((cs) => cs.map((c) => (c.id === id ? { ...c, currentStageId: toStage, ghosted: false } : c)));
     startTransition(async () => {
       const res: { ok: boolean; message?: string } = await moveApplication(id, toStage).catch(() => ({ ok: false }));
       if (!res.ok) {
@@ -216,6 +219,11 @@ function CardBody({ card }: { card: Card }) {
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
         <Badge variant="secondary">{SHORT_SOURCE[card.source] ?? JOB_SOURCE_LABELS[card.source]}</Badge>
         {card.eligibility && <EligibilityBadge status={card.eligibility} />}
+        {card.ghosted && (
+          <Badge variant="secondary" className="bg-amber-500/15 text-amber-700 dark:text-amber-300" title="Tanpa kabar 30 hari atau lebih">
+            Ghosted
+          </Badge>
+        )}
         {card.deadline && days !== null && (
           <span
             className={cn("inline-flex items-center gap-1 text-xs", days <= 3 ? "font-medium text-destructive" : "text-muted-foreground")}
