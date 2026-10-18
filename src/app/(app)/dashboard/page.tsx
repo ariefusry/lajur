@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { Card, Stat, pct } from "@/components/dashboard/cards";
 import { Button } from "@/components/ui/button";
+import { ShinyButton } from "@/components/ui/shiny-button";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, computeDashboard, GHOSTED_DAYS, MIN_SAMPLE, QUIET_DAYS, rate, weeklyCounts } from "@/lib/dashboard";
 import { db } from "@/lib/db";
@@ -97,11 +98,9 @@ export default async function DashboardPage() {
             Tempel teks lowongan dan AI mengisi form-nya untukmu, atau isi manual. Setelah itu, di sini muncul jadwal
             tes dan interview terdekat, deadline yang hampir tutup, dan lamaran yang sudah lama tanpa kabar.
           </p>
-          <Button asChild>
-            <Link href="/applications/new">
-              <Sparkles /> Tempel lowongan
-            </Link>
-          </Button>
+          <ShinyButton href="/applications/new">
+            <Sparkles /> Tempel lowongan
+          </ShinyButton>
         </div>
       </div>
     );
@@ -204,11 +203,9 @@ export default async function DashboardPage() {
               <BarChart3 /> Analytics
             </Link>
           </Button>
-          <Button asChild>
-            <Link href="/applications/new">
-              <Sparkles /> Tempel lowongan
-            </Link>
-          </Button>
+          <ShinyButton href="/applications/new" size="sm">
+            <Sparkles /> Tempel lowongan
+          </ShinyButton>
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import { CircleCheck, CircleX, LoaderCircle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { ShinyButton } from "@/components/ui/shiny-button";
 
 type Gap = { id: string; skill: string; inResume: boolean; suggestion: string | null; sourceQuote: string | null };
 
@@ -57,10 +57,10 @@ export function SkillGapSection({
           </p>
         </div>
         {!blocker && !readOnly && (
-          <Button type="button" variant="outline" size="sm" onClick={analyze} disabled={pending}>
+          <ShinyButton size="sm" onClick={analyze} disabled={pending}>
             {pending ? <LoaderCircle className="animate-spin motion-reduce:animate-none" /> : <Sparkles />}
             {pending ? "Mencocokkan skill dengan CV…" : gaps.length ? "Analisis ulang" : "Analisis skill"}
-          </Button>
+          </ShinyButton>
         )}
       </div>
 

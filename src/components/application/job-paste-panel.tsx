@@ -5,12 +5,12 @@ import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AiFindings } from "@/components/application/ai-findings";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ExtractEvent } from "@/lib/ai/extract-events";
 import type { ExtractedJob } from "@/lib/ai/extract-job";
+import { ShinyButton } from "@/components/ui/shiny-button";
 
 export type ExtractResult = { job: ExtractedJob; text: string; cached: boolean; sourceUrl?: string };
 type Status = Extract<ExtractEvent, { type: "status" }>["status"];
@@ -121,9 +121,9 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
             : "Beberapa situs (LinkedIn, JobStreet) menolak diambil otomatis. Kalau gagal, salin teksnya saja."}
         </p>
       </div>
-      <Button type="button" onClick={extract} disabled={pending}>
+      <ShinyButton onClick={extract} disabled={pending}>
         <Sparkles /> {pending ? "AI sedang membaca…" : "Isi otomatis dengan AI"}
-      </Button>
+      </ShinyButton>
       {pending && <AiFindings status={status} job={partial} elapsed={elapsed} />}
     </section>
   );

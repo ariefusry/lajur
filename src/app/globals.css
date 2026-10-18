@@ -144,6 +144,185 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+/* ShinyButton (components/ui/shiny-button.tsx): AI call-to-action with a rotating brand-blue edge. */
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --gradient-angle-offset {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@property --gradient-percent {
+  syntax: "<percentage>";
+  initial-value: 5%;
+  inherits: false;
+}
+@property --gradient-shine {
+  syntax: "<color>";
+  initial-value: white;
+  inherits: false;
+}
+@layer components {
+  .shiny-cta {
+    --shiny-cta-bg: oklch(0.2 0.02 260);
+    --shiny-cta-bg-subtle: oklch(0.3 0.02 260);
+    --shiny-cta-fg: #ffffff;
+    --shiny-cta-highlight: var(--primary);
+    --shiny-cta-highlight-subtle: oklch(0.78 0.12 255);
+    --animation: gradient-angle linear infinite;
+    --duration: 3s;
+    --shadow-size: 2px;
+    --transition: 800ms cubic-bezier(0.25, 1, 0.5, 1);
+
+    isolation: isolate;
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.5rem;
+    padding-inline: 1.25rem;
+    cursor: pointer;
+    outline-offset: 4px;
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--shiny-cta-fg);
+    background:
+      linear-gradient(var(--shiny-cta-bg), var(--shiny-cta-bg)) padding-box,
+      conic-gradient(
+          from calc(var(--gradient-angle) - var(--gradient-angle-offset)),
+          transparent,
+          var(--shiny-cta-highlight) var(--gradient-percent),
+          var(--gradient-shine) calc(var(--gradient-percent) * 2),
+          var(--shiny-cta-highlight) calc(var(--gradient-percent) * 3),
+          transparent calc(var(--gradient-percent) * 4)
+        )
+        border-box;
+    box-shadow: inset 0 0 0 1px var(--shiny-cta-bg-subtle);
+    transition: var(--transition);
+    transition-property: --gradient-angle-offset, --gradient-percent, --gradient-shine, translate;
+  }
+  .shiny-cta-sm {
+    height: 2.25rem;
+    padding-inline: 1rem;
+  }
+  @media (pointer: coarse) {
+    .shiny-cta {
+      height: 2.75rem;
+    }
+  }
+  .shiny-cta::before,
+  .shiny-cta::after,
+  .shiny-cta > span::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset-inline-start: 50%;
+    inset-block-start: 50%;
+    translate: -50% -50%;
+    z-index: -1;
+  }
+  .shiny-cta:active:not(:disabled) {
+    translate: 0 1px;
+  }
+  /* Dots pattern */
+  .shiny-cta::before {
+    --size: calc(100% - var(--shadow-size) * 3);
+    --position: 2px;
+    --space: calc(var(--position) * 2);
+    width: var(--size);
+    height: var(--size);
+    background: radial-gradient(circle at var(--position) var(--position), white calc(var(--position) / 4), transparent 0)
+      padding-box;
+    background-size: var(--space) var(--space);
+    background-repeat: space;
+    mask-image: conic-gradient(from calc(var(--gradient-angle) + 45deg), black, transparent 10% 90%, black);
+    border-radius: inherit;
+    opacity: 0.4;
+  }
+  /* Inner shimmer */
+  .shiny-cta::after {
+    --animation: shimmer linear infinite;
+    width: 100%;
+    aspect-ratio: 1;
+    background: linear-gradient(-50deg, transparent, var(--shiny-cta-highlight), transparent);
+    mask-image: radial-gradient(circle at bottom, transparent 40%, black);
+    opacity: 0.6;
+  }
+  .shiny-cta > span {
+    z-index: 1;
+  }
+  .shiny-cta > span::before {
+    --size: calc(100% + 1rem);
+    width: var(--size);
+    height: var(--size);
+    box-shadow: inset 0 -1ex 2rem 4px var(--shiny-cta-highlight);
+    opacity: 0;
+    transition: opacity var(--transition);
+    animation: calc(var(--duration) * 1.5) shiny-breathe linear infinite;
+  }
+  .shiny-cta,
+  .shiny-cta::before,
+  .shiny-cta::after {
+    animation:
+      var(--animation) var(--duration),
+      var(--animation) calc(var(--duration) / 0.4) reverse paused;
+    animation-composition: add;
+  }
+  .shiny-cta:is(:hover, :focus-visible):not(:disabled) {
+    --gradient-percent: 20%;
+    --gradient-angle-offset: 95deg;
+    --gradient-shine: var(--shiny-cta-highlight-subtle);
+  }
+  .shiny-cta:is(:hover, :focus-visible):not(:disabled),
+  .shiny-cta:is(:hover, :focus-visible):not(:disabled)::before,
+  .shiny-cta:is(:hover, :focus-visible):not(:disabled)::after {
+    animation-play-state: running;
+  }
+  .shiny-cta:is(:hover, :focus-visible):not(:disabled) > span::before {
+    opacity: 1;
+  }
+  /* Busy (AI working) or unavailable: keep the shape, drop the motion. */
+  .shiny-cta:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .shiny-cta,
+    .shiny-cta::before,
+    .shiny-cta::after,
+    .shiny-cta > span::before {
+      animation: none !important;
+    }
+  }
+}
+@keyframes gradient-angle {
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+@keyframes shimmer {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes shiny-breathe {
+  from,
+  to {
+    scale: 1;
+  }
+  50% {
+    scale: 1.2;
+  }
+}
 /* Semi-glass surface for cards: translucent, blurred, a light top edge (light catching the material). */
 @utility glass {
   background-color: color-mix(in oklch, var(--card) 66%, transparent);
