@@ -6,6 +6,7 @@ import {
   RequirementType,
   StageResult,
 } from "@/generated/prisma/enums";
+import { StoredCvTweaks } from "@/lib/ai/cv-tweaks";
 
 /**
  * Everything needed to bring a deleted application back ("Urungkan"). It travels through the client,
@@ -28,6 +29,7 @@ export const applicationSnapshotSchema = z.object({
   nextActionAt: z.date().nullable().default(null),
   lastFollowUpAt: z.date().nullable().default(null),
   followUpRemindedAt: z.date().nullable().default(null),
+  cvTweaks: StoredCvTweaks.default([]),
   createdAt: z.date(),
   history: z.array(
     z.object({

@@ -1,80 +1,67 @@
-import "server-only";
 import { z } from "zod";
-import type { ExtractedJob } from "@/lib/ai/extract-job";
-import { generateStructured } from "@/lib/ai/provider";
-import { redact, rehydrate, type KnownPii, type PiiMap } from "@/lib/ai/redact";
+import { rehydrate, type PiiMap } from "@/lib/ai/redact";
+import { findSkillInText } from "@/lib/ai/skill-aliases";
 import { squash } from "@/lib/ai/skill-gap";
 
 export const MAX_CV_TWEAKS = 8;
 
-export const CvTweaksAnswer = z.object({
-  tweaks: z.array(
-    z.object({
-      section: z.string(),
-      current: z.string().nullable(), // exact snippet of the redacted CV; null when the tweak adds something new
-      suggestion: z.string(),
-      reason: z.string(),
-    }),
-  ),
+export const CvTweak = z.object({
+  // rewrite: polish text that is already in the CV (copy-ready); add: what to fill in, if the user really has it.
+  kind: z.enum(["rewrite", "add"]),
+  section: z.string(), // "Keahlian", "Pengalaman", …
+  current: z.string().nullable(), // rewrite: exact snippet of the redacted CV; add: null
+  suggestion: z.string(),
+  reason: z.string(),
 });
-export type CvTweak = z.infer<typeof CvTweaksAnswer>["tweaks"][number];
+export type CvTweak = z.infer<typeof CvTweak>;
 
-export const CV_TWEAKS_SYSTEM = `Kamu membantu pencari kerja menyesuaikan CV dengan satu lowongan.
-Teks CV sudah disamarkan (nama, kontak, dan alamat diganti tanda seperti [NAME_1] atau [EMAIL_1]). Biarkan tanda itu apa adanya.
+/** What Application.cvTweaks holds and the new-application form sends back: bounded, so it's safe to store. */
+export const StoredCvTweaks = z
+  .array(
+    z.object({
+      kind: z.enum(["rewrite", "add"]),
+      section: z.string().max(200),
+      current: z.string().max(4000).nullable(),
+      suggestion: z.string().max(4000),
+      reason: z.string().max(2000),
+    }),
+  )
+  .max(MAX_CV_TWEAKS);
 
-Beri paling banyak ${MAX_CV_TWEAKS} saran yang paling berpengaruh, masing-masing:
-- section: bagian CV yang diubah (contoh "Keahlian", "Pengalaman").
-- current: potongan teks yang disalin persis dari CV yang perlu diubah, atau null kalau sarannya menambah hal baru.
-- suggestion: teks pengganti atau tambahan yang siap ditempel ke CV.
-- reason: satu kalimat yang mengaitkan saran dengan syarat atau skill di lowongan.
-Hanya pakai pengalaman yang memang ada di CV. Jangan mengarang pengalaman, angka, atau sertifikat.
-Tulis dalam bahasa CV, kecuali lowongan meminta CV berbahasa lain.`;
-
-/** The extracted posting, not its full text: the CV already takes most of Groq's 8K tokens/minute. */
-export function cvTweaksPrompt(posting: ExtractedJob, redactedCv: string) {
-  const lines = [
-    posting.position && `Posisi: ${posting.position}`,
-    posting.company && `Perusahaan: ${posting.company}`,
-    posting.skills.length > 0 && `Skill: ${posting.skills.map((s) => s.name).join(", ")}`,
-    ...posting.requirements.map((r) => `Syarat (${r.type}): ${r.value}`),
-  ].filter(Boolean);
-  return `Lowongan:\n${lines.join("\n")}\n\nCV:\n${redactedCv}`;
+/** Saved tweaks from the database (Json), or [] when missing/malformed. */
+export function readCvTweaks(value: unknown): CvTweak[] {
+  return StoredCvTweaks.safeParse(value).data ?? [];
 }
 
-/** At most 8; a tweak that claims to change text the CV doesn't contain is dropped; personal data goes back in. */
-export function verifyCvTweaks(answer: z.infer<typeof CvTweaksAnswer>, redactedCv: string, map: PiiMap): CvTweak[] {
+const PLACEHOLDER = /\[[A-Z]+_\d+\]/g;
+const numbers = (s: string) => s.replace(PLACEHOLDER, "").match(/\d+(?:[.,]\d+)*/g) ?? [];
+// An "add" tip carrying a ready-made CV sentence in quotes ("misalnya: \"Frontend developer dengan pengalaman …\"").
+const QUOTED_SAMPLE = /["“'‘][^"”'’]{30,}["”'’]/;
+
+/**
+ * The model must not put words in the user's mouth: a tweak is dropped when it
+ * - rewrites text that isn't in the CV,
+ * - introduces a number (year, GPA, amount, "5 halaman") the CV doesn't have,
+ * - rewrites the CV to claim a posting skill the check found missing, or
+ * - is an "add" tip that hands over a made-up CV sentence in quotes instead of saying what to add.
+ * At most 8 survive; personal data goes back in.
+ */
+export function verifyCvTweaks(tweaks: CvTweak[], redactedCv: string, map: PiiMap, missingSkills: string[] = []): CvTweak[] {
   const cv = squash(redactedCv);
-  return answer.tweaks
-    .filter((t) => t.current === null || (squash(t.current).length > 0 && cv.includes(squash(t.current))))
+  const cvNumbers = new Set(numbers(redactedCv));
+  return tweaks
+    .filter((t) => {
+      if (t.kind === "rewrite" && !(t.current && squash(t.current).length > 0 && cv.includes(squash(t.current)))) return false;
+      if (numbers(t.suggestion).some((n) => !cvNumbers.has(n))) return false;
+      if (t.kind === "add") return !QUOTED_SAMPLE.test(t.suggestion);
+      return !missingSkills.some((skill) => findSkillInText(skill, t.suggestion));
+    })
     .slice(0, MAX_CV_TWEAKS)
     .map((t) => ({
+      kind: t.kind,
       section: t.section,
-      current: t.current && rehydrate(t.current, map),
+      current: t.kind === "rewrite" && t.current ? rehydrate(t.current, map) : null,
       suggestion: rehydrate(t.suggestion, map),
       reason: rehydrate(t.reason, map),
     }));
-}
-
-/** CV tweaks for one posting. Only the redacted CV leaves the server. Throws like generateStructured. */
-export async function suggestCvTweaks({
-  cvText,
-  posting,
-  userId,
-  owner,
-}: {
-  cvText: string;
-  posting: ExtractedJob;
-  userId: string;
-  owner: KnownPii;
-}): Promise<CvTweak[]> {
-  const cv = redact(cvText, owner);
-  const { object } = await generateStructured({
-    schema: CvTweaksAnswer,
-    system: CV_TWEAKS_SYSTEM,
-    prompt: cvTweaksPrompt(posting, cv.text),
-    feature: "CV_TWEAKS",
-    userId,
-    maxOutputTokens: 2500,
-  });
-  return verifyCvTweaks(object, cv.text, cv.map);
 }

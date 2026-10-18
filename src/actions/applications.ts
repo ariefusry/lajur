@@ -3,22 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { readCvTweaks } from "@/lib/ai/cv-tweaks";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 import { applicationSnapshotSchema, type ApplicationSnapshot } from "@/lib/application-snapshot";
-import { applicationSchema, draftSchema, type FormState } from "@/lib/validation";
+import { applicationSchema, cvCheckSchema, draftSchema, type FormState } from "@/lib/validation";
 
 function parse(formData: FormData) {
   return applicationSchema.safeParse(Object.fromEntries(formData));
 }
 
-/** Optional AI draft (requirements + posting text); absent or malformed → ignored, manual flow still works. */
-function parseDraft(formData: FormData) {
-  const raw = formData.get("draft");
+/** Optional hidden JSON field (AI draft, CV check); absent or malformed → ignored, manual flow still works. */
+function parseJsonField<T>(formData: FormData, name: string, schema: z.ZodType<T>): T | null {
+  const raw = formData.get(name);
   if (typeof raw !== "string" || !raw) return null;
   try {
-    const parsed = draftSchema.safeParse(JSON.parse(raw));
+    const parsed = schema.safeParse(JSON.parse(raw));
     return parsed.success ? parsed.data : null;
   } catch {
     return null;
@@ -41,7 +42,10 @@ export async function createApplication(_: FormState, formData: FormData): Promi
   if (!(await ownsStage(user.id, parsed.data.currentStageId))) return { message: "Tahap tidak valid." };
   if (!(await ownsResume(user.id, parsed.data.resumeId))) return { message: "CV tidak valid." };
 
-  const draft = parseDraft(formData);
+  const draft = parseJsonField(formData, "draft", draftSchema);
+  // A "Cek CV" result only belongs to the application if it was made for the CV that is being sent.
+  const cvCheck = parseJsonField(formData, "cvCheck", cvCheckSchema);
+  const check = cvCheck && cvCheck.resumeId === parsed.data.resumeId ? cvCheck : null;
   await db.application.create({
     data: {
       ...parsed.data,
@@ -54,6 +58,7 @@ export async function createApplication(_: FormState, formData: FormData): Promi
           ageReferenceDate: r.ageReferenceDate ? new Date(`${r.ageReferenceDate}T00:00:00Z`) : null,
         })),
       },
+      ...(check && { skillGaps: { create: check.rows }, cvTweaks: check.tweaks }),
     },
   });
   revalidatePath("/board");
@@ -101,6 +106,7 @@ export async function deleteApplication(
     ok: true,
     snapshot: {
       ...app,
+      cvTweaks: readCvTweaks(app.cvTweaks),
       history: app.history.map(({ stageId, enteredAt, result, notes }) => ({ stageId, enteredAt, result, notes })),
       events: app.events.map(({ type, startsAt, locationOrUrl, remindedH3At, remindedH1At }) => ({
         type,

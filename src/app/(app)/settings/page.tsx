@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import { requireUser } from "@/lib/auth";
 import { toDateInput } from "@/lib/dates";
 import { db } from "@/lib/db";
-import { isDemoEmail } from "@/lib/demo";
+import { isDemoEmail, isReadOnly } from "@/lib/demo";
 import { optionsFrom } from "@/lib/utils";
 import { STAGE_KIND_LABELS } from "@/lib/validation";
 
@@ -48,7 +48,7 @@ export default async function SettingsPage() {
             />
           </Card>
           <Card title="Persetujuan AI" description="Fitur AI hanya aktif setelah kamu setuju." className="order-1 lg:order-none">
-            <AiConsent consentedAt={profile.aiConsentAt} readOnly={isDemoEmail(email)} />
+            <AiConsent consentedAt={profile.aiConsentAt} readOnly={isReadOnly({ email })} />
           </Card>
           <Card
             title="Data & akun"

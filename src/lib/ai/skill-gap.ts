@@ -27,19 +27,6 @@ export const SkillGapAnswer = z.object({
 });
 export type SkillGapAnswer = z.infer<typeof SkillGapAnswer>;
 
-export const SKILL_GAP_SYSTEM = `Kamu membantu pencari kerja di Indonesia membandingkan CV dengan skill yang diminta lowongan.
-Teks CV sudah disamarkan (nama, kontak, dan alamat diganti tanda seperti [NAME_1] atau [EMAIL_1]). Biarkan tanda itu apa adanya.
-
-Untuk SETIAP skill di daftar:
-- inResume: true hanya jika CV jelas menunjukkan skill itu, termasuk lewat istilah setara (contoh: "analisis data dengan pivot" untuk "Pivot Table"). Kalau ragu, false.
-- quote: potongan teks yang disalin persis dari CV sebagai bukti. null kalau inResume false.
-- suggestion: satu kalimat singkat berbahasa Indonesia. Kalau belum ada, saran konkret cara mempelajari atau membuktikannya (proyek kecil, sertifikasi). Kalau sudah ada, saran cara menonjolkannya di CV.
-Jangan menambah skill di luar daftar.`;
-
-export function skillGapPrompt(missing: string[], redactedCv: string) {
-  return `Skill yang dicek:\n${missing.map((s) => `- ${s}`).join("\n")}\n\nCV:\n${redactedCv}`;
-}
-
 /** Case- and whitespace-insensitive form for "is this quote really in the CV" checks. */
 export const squash = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
 

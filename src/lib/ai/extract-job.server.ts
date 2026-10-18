@@ -1,6 +1,6 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
-import { EXTRACT_SYSTEM, ExtractedJob, hashJobText, isEmptyExtraction, normalizeJobText, verifyQuotes } from "@/lib/ai/extract-job";
+import { EXTRACT_SYSTEM, ExtractedJob, hashJobText, isEmptyExtraction, verifyQuotes } from "@/lib/ai/extract-job";
 import { generateStructured, type AiProgress } from "@/lib/ai/provider";
 import { db } from "@/lib/db";
 
@@ -38,10 +38,4 @@ export async function extractJob(text: string, userId: string, hooks: Hooks = {}
   const result = job as unknown as Prisma.InputJsonValue;
   await db.extractionCache.upsert({ where: { textHash }, create: { textHash, result, model }, update: { result, model } });
   return { job, cached: false };
-}
-
-/** Skills of a saved posting (from the cache in the common case). */
-export async function postingSkills(jobPostingText: string, userId: string) {
-  const { job } = await extractJob(normalizeJobText(jobPostingText), userId);
-  return job.skills.map((s) => s.name);
 }

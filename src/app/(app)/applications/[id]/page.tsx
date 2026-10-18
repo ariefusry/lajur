@@ -10,6 +10,7 @@ import { DeleteApplicationButton } from "@/components/application/delete-button"
 import { EventForm } from "@/components/application/event-form";
 import { FollowUpPanel } from "@/components/application/follow-up-panel";
 import { SkillGapSection } from "@/components/application/skill-gap-section";
+import { readCvTweaks } from "@/lib/ai/cv-tweaks";
 import { StageHistoryForm } from "@/components/application/stage-history-form";
 import { Card } from "@/components/dashboard/cards";
 import { EligibilityBadge } from "@/components/eligibility-badge";
@@ -32,7 +33,7 @@ const TABS = [
   { key: "ringkasan", label: "Ringkasan" },
   { key: "riwayat", label: "Riwayat tahap" },
   { key: "jadwal", label: "Jadwal" },
-  { key: "skill", label: "Skill vs CV" },
+  { key: "skill", label: "Cek CV" },
   { key: "data", label: "Ubah data" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
@@ -395,10 +396,11 @@ export default async function ApplicationDetailPage({
           <SkillGapSection
             applicationId={app.id}
             gaps={app.skillGaps}
+            tweaks={readCvTweaks(app.cvTweaks)}
             readOnly={readOnly}
             blocker={
               !app.jobPostingText
-                ? 'Analisis skill butuh teks lowongan. Lamaran yang dibuat lewat "Tambah dengan AI" otomatis menyimpannya.'
+                ? 'Cek CV butuh teks lowongan. Lamaran yang dibuat lewat "Tambah dengan AI" otomatis menyimpannya.'
                 : !app.resume
                   ? 'Pilih CV yang dikirim di tab "Ubah data", lalu simpan.'
                   : !app.resume.extractedText

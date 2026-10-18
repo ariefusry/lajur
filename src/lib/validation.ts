@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Degree, EventType, JobSource, RequirementType, StageKind, StageResult } from "@/generated/prisma/enums";
+import { StoredCvTweaks } from "@/lib/ai/cv-tweaks";
 import { fromDateInput, fromDateTimeInput } from "@/lib/dates";
 
 // FormData gives strings; empty optional fields become null.
@@ -135,5 +136,21 @@ export const draftSchema = z.object({
     .max(30),
 });
 export type Draft = z.infer<typeof draftSchema>;
+
+/** Hidden "cvCheck" field on the new-application form: the "Cek CV" result, saved only for the CV it checked. */
+export const cvCheckSchema = z.object({
+  resumeId: z.string().min(1),
+  rows: z
+    .array(
+      z.object({
+        skill: z.string().min(1).max(200),
+        inResume: z.boolean(),
+        suggestion: z.string().max(2000).nullable(),
+        sourceQuote: z.string().max(4000).nullable(),
+      }),
+    )
+    .max(100),
+  tweaks: StoredCvTweaks,
+});
 
 export type FormState = { errors?: Record<string, string[] | undefined>; message?: string; ok?: boolean };

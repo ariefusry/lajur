@@ -1,10 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { NothingFoundError, postingSkills } from "@/lib/ai/extract-job.server";
-import { aiEnabled, AiUnavailableError, generateStructured } from "@/lib/ai/provider";
 import { AiConsentRequiredError } from "@/lib/ai/consent";
-import { redact, rehydrate } from "@/lib/ai/redact";
-import { matchSkills, SKILL_GAP_SYSTEM, SkillGapAnswer, skillGapPrompt, verifySkillGap, type GapRow } from "@/lib/ai/skill-gap";
+import { checkCv } from "@/lib/ai/cv-check";
+import { normalizeJobText, type ExtractedJob } from "@/lib/ai/extract-job";
+import { extractJob, NothingFoundError } from "@/lib/ai/extract-job.server";
 import { QuotaExceededError } from "@/lib/ai/usage";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -13,12 +12,18 @@ import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 export const runtime = "nodejs";
 export const maxDuration = 200;
 
-const Body = z.object({ applicationId: z.string().min(1) });
+const Body = z.union([
+  z.object({ applicationId: z.string().min(1) }),
+  // Preview on the new-application form: the posting text of the AI draft + the CV picked in the form.
+  z.object({ text: z.string().min(50).max(100_000), resumeId: z.string().min(1) }),
+]);
 const fail = (error: string, status: number) => Response.json({ error }, { status });
+const UNREADABLE_CV = "Teks CV ini tidak terbaca (mungkin hasil scan). Unggah versi PDF yang teksnya bisa disalin.";
 
 /**
- * Skill gap for one application (CLAUDE.md 7.5): string/alias match first, then only the remaining skills
- * plus the *redacted* CV go to the LLM. Without AI the string-match result is still saved.
+ * "Cek CV": skills found / missing + CV tweaks for one posting (lib/ai/cv-check.ts). With an applicationId the
+ * result replaces the application's saved one; the new-application preview is returned only, and saved together
+ * with the application by createApplication.
  */
 export async function POST(request: Request) {
   const session = await auth();
@@ -28,70 +33,51 @@ export async function POST(request: Request) {
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return fail("Permintaan tidak valid.", 400);
 
-  const app = await db.application.findFirst({
-    where: { id: body.data.applicationId, userId },
-    select: { id: true, jobPostingText: true, resume: { select: { extractedText: true } } },
-  });
-  if (!app) return fail("Lamaran tidak ditemukan.", 404);
-  if (!app.jobPostingText) return fail("Lamaran ini belum punya teks lowongan. Buat lamaran lewat \"Tambah dengan AI\" dulu.", 422);
-  if (!app.resume) return fail("Pilih CV yang dikirim di data lamaran dulu.", 422);
-  if (!app.resume.extractedText) return fail("Teks CV ini tidak terbaca (mungkin hasil scan). Unggah versi PDF yang teksnya bisa disalin.", 422);
-  const cvText = app.resume.extractedText;
+  let postingText: string;
+  let cvText: string;
+  let applicationId: string | null = null;
+  if ("applicationId" in body.data) {
+    const app = await db.application.findFirst({
+      where: { id: body.data.applicationId, userId },
+      select: { id: true, jobPostingText: true, resume: { select: { extractedText: true } } },
+    });
+    if (!app) return fail("Lamaran tidak ditemukan.", 404);
+    if (!app.jobPostingText) return fail("Lamaran ini belum punya teks lowongan. Buat lamaran lewat \"Tambah dengan AI\" dulu.", 422);
+    if (!app.resume) return fail("Pilih CV yang dikirim di data lamaran dulu.", 422);
+    if (!app.resume.extractedText) return fail(UNREADABLE_CV, 422);
+    applicationId = app.id;
+    postingText = app.jobPostingText;
+    cvText = app.resume.extractedText;
+  } else {
+    const resume = await db.resume.findFirst({ where: { id: body.data.resumeId, userId }, select: { extractedText: true } });
+    if (!resume) return fail("CV tidak ditemukan.", 404);
+    if (!resume.extractedText) return fail(UNREADABLE_CV, 422);
+    postingText = body.data.text;
+    cvText = resume.extractedText;
+  }
 
-  let skills: string[];
+  // The posting's skills and requirements; a cache hit (no AI, no quota) whenever the text was extracted before.
+  let posting: ExtractedJob;
   try {
-    skills = await postingSkills(app.jobPostingText, userId);
+    ({ job: posting } = await extractJob(normalizeJobText(postingText), userId));
   } catch (error) {
     if (error instanceof AiConsentRequiredError) return fail(error.message, 403);
     if (error instanceof QuotaExceededError) return fail(error.message, 429);
-    if (error instanceof NothingFoundError) return fail("Tidak ada skill yang bisa dibaca dari teks lowongan ini.", 422);
-    return fail("Daftar skill lowongan belum tersedia dan AI sedang tidak tersedia. Coba lagi nanti.", 503);
-  }
-  if (!skills.length) return fail("Lowongan ini tidak menyebut skill teknis.", 422);
-
-  // 1. No AI: aliases/verbatim matches.
-  const { found, missing } = matchSkills(skills, cvText);
-
-  // 2–3. Only what's left, and only the redacted CV, goes to the LLM.
-  let fromAi: GapRow[] = [];
-  let aiNote: string | null = null;
-  if (missing.length) {
-    const owner = await db.user.findUnique({ where: { id: userId }, select: { name: true, domicile: true } });
-    const redacted = redact(cvText, { name: owner?.name, address: owner?.domicile });
-    const notChecked = (suggestion: string) => missing.map((skill) => ({ skill, inResume: false, suggestion, sourceQuote: null }));
-    if (!aiEnabled()) {
-      fromAi = notChecked("Tidak ditemukan di CV. AI tidak aktif, jadi istilah setara belum dicek.");
-    } else {
-      try {
-        const { object } = await generateStructured({
-          schema: SkillGapAnswer,
-          system: SKILL_GAP_SYSTEM,
-          prompt: skillGapPrompt(missing, redacted.text),
-          feature: "SKILL_GAP",
-          userId,
-        });
-        // Quotes are checked against what the AI saw, then shown with the user's own data back in.
-        fromAi = verifySkillGap(missing, object, redacted.text).map((r) => ({
-          ...r,
-          suggestion: r.suggestion && rehydrate(r.suggestion, redacted.map),
-          sourceQuote: r.sourceQuote && rehydrate(r.sourceQuote, redacted.map),
-        }));
-      } catch (error) {
-        const known = error instanceof QuotaExceededError || error instanceof AiConsentRequiredError;
-        aiNote = known ? error.message : "AI sedang tidak tersedia, jadi hanya pencocokan teks yang dipakai.";
-        if (!(known || error instanceof AiUnavailableError)) {
-          console.error("skill gap failed", error instanceof Error ? error.name : "unknown");
-        }
-        fromAi = notChecked("Tidak ditemukan di CV. Istilah setara belum dicek AI.");
-      }
-    }
+    if (error instanceof NothingFoundError) return fail("Tidak ada informasi yang bisa dibaca dari teks lowongan ini.", 422);
+    return fail("Isi lowongan belum terbaca dan AI sedang tidak tersedia. Coba lagi nanti.", 503);
   }
 
-  const rows = [...found, ...fromAi];
-  await db.$transaction([
-    db.skillGap.deleteMany({ where: { applicationId: app.id } }),
-    db.skillGap.createMany({ data: rows.map((r) => ({ ...r, applicationId: app.id })) }),
-  ]);
-  revalidatePath(`/applications/${app.id}`);
-  return Response.json({ rows, matchedWithoutAi: found.length, checkedByAi: aiNote ? 0 : fromAi.length, aiNote });
+  const owner = await db.user.findUnique({ where: { id: userId }, select: { name: true, domicile: true } });
+  const result = await checkCv({ posting, cvText, owner: { name: owner?.name, address: owner?.domicile }, userId });
+
+  if (applicationId) {
+    await db.$transaction([
+      db.skillGap.deleteMany({ where: { applicationId } }),
+      db.skillGap.createMany({ data: result.rows.map((r) => ({ ...r, applicationId })) }),
+      // Keep earlier tweaks when this run couldn't reach the AI (string match only).
+      ...(result.aiNote ? [] : [db.application.update({ where: { id: applicationId }, data: { cvTweaks: result.tweaks } })]),
+    ]);
+    revalidatePath(`/applications/${applicationId}`);
+  }
+  return Response.json(result);
 }

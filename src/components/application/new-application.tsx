@@ -4,6 +4,7 @@ import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { createApplication } from "@/actions/applications";
 import { ApplicationForm, type ApplicationDefaults, type Evidence } from "@/components/application/application-form";
+import { NewApplicationCvCheck } from "@/components/application/cv-check";
 import { JobPastePanel, type ExtractResult } from "@/components/application/job-paste-panel";
 import { RequirementsEditor } from "@/components/application/requirements-editor";
 import { AiConsent } from "@/components/settings/ai-consent";
@@ -89,7 +90,12 @@ export function NewApplication({ aiEnabled, aiConsent, stages, resumes, defaults
           evidence={evidence}
           submitLabel="Simpan lamaran"
         >
-          {draft && <RequirementsEditor job={draft.job} text={draft.text} profile={profile} />}
+          {draft && (
+            <div className="space-y-4">
+              <RequirementsEditor job={draft.job} text={draft.text} profile={profile} />
+              <NewApplicationCvCheck text={draft.text} resumes={resumes} />
+            </div>
+          )}
         </ApplicationForm>
       )}
     </div>

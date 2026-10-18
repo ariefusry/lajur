@@ -450,6 +450,7 @@ Input berupa daftar skill hasil ekstraksi + `extractedText` dari CV yang dipilih
 3. **Baru ke LLM:** hanya skill yang belum ketemu + teks yang sudah diredaksi. LLM mengembalikan `{ skill, inResume, suggestion, quote }`. Kalau `quote` tidak ada di teks redaksi, set `inResume=false`.
 4. Tampilkan sebagai daftar ✅ ada / ❌ belum ada + saran.
 5. Di UI, tampilkan catatan kecil: "Hanya bagian keahlian dan pengalaman (tanpa nama dan kontak) yang dikirim ke AI."
+6. **Cek CV** (ditambahkan 2026-10-19, `lib/ai/cv-check.ts`): panggilan AI yang sama juga memberi maks. 8 saran perbaikan CV. `rewrite` hanya memoles teks yang ada di CV; `add` berupa instruksi "kalau memang punya". Saran yang mengarang (teks/angka/skill yang tidak ada di CV, atau contoh kalimat CV dalam kutipan) dibuang di server (`verifyCvTweaks`). Tersedia di form Lamaran baru (sebelum menyimpan) dan tab "Cek CV"; hasil disimpan di `SkillGap` + `Application.cvTweaks`.
 
 ### 7.6 Pengingat
 - `vercel.json`: cron harian `0 0 * * *` (07.00 WIB) ke `/api/cron/reminders`.

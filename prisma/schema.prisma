@@ -138,6 +138,8 @@ model Application {
   nextActionAt       DateTime?
   lastFollowUpAt     DateTime?
   followUpRemindedAt DateTime?
+  // Saran perbaikan CV dari "Cek CV" (CvTweak[], lib/ai/cv-tweaks.ts). Hasil skill-nya ada di SkillGap.
+  cvTweaks           Json?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
