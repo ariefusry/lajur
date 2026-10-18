@@ -36,7 +36,6 @@ export function ApplicationForm({
   defaults,
   submitLabel,
   evidence,
-  compact,
   children,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
@@ -45,8 +44,6 @@ export function ApplicationForm({
   defaults: ApplicationDefaults;
   submitLabel: string;
   evidence?: Evidence;
-  /** Single column (narrow side panel) instead of two. */
-  compact?: boolean;
   children?: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -85,10 +82,10 @@ export function ApplicationForm({
     "aria-describedby": err(name) ? `${name}-error` : undefined,
   });
 
-  const span = compact ? undefined : "sm:col-span-2";
+  const span = "sm:col-span-2";
 
   return (
-    <form action={formAction} className={cn("grid gap-4", !compact && "max-w-3xl sm:grid-cols-2")}>
+    <form action={formAction} className="grid max-w-3xl gap-4 sm:grid-cols-2">
       {field("company", "Perusahaan *", <Input {...a11y("company")} defaultValue={defaults.company} required />)}
       {field("position", "Posisi *", <Input {...a11y("position")} defaultValue={defaults.position} required />)}
       {field(

@@ -62,16 +62,15 @@ export function FollowUpPanel({ id, next, nextLabel, lastLabel, due }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" disabled={pending} onClick={() => run({ mode: "done", inDays })}>
+        <Button type="button" className="h-10 pointer-coarse:h-11" disabled={pending} onClick={() => run({ mode: "done", inDays })}>
           Sudah follow-up
         </Button>
-        <span className="text-muted-foreground text-xs">ingatkan lagi</span>
         <Select
           value={inDays}
           onValueChange={setInDays}
           aria-label="Ingatkan lagi dalam"
-          className="w-28"
-          options={FOLLOW_UP_INTERVALS.map((n) => ({ value: String(n), label: `${n} hari` }))}
+          className="min-w-36 flex-1"
+          options={FOLLOW_UP_INTERVALS.map((n) => ({ value: String(n), label: `Ingatkan ${n} hari lagi` }))}
         />
       </div>
 
@@ -92,7 +91,7 @@ export function FollowUpPanel({ id, next, nextLabel, lastLabel, due }: Props) {
           onChange={(e) => setDate(e.target.value)}
           className="w-auto min-w-0 flex-1"
         />
-        <Button type="submit" variant="outline" disabled={pending || !date}>
+        <Button type="submit" variant="outline" className="h-10 pointer-coarse:h-11" disabled={pending || !date}>
           Atur tanggal
         </Button>
         {nextLabel && (

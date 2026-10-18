@@ -60,11 +60,17 @@ test("demo user creates an application, moves it on the board, and sees it on th
   // History recorded on the detail page
   await page.getByRole("region", { name: "Administrasi" }).getByText(COMPANY).click();
   await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible();
-  const timeline = page.locator("section", { has: page.getByRole("heading", { name: "Timeline tahap" }) });
+  const detailUrl = page.url();
+  // Stage progress in the header marks the current stage
+  await expect(page.getByRole("list", { name: "Progres tahap" }).locator('[aria-current="step"]')).toHaveText("Administrasi");
+  // The history lives on its own tab (opened by URL: same-path soft navigation doesn't complete against the
+  // locally isolated build, though it does on Vercel; the tab links themselves are checked there).
+  await expect(page.getByRole("navigation", { name: "Bagian lamaran" }).getByRole("link", { name: "Riwayat tahap" })).toBeVisible();
+  await page.goto(`${detailUrl}?tab=riwayat`);
+  const timeline = page.locator("section", { has: page.getByRole("heading", { name: "Riwayat tahap" }) });
   await expect(timeline.getByText("Wishlist")).toBeVisible();
   await expect(timeline.getByText("Administrasi", { exact: true })).toHaveCount(1);
   await expect(timeline.getByText("Tes Online/TPA", { exact: true })).toHaveCount(0);
-  const detailUrl = page.url();
 
   // 4. Cek dashboard: the move shows up in recent activity; the list view has it too
   await page.goto("/dashboard");
@@ -74,8 +80,8 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await expect(page.getByText("1 dari")).toBeVisible();
   await expect(page.getByRole("link", { name: COMPANY }).first()).toBeVisible();
 
-  // Cleanup
-  await page.goto(detailUrl);
+  // Cleanup (delete lives on the "Ubah data" tab)
+  await page.goto(`${detailUrl}?tab=data`);
   await page.getByRole("button", { name: "Hapus lamaran" }).click();
   await page.getByRole("button", { name: "Ya, hapus" }).click(); // inline confirmation
   await expect(page).toHaveURL(/\/board$/);
@@ -84,10 +90,11 @@ test("demo user creates an application, moves it on the board, and sees it on th
   // "Urungkan" brings it back, still in Administrasi, with its history
   await page.getByRole("button", { name: "Urungkan" }).click();
   await expect(page.getByRole("region", { name: "Administrasi" }).getByText(COMPANY)).toBeVisible();
-  await page.goto(detailUrl);
+  await page.goto(`${detailUrl}?tab=riwayat`);
   await expect(timeline.getByText("Wishlist")).toBeVisible();
 
   // Delete for real (the undo toast is ignored)
+  await page.goto(`${detailUrl}?tab=data`);
   await page.getByRole("button", { name: "Hapus lamaran" }).click();
   await page.getByRole("button", { name: "Ya, hapus" }).click();
   await expect(page).toHaveURL(/\/board$/);
