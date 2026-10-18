@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 
 type Defaults = { gpa: string; birthDate: string; major: string; degree: string; domicile: string };
 
-const DEGREES = ["SMA", "D3", "D4", "S1", "S2"] as const;
+const DEGREES = ["SMA", "D1", "D2", "D3", "D4", "S1", "S2", "S3"] as const;
 
 export function ProfileForm({ defaults }: { defaults: Defaults }) {
   const [state, action, pending] = useActionState(updateProfile, {});

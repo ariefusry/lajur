@@ -67,13 +67,24 @@ describe("MAJOR", () => {
 });
 
 describe("MIN_DEGREE", () => {
-  it("orders SMA < D3 < D4 = S1 < S2", () => {
+  it("orders SMA < D1 < D2 < D3 < D4 = S1 < S2 < S3", () => {
     expect(check("MIN_DEGREE", "S1")).toBe("MEETS");
     expect(check("MIN_DEGREE", "D4")).toBe("MEETS"); // S1 ≥ D4
     expect(check("MIN_DEGREE", "Minimal S1", { ...profile, degree: "D4" })).toBe("MEETS"); // D4 = S1
     expect(check("MIN_DEGREE", "S2")).toBe("FAILS");
     expect(check("MIN_DEGREE", "S1", { ...profile, degree: "D3" })).toBe("FAILS");
     expect(check("MIN_DEGREE", "SMA/SMK sederajat", { ...profile, degree: "SMA" })).toBe("MEETS");
+  });
+  it("handles diplomas below D3 and doctorates", () => {
+    expect(parseMinDegree("Minimal D1")).toBe("D1");
+    expect(parseMinDegree("Diploma II")).toBe("D2");
+    expect(parseMinDegree("D2/D3")).toBe("D2");
+    expect(parseMinDegree("S3 / Doktor")).toBe("S3");
+    expect(parseMinDegree("Berpengalaman di bidang perbankan")).toBeNull(); // "di" is a preposition, not D1
+    expect(check("MIN_DEGREE", "D3", { ...profile, degree: "D2" })).toBe("FAILS");
+    expect(check("MIN_DEGREE", "D1", { ...profile, degree: "D2" })).toBe("MEETS");
+    expect(check("MIN_DEGREE", "S2", { ...profile, degree: "S3" })).toBe("MEETS");
+    expect(check("MIN_DEGREE", "S3")).toBe("FAILS"); // profile is S1
   });
   it("takes the lowest of listed degrees", () => {
     expect(parseMinDegree("D3/S1")).toBe("D3");

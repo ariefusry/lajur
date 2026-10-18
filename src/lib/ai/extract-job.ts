@@ -40,7 +40,7 @@ Aturan:
   - MIN_GPA: value angka IPK minimal, contoh "3.00" (atau varian per jenjang seperti di atas).
   - MAX_AGE: value angka usia maksimal, contoh "25" (atau varian per jenjang). Isi ageReferenceDate jika disebut ("per 31 Desember 2026").
   - MAJOR: value daftar jurusan persis seperti di teks, TANPA jenjang (contoh "Teknik Informatika/Sistem Informasi").
-  - MIN_DEGREE: value jenjang minimal (SMA, D3, D4, S1, S2), ambil yang terendah kalau ada beberapa. Buat item terpisah dari MAJOR walau ditulis bersama, contoh "S1 Teknik Informatika" menghasilkan MIN_DEGREE "S1" dan MAJOR "Teknik Informatika", keduanya dengan quote yang sama.
+  - MIN_DEGREE: value jenjang minimal (SMA, D1, D2, D3, D4, S1, S2, S3), ambil yang terendah kalau ada beberapa. Buat item terpisah dari MAJOR walau ditulis bersama, contoh "S1 Teknik Informatika" menghasilkan MIN_DEGREE "S1" dan MAJOR "Teknik Informatika", keduanya dengan quote yang sama.
   - PLACEMENT: penempatan, contoh "Seluruh Indonesia".
   - SERVICE_BOND: ikatan dinas, contoh "2 tahun".
   - OTHER: syarat administratif penting lain (contoh: belum menikah, tidak buta warna).`;

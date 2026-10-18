@@ -2,7 +2,7 @@ import "server-only";
 import type { AiFeature } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { toDateInput } from "@/lib/dates";
-import { DEMO_EMAIL } from "@/lib/demo";
+import { isDemoEmail } from "@/lib/demo";
 
 
 export class QuotaExceededError extends Error {
@@ -23,7 +23,7 @@ export async function assertQuota(userId: string) {
     db.aiUsage.aggregate({ where: { userId, day: jakartaDay() }, _sum: { count: true } }),
   ]);
   const limit = Number(
-    user?.email === DEMO_EMAIL ? (process.env.AI_DAILY_LIMIT_DEMO ?? 10) : (process.env.AI_DAILY_LIMIT_PER_USER ?? 30),
+    isDemoEmail(user?.email) ? (process.env.AI_DAILY_LIMIT_DEMO ?? 10) : (process.env.AI_DAILY_LIMIT_PER_USER ?? 30),
   );
   if ((used._sum.count ?? 0) >= limit) throw new QuotaExceededError();
 }

@@ -1,9 +1,10 @@
 import { CalendarClock, FileText, KanbanSquare, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
-import { signInAsDemo } from "@/actions/demo";
+import { signInAsDemo, signInAsNonItDemo } from "@/actions/demo";
 import { Button } from "@/components/ui/button";
 import { auth, signIn } from "@/lib/auth";
-import { demoLoginEnabled } from "@/lib/demo";
+import { db } from "@/lib/db";
+import { DEMO_NONIT_EMAIL, demoLoginEnabled } from "@/lib/demo";
 
 export const metadata = { title: "Masuk · Lamarin" };
 
@@ -17,6 +18,9 @@ const VALUE_PROPS = [
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if ((await auth())?.user) redirect("/board");
   const { error } = await searchParams;
+  // The second demo persona only shows up where it has been seeded.
+  const nonItDemo =
+    demoLoginEnabled() && !!(await db.user.findUnique({ where: { email: DEMO_NONIT_EMAIL }, select: { id: true } }));
 
   return (
     <main className="mx-auto grid min-h-svh max-w-5xl items-center gap-10 p-4 py-10 lg:grid-cols-[1fr_22rem] lg:gap-16">
@@ -62,10 +66,17 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               </Button>
             </form>
           )}
+          {nonItDemo && (
+            <form action={signInAsNonItDemo}>
+              <Button type="submit" size="lg" variant="outline" className="w-full">
+                Demo lulusan Manajemen (non-IT)
+              </Button>
+            </form>
+          )}
         </div>
         {demoLoginEnabled() && (
           <p className="text-muted-foreground text-xs">
-            Akun demo berisi 15 contoh lamaran supaya kamu bisa melihat board, dashboard, dan kalender tanpa mendaftar.
+            Akun demo berisi contoh lamaran supaya kamu bisa melihat board, dashboard, dan kalender tanpa mendaftar.
           </p>
         )}
         {error === "demo" && <p className="text-destructive text-sm">Akun demo belum tersedia.</p>}

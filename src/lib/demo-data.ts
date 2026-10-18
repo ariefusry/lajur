@@ -39,6 +39,48 @@ export const DEMO_APPS: DemoApp[] = [
   { company: "eFishery", position: "Fullstack Engineer", source: "OTHER", stage: 9, failedAt: 1, location: "Bandung (remote)", resume: 1 },
 ];
 
+// --- Second persona: S1 Manajemen, applying to banks, FMCG, retail and BUMN (same BUMN stage template). ---
+export const DEMO_NONIT_RESUMES = ["CV Perbankan v1", "CV Marketing v2"] as const;
+
+const POSTING_MT = `Management Trainee Program 2026 - PT Unilever Indonesia Tbk (contoh)
+
+Persyaratan:
+- Pendidikan minimal S1 semua jurusan
+- IPK minimal 3.00 (skala 4.00)
+- Usia maksimal 25 tahun
+- Menguasai Microsoft Excel dan PowerPoint
+- Kemampuan komunikasi dan negosiasi yang baik
+- Bahasa Inggris aktif (TOEFL minimal 500)
+- Kepemimpinan dan kerja tim, terbiasa berorganisasi
+- Bersedia ditempatkan di seluruh Indonesia
+
+Pendaftaran ditutup 30 November 2026.`;
+
+const POSTING_CS = `Officer Customer Service & Teller - Bank Syariah Indonesia (contoh)
+
+Persyaratan:
+- Pendidikan minimal D3/S1 Manajemen, Perbankan, Akuntansi, atau Ekonomi
+- IPK minimal 3.00
+- Usia maksimal 27 tahun
+- Pelayanan pelanggan yang prima, komunikasi efektif
+- Memahami akuntansi dasar dan Microsoft Excel
+- Bahasa Inggris pasif`;
+
+export const DEMO_NONIT_APPS: DemoApp[] = [
+  { company: "PT Bank Mandiri (Persero) Tbk", position: "Officer Development Program", source: "BUMN_PORTAL", stage: 3, location: "Jakarta", resume: 0 },
+  { company: "PT Bank Central Asia Tbk", position: "Management Trainee Bisnis", source: "JOBSTREET", stage: 4, location: "Jakarta", resume: 0 },
+  { company: "PT Unilever Indonesia Tbk", position: "Management Trainee, Marketing", source: "LINKEDIN", stage: 5, location: "Tangerang", resume: 1, jobPostingText: POSTING_MT },
+  { company: "PT Indofood Sukses Makmur Tbk", position: "Management Trainee", source: "KALIBRR", stage: 2, location: "Jakarta", resume: 1 },
+  { company: "PT Pertamina (Persero)", position: "Staf Keuangan", source: "BUMN_PORTAL", stage: 1, location: "Seluruh Indonesia", deadlineInDays: 6, resume: 0 },
+  { company: "PT Telkom Indonesia", position: "Staf Human Capital", source: "BUMN_PORTAL", stage: 9, failedAt: 2, location: "Bandung", resume: 0 },
+  { company: "Bank Syariah Indonesia", position: "Officer Customer Service & Teller", source: "BUMN_PORTAL", stage: 7, location: "Jakarta", resume: 0, jobPostingText: POSTING_CS },
+  { company: "PT Sumber Alfaria Trijaya Tbk", position: "Management Trainee Operasional", source: "COMPANY_SITE", stage: 1, location: "Tangerang", deadlineInDays: 3, resume: 1 },
+  { company: "Kompas Gramedia", position: "Marketing Communications Officer", source: "INSTAGRAM", stage: 9, failedAt: 1, location: "Jakarta", resume: 1 },
+  { company: "PT Danone Indonesia", position: "Sales Supervisor Trainee", source: "GLINTS", stage: 8, location: "Jakarta", resume: 1 },
+  { company: "Shopee Indonesia", position: "Operations Associate", source: "REFERRAL", stage: 9, failedAt: 5, location: "Jakarta", resume: 1 },
+  { company: "PT Kereta Api Indonesia", position: "Staf Administrasi Umum", source: "OTHER", stage: 0, location: "Bandung", deadlineInDays: 12 },
+];
+
 const DAY = 86_400_000;
 
 /**

@@ -87,13 +87,17 @@ function majorMatches(profileMajor: string, value: string) {
   return group.some((syn) => v.includes(` ${syn} `));
 }
 
-const DEGREE_RANK: Record<Degree, number> = { SMA: 0, D3: 1, D4: 2, S1: 2, S2: 3 };
+const DEGREE_RANK: Record<Degree, number> = { SMA: 0, D1: 1, D2: 2, D3: 3, D4: 4, S1: 4, S2: 5, S3: 6 };
 const DEGREE_PATTERNS: [RegExp, Degree][] = [
   [/\b(sma|smk|slta|ma)\b/, "SMA"],
+  // "di" alone is the Indonesian preposition, so D1 is only matched in unambiguous spellings.
+  [/\b(d1|diploma 1|diploma i)\b/, "D1"],
+  [/\b(d2|d ii|dii|diploma 2|diploma ii)\b/, "D2"],
   [/\b(d3|d iii|diii|diploma 3|diploma iii)\b/, "D3"],
   [/\b(d4|d iv|div|diploma 4|diploma iv|sarjana terapan)\b/, "D4"],
   [/\b(s1|sarjana|bachelor)\b/, "S1"],
   [/\b(s2|magister|master)\b/, "S2"],
+  [/\b(s3|doktor|doctor|doctoral|phd)\b/, "S3"],
 ];
 
 /** Lowest degree mentioned ("D3/S1" → D3), or null if none. */

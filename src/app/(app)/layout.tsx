@@ -4,7 +4,7 @@ import { NavLinks, TabBar } from "@/components/nav-links";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { requireUser, signOut } from "@/lib/auth";
-import { DEMO_EMAIL, isReadOnly } from "@/lib/demo";
+import { isDemoEmail, isReadOnly } from "@/lib/demo";
 
 async function signOutAction() {
   "use server";
@@ -13,7 +13,7 @@ async function signOutAction() {
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const isDemo = user.email === DEMO_EMAIL;
+  const isDemo = isDemoEmail(user.email);
 
   return (
     <div className="flex min-h-svh flex-col md:flex-row">

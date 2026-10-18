@@ -6,6 +6,15 @@ TypeScript, React.js, Postgres, Microsoft Excel, C#, Node.js
 PENGALAMAN
 Membangun REST API dengan Express; deploy ke Google Cloud`;
 
+describe("non-IT skills", () => {
+  it("match without the AI", () => {
+    expect(findSkillInText("Sales", "Pengalaman penjualan retail 2 tahun")).toBe("Pengalaman penjualan retail 2 tahun");
+    expect(findSkillInText("Payroll", "Mengelola penggajian 120 karyawan")).toContain("penggajian");
+    expect(findSkillInText("Leadership", "Ketua panitia, kepemimpinan tim 15 orang")).toContain("kepemimpinan");
+    expect(findSkillInText("Supply chain", "Staf logistik gudang")).toContain("logistik");
+  });
+});
+
 describe("findSkillInText", () => {
   it("matches aliases in both directions, case-insensitively", () => {
     expect(findSkillInText("PostgreSQL", cv)).toContain("Postgres");

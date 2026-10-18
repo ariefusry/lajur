@@ -1,6 +1,6 @@
 import type { StageKind } from "@/generated/prisma/enums";
 
-export type TemplateKey = "BUMN" | "STARTUP" | "UMUM";
+export type TemplateKey = "BUMN" | "STARTUP" | "UMUM" | "RETAIL" | "CPNS";
 
 export const STAGE_TEMPLATES: Record<
   TemplateKey,
@@ -30,6 +30,31 @@ export const STAGE_TEMPLATES: Record<
       { name: "Interview", kind: "IN_PROGRESS" },
       { name: "Offering", kind: "OFFER" },
       { name: "Ditolak", kind: "REJECTED" },
+    ],
+  },
+  RETAIL: {
+    label: "Retail/Pabrik",
+    stages: [
+      { name: "Wishlist", kind: "WISHLIST" },
+      { name: "Melamar", kind: "IN_PROGRESS" },
+      { name: "Seleksi Berkas", kind: "IN_PROGRESS" },
+      { name: "Tes Tertulis/Praktik", kind: "IN_PROGRESS" },
+      { name: "Interview", kind: "IN_PROGRESS" },
+      { name: "Medical Check-up", kind: "IN_PROGRESS" },
+      { name: "Offering", kind: "OFFER" },
+      { name: "Ditolak", kind: "REJECTED" },
+    ],
+  },
+  CPNS: {
+    label: "CPNS/Instansi Pemerintah",
+    stages: [
+      { name: "Wishlist", kind: "WISHLIST" },
+      { name: "Seleksi Administrasi", kind: "IN_PROGRESS" },
+      { name: "SKD", kind: "IN_PROGRESS" },
+      { name: "SKB", kind: "IN_PROGRESS" },
+      { name: "Pemberkasan", kind: "IN_PROGRESS" },
+      { name: "Lolos (NIP)", kind: "OFFER" },
+      { name: "Tidak Lolos", kind: "REJECTED" },
     ],
   },
   STARTUP: {
