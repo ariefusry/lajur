@@ -49,6 +49,18 @@
 }
 
 :root {
+  /* Button group (components/ui/primitive-button-group.tsx): a recessed tray, the active item raised.
+     Recipe from the Bjork group, mapped onto Lamarin's cool neutrals instead of its warm beige. */
+  --bjork-border: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --bjork-surface-muted: color-mix(in oklch, var(--foreground) 4.5%, transparent);
+  --bjork-surface-hover: color-mix(in oklch, var(--foreground) 6%, transparent);
+  --bjork-field: var(--card);
+  --bjork-text: var(--foreground);
+  --bjork-text-muted: var(--muted-foreground);
+  --bjork-shadow-surface:
+    inset 0 7px 14px rgb(15 23 42 / 0.04), inset 0 0.5px 0.5px rgb(255 255 255 / 0.9),
+    inset 1px 0 0 rgb(15 23 42 / 0.02), inset -1px 0 0 rgb(255 255 255 / 0.6), 0 14px 22px -9px rgb(15 23 42 / 0.1);
+  --bjork-shadow-raised: 0 1px 2px rgb(15 23 42 / 0.1), 0 0 0 0.5px rgb(15 23 42 / 0.06);
   --background: oklch(0.968 0.003 260); /* grouped background; cards stay white */
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -84,6 +96,13 @@
 }
 
 .dark {
+  --bjork-border: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --bjork-surface-muted: color-mix(in oklch, var(--foreground) 5%, transparent);
+  --bjork-surface-hover: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --bjork-field: color-mix(in oklch, var(--card) 85%, white);
+  --bjork-shadow-surface:
+    inset 0 7px 14px rgb(255 255 255 / 0.03), inset 0 0.5px 0.5px rgb(255 255 255 / 0.06), 0 14px 20px -6px rgb(0 0 0 / 0.45);
+  --bjork-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.5), inset 0 0.5px 0 rgb(255 255 255 / 0.08);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

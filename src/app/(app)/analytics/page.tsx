@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Card, Stat, pct } from "@/components/dashboard/cards";
 import { Button } from "@/components/ui/button";
+import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
 import type { JobSource } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, computeDashboard, GHOSTED_DAYS, MIN_SAMPLE, rate, type PassRate } from "@/lib/dashboard";
 import { db } from "@/lib/db";
-import { cn } from "@/lib/utils";
 import { JOB_SOURCE_LABELS } from "@/lib/validation";
 
 export const metadata = { title: "Analytics · Lamarin" };
@@ -57,21 +57,18 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground text-sm">Strategi mana yang paling berhasil: sumber, versi CV, dan tahap.</p>
         </div>
-        <nav aria-label="Periode" className="bg-foreground/5 inline-flex rounded-lg p-0.5">
+        <ButtonGroup role="navigation" aria-label="Periode" className="p-1">
           {RANGES.map((x) => (
             <Link
               key={x.key}
               href={x.key === "all" ? "/analytics" : `/analytics?range=${x.key}`}
               aria-current={x.key === range.key ? "true" : undefined}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm transition-colors pointer-coarse:py-2.5",
-                x.key === range.key ? "bg-card font-medium shadow-sm" : "text-muted-foreground hover:text-foreground",
-              )}
+              className={buttonGroupItemClass(x.key === range.key)}
             >
               {x.label}
             </Link>
           ))}
-        </nav>
+        </ButtonGroup>
       </div>
 
       {o.applied === 0 ? (
