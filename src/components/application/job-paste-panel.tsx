@@ -88,7 +88,7 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
     <section className="glass space-y-3 rounded-2xl border p-4">
       <div>
         <h2 className="flex items-center gap-2 font-medium">
-          <Sparkles className="size-4" /> Tempel lowongan
+          <Sparkles className="size-4" /> Tambah dengan AI
         </h2>
         <p className="text-xs text-muted-foreground">
           AI mengisi form di bawah sebagai draf, lengkap dengan kutipan buktinya. Kamu tetap bisa mengubah semuanya.

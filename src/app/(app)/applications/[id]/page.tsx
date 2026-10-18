@@ -205,7 +205,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
             readOnly={isReadOnly(user)}
             blocker={
               !app.jobPostingText
-                ? 'Analisis skill butuh teks lowongan. Lamaran yang dibuat lewat "Tempel lowongan" otomatis menyimpannya.'
+                ? 'Analisis skill butuh teks lowongan. Lamaran yang dibuat lewat "Tambah dengan AI" otomatis menyimpannya.'
                 : !app.resume
                   ? "Pilih CV yang dikirim di kartu Data lamaran, lalu simpan."
                   : !app.resume.extractedText

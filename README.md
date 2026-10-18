@@ -9,7 +9,7 @@ Tracker lamaran kerja dengan bantuan AI, untuk pencari kerja di Indonesia yang m
 ## Fitur
 
 - **Board kanban** dengan tahap seleksi khas Indonesia (Administrasi, Tes Online/TPA, Psikotes, LGD, Interview HR/User, MCU, Offering). Geser kartu antar kolom; riwayat tahap tercatat otomatis. Template BUMN/Bank, Startup, dan Umum.
-- **Tempel lowongan → form terisi otomatis.** AI membaca teks atau link lowongan, lalu mengisi perusahaan, posisi, lokasi, deadline, skill, dan syarat administratif sebagai draf. Setiap isian disertai **kutipan bukti** dari lowongan, dan temuan AI muncul langsung saat AI membaca.
+- **Tambah dengan AI → form terisi otomatis.** Tempel teks atau link lowongan, lalu AI mengisi perusahaan, posisi, lokasi, deadline, skill, dan syarat administratif sebagai draf. Setiap isian disertai **kutipan bukti** dari lowongan, dan temuan AI muncul langsung saat AI membaca.
 - **Cek kelayakan tanpa AI:** IPK minimal, batas usia (termasuk "per tanggal X" dan tanggal lahir 29 Februari), jurusan (dengan sinonim lintas bidang), jenjang pendidikan, penempatan, dan ikatan dinas, dibandingkan dengan profilmu. Hasilnya tampil sebagai badge di board.
 - **Versi CV:** unggah PDF, tautkan ke lamaran, lihat lewat tautan sementara 60 detik.
 - **Gap skill:** skill yang diminta lowongan vs CV-mu. Pencocokan teks dulu; AI hanya untuk sisanya, dan hanya menerima bagian keahlian/pengalaman yang sudah disamarkan (tanpa nama dan kontak).

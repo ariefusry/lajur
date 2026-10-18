@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     select: { id: true, jobPostingText: true, resume: { select: { extractedText: true } } },
   });
   if (!app) return fail("Lamaran tidak ditemukan.", 404);
-  if (!app.jobPostingText) return fail("Lamaran ini belum punya teks lowongan. Buat lamaran lewat \"Tempel lowongan\" dulu.", 422);
+  if (!app.jobPostingText) return fail("Lamaran ini belum punya teks lowongan. Buat lamaran lewat \"Tambah dengan AI\" dulu.", 422);
   if (!app.resume) return fail("Pilih CV yang dikirim di data lamaran dulu.", 422);
   if (!app.resume.extractedText) return fail("Teks CV ini tidak terbaca (mungkin hasil scan). Unggah versi PDF yang teksnya bisa disalin.", 422);
   const cvText = app.resume.extractedText;

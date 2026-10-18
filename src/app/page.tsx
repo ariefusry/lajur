@@ -31,7 +31,7 @@ const STAGES = ["Administrasi", "Tes Online/TPA", "Psikotes", "LGD", "Interview 
 const FEATURES = [
   {
     icon: Sparkles,
-    title: "Tempel lowongan, form terisi",
+    title: "Tambah dengan AI, form terisi",
     text: "AI membaca teks lowongan: perusahaan, posisi, deadline, dan syaratnya, lengkap dengan kutipan bukti. Kamu cek dulu sebelum disimpan.",
   },
   {
@@ -62,7 +62,7 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { title: "Tempel lowongannya", text: "Dari JobStreet, Glints, portal BUMN, atau caption Instagram. Atau isi manual." },
+  { title: "Tambah dengan AI", text: "Tempel teks lowongan dari JobStreet, Glints, portal BUMN, atau caption Instagram. Atau isi manual." },
   { title: "Geser saat tahapnya berubah", text: "Lolos administrasi? Diundang psikotes? Pindahkan kartunya, jadwalnya diingatkan." },
   { title: "Lihat polanya", text: "Setelah beberapa lamaran, dashboard menunjukkan apa yang perlu diperbaiki." },
 ];

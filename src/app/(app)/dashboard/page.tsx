@@ -99,7 +99,7 @@ export default async function DashboardPage() {
             tes dan interview terdekat, deadline yang hampir tutup, dan lamaran yang sudah lama tanpa kabar.
           </p>
           <ShinyButton href="/applications/new">
-            <Sparkles /> Tempel lowongan
+            <Sparkles /> Tambah dengan AI
           </ShinyButton>
         </div>
       </div>
@@ -204,7 +204,7 @@ export default async function DashboardPage() {
             </Link>
           </Button>
           <ShinyButton href="/applications/new" size="sm">
-            <Sparkles /> Tempel lowongan
+            <Sparkles /> Tambah dengan AI
           </ShinyButton>
         </div>
       </div>
