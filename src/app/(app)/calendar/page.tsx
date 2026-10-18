@@ -113,11 +113,20 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   href={`/applications/${it.applicationId}`}
                   title={`${it.label} · ${it.company}`}
                   className={cn(
-                    "line-clamp-2 rounded px-1 py-0.5 text-[10px] leading-snug font-medium [overflow-wrap:anywhere] md:line-clamp-1 md:text-xs",
+                    "block rounded px-1 py-0.5 text-[10px] leading-snug font-medium md:truncate md:text-xs",
                     it.isDeadline ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary",
                   )}
                 >
-                  {shortCompany(it.company)}
+                  {/* Phones: first word, then the rest, each line cut with "…" (never split inside a word). */}
+                  <span className="hidden md:inline">{shortCompany(it.company)}</span>
+                  {shortCompany(it.company)
+                    .split(/\s+(.*)/, 2)
+                    .filter(Boolean)
+                    .map((line, n) => (
+                      <span key={n} className="block truncate md:hidden">
+                        {line}
+                      </span>
+                    ))}
                 </Link>
               ))}
               {dayItems.length > 3 && <p className="px-1 text-muted-foreground">+{dayItems.length - 3} lagi</p>}
