@@ -9,7 +9,7 @@ import { ApplicationForm } from "@/components/application/application-form";
 import { DeleteApplicationButton } from "@/components/application/delete-button";
 import { EventForm } from "@/components/application/event-form";
 import { FollowUpPanel } from "@/components/application/follow-up-panel";
-import { SkillGapSection } from "@/components/application/skill-gap-section";
+import { CvCheckSection } from "@/components/application/cv-check-section";
 import { readCvTweaks } from "@/lib/ai/cv-tweaks";
 import { StageHistoryForm } from "@/components/application/stage-history-form";
 import { Card } from "@/components/dashboard/cards";
@@ -393,7 +393,7 @@ export default async function ApplicationDetailPage({
 
       {tab === "skill" && (
         <div className="glass rounded-2xl border p-5">
-          <SkillGapSection
+          <CvCheckSection
             applicationId={app.id}
             gaps={app.skillGaps}
             tweaks={readCvTweaks(app.cvTweaks)}

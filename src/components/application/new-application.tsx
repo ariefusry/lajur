@@ -7,7 +7,7 @@ import { ApplicationForm, type ApplicationDefaults, type Evidence } from "@/comp
 import { NewApplicationCvCheck } from "@/components/application/cv-check";
 import { JobPastePanel, type ExtractResult } from "@/components/application/job-paste-panel";
 import { RequirementsEditor } from "@/components/application/requirements-editor";
-import { AiConsent } from "@/components/settings/ai-consent";
+import { AiConsent } from "@/components/ai-consent";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

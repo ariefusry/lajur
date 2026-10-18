@@ -1,7 +1,7 @@
 import { addStage } from "@/actions/settings";
 import { Card } from "@/components/dashboard/cards";
 import { AccountData } from "@/components/settings/account-data";
-import { AiConsent } from "@/components/settings/ai-consent";
+import { AiConsent } from "@/components/ai-consent";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { StageEditor } from "@/components/settings/stage-editor";
 import { TemplatePicker } from "@/components/settings/template-picker";

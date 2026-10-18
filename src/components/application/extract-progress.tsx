@@ -18,7 +18,7 @@ const HEADLINE: Record<Status, string> = {
  * Progress while the AI reads, at a fixed height. The answer isn't streamed (strict JSON output can't be),
  * so this shows the current step; everything found lands in the form once it's done.
  */
-export function AiFindings({ status, elapsed }: { status: Status; elapsed: number }) {
+export function ExtractProgress({ status, elapsed }: { status: Status; elapsed: number }) {
   return (
     <div className="space-y-1.5 rounded-xl border bg-card p-3">
       <p className="flex items-center gap-2 text-sm font-medium">

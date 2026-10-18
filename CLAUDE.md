@@ -160,7 +160,7 @@ src/
       auth/[...nextauth]/route.ts
       resumes/upload/route.ts
       ai/extract/route.ts
-      ai/skill-gap/route.ts
+      ai/cv-check/route.ts      # Cek CV: gap skill + saran CV
       cron/reminders/route.ts
   components/                    # ui/ (shadcn), board/, application/, charts/
   lib/
@@ -557,7 +557,7 @@ Buat file `scripts/check-llm-provider.sh`:
 
 ```bash
 #!/usr/bin/env bash
-# Gagal jika repo memakai SDK/API Anthropic. Pemilik repo melarangnya (CLAUDE.md aturan 10).
+# Gagal jika repo memakai SDK/API Anthropic. Pemilik repo melarangnya.
 set -euo pipefail
 if git grep -nIiE 'anthropic|api\.anthropic\.com' -- . \
      ':!CLAUDE.md' ':!.claude/' ':!scripts/check-llm-provider.sh'; then

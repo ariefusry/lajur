@@ -8,7 +8,7 @@ import { ShinyButton } from "@/components/ui/shiny-button";
 import type { CvTweak } from "@/lib/ai/cv-tweaks";
 
 /** "Cek CV" tab of a saved application: the saved result, and a button to (re)check the linked CV. */
-export function SkillGapSection({
+export function CvCheckSection({
   applicationId,
   gaps,
   tweaks,

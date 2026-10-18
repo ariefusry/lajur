@@ -3,7 +3,7 @@
 import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AiFindings } from "@/components/application/ai-findings";
+import { ExtractProgress } from "@/components/application/extract-progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -117,7 +117,7 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
       <ShinyButton onClick={extract} disabled={pending}>
         <Sparkles /> {pending ? "AI sedang membaca…" : "Isi otomatis dengan AI"}
       </ShinyButton>
-      {pending && <AiFindings status={status} elapsed={elapsed} />}
+      {pending && <ExtractProgress status={status} elapsed={elapsed} />}
     </section>
   );
 }

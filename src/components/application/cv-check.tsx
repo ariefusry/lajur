@@ -13,10 +13,10 @@ type CheckResponse = { rows: CvCheckRow[]; tweaks: CvTweak[]; matchedWithoutAi: 
 
 export const CV_CHECK_PRIVACY_NOTE = "Hanya bagian keahlian dan pengalaman (tanpa nama dan kontak) yang dikirim ke AI.";
 
-/** POST /api/ai/skill-gap; shows the error/AI note as a toast and returns the result, or null on failure. */
+/** POST /api/ai/cv-check; shows the error/AI note as a toast and returns the result, or null on failure. */
 export async function requestCvCheck(body: { applicationId: string } | { text: string; resumeId: string }) {
   try {
-    const res = await fetch("/api/ai/skill-gap", {
+    const res = await fetch("/api/ai/cv-check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
