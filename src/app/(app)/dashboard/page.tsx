@@ -354,7 +354,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
         <Card
           title="Pipeline"
           description="Posisi semua lamaran saat ini. Klik untuk melihat daftarnya."
