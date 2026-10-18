@@ -12,7 +12,11 @@ export const metadata = { title: "Kalender · Lamarin" };
 const WEEKDAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
 const pad = (n: number) => String(n).padStart(2, "0");
 
-type Item = { key: string; at: Date; label: string; company: string; applicationId: string; isDeadline: boolean };
+// Phone cells fit ~6 characters: drop legal-form noise so the recognisable part shows ("PT Bank Mandiri (Persero) Tbk" → "Bank Mandiri").
+const shortCompany = (name: string) =>
+  name.replace(/^(PT|CV)\.?\s+/i, "").replace(/\s*\(Persero\)|\s+Tbk\.?/gi, "").trim() || name;
+
+type Item ={ key: string; at: Date; label: string; company: string; applicationId: string; isDeadline: boolean };
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const user = await requireUser();
@@ -109,12 +113,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   href={`/applications/${it.applicationId}`}
                   title={`${it.label} · ${it.company}`}
                   className={cn(
-                    "block truncate rounded px-1 py-0.5",
-                    it.isDeadline ? "bg-destructive/10 text-destructive" : "bg-primary/10",
+                    "line-clamp-2 rounded px-1 py-0.5 text-[10px] leading-snug font-medium [overflow-wrap:anywhere] md:line-clamp-1 md:text-xs",
+                    it.isDeadline ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary",
                   )}
                 >
-                  <span className="hidden md:inline">{it.company}</span>
-                  <span className="md:hidden">•</span>
+                  {shortCompany(it.company)}
                 </Link>
               ))}
               {dayItems.length > 3 && <p className="px-1 text-muted-foreground">+{dayItems.length - 3} lagi</p>}
