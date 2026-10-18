@@ -1,88 +1,37 @@
 import "server-only";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { APICallError, parsePartialJson, streamText, type DeepPartial } from "ai";
+import { APICallError, generateText, jsonSchema, NoObjectGeneratedError, Output, type LanguageModelUsage } from "ai";
 import { z } from "zod";
 import type { AiFeature } from "@/generated/prisma/enums";
-import { extractJsonObject, jsonStart } from "@/lib/ai/json-text";
+import { assertAiConsent } from "@/lib/ai/consent";
+import { extractJsonObject } from "@/lib/ai/json-text";
+import { modelChain, responseSchema, type ModelRef, type ProviderName } from "@/lib/ai/llm-config";
 import { assertQuota, recordUsage } from "@/lib/ai/usage";
-
-/*
- * Allowed LLM providers (CLAUDE.md rule 10): NVIDIA API Catalog and OpenRouter; forbidden vendors are refused below.
- * Models are configured as "<provider>:<model id>", e.g.
- *   LLM_MODEL=openrouter:nvidia/nemotron-3-super-120b-a12b:free
- *   LLM_FALLBACK_MODEL=nvidia:nvidia/nemotron-3-super-120b-a12b
- */
-type ProviderName = "nvidia" | "openrouter";
-
-const NVIDIA_BASE_URL = process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1";
-const NVIDIA_BASE_URL_OK = (() => {
-  try {
-    return new URL(NVIDIA_BASE_URL).hostname === "integrate.api.nvidia.com";
-  } catch {
-    return false;
-  }
-})();
-if (!NVIDIA_BASE_URL_OK) console.warn("AI: NVIDIA disabled, NVIDIA_BASE_URL must point to integrate.api.nvidia.com");
-
-const PROVIDERS = {
-  nvidia: {
-    key: process.env.NVIDIA_API_KEY,
-    enabled: NVIDIA_BASE_URL_OK,
-    client: createOpenAICompatible({ name: "nvidia", baseURL: NVIDIA_BASE_URL, apiKey: process.env.NVIDIA_API_KEY }),
-    // Nemotron thinking switch on NVIDIA NIM.
-    thinking: (on: boolean) => ({ chat_template_kwargs: { enable_thinking: on } }),
-  },
-  openrouter: {
-    key: process.env.OPENROUTER_API_KEY,
-    enabled: true,
-    client: createOpenAICompatible({ name: "openrouter", baseURL: "https://openrouter.ai/api/v1", apiKey: process.env.OPENROUTER_API_KEY }),
-    thinking: (on: boolean) => ({ reasoning: { enabled: on } }),
-  },
-} satisfies Record<ProviderName, unknown>;
-
-// Spelled with character classes so `pnpm check:llm-provider` (which greps the repo for the vendor name) stays clean.
-const FORBIDDEN_MODEL = /an[t]hropic|cl[a]ude/i;
-
-type ModelRef = { provider: ProviderName; model: string; label: string };
-
-function parseModelRef(raw: string | undefined): ModelRef | null {
-  if (!raw) return null;
-  const i = raw.indexOf(":");
-  const provider = raw.slice(0, i) as ProviderName;
-  const model = raw.slice(i + 1);
-  if (i < 0 || !(provider in PROVIDERS) || !model) {
-    console.warn(`AI: ignoring "${raw}", expected "<nvidia|openrouter>:<model id>"`);
-    return null;
-  }
-  if (FORBIDDEN_MODEL.test(model)) {
-    console.warn(`AI: ignoring "${raw}", this vendor is not allowed (CLAUDE.md rule 10)`);
-    return null;
-  }
-  const p = PROVIDERS[provider];
-  return p.enabled && p.key ? { provider, model, label: raw } : null;
-}
-
-function configuredModels(): ModelRef[] {
-  return [process.env.LLM_MODEL, process.env.LLM_FALLBACK_MODEL]
-    .map(parseModelRef)
-    .filter((m): m is ModelRef => m !== null);
-}
 
 /** AI features are optional: hidden when no usable provider key/model is configured. */
 export function aiEnabled() {
-  return configuredModels().length > 0;
+  try {
+    return modelChain().length > 0;
+  } catch (error) {
+    console.error("AI disabled:", error instanceof Error ? error.message : error);
+    return false;
+  }
 }
 
-/** The model answered, but not with JSON matching the schema; earns one retry with reasoning on. */
+/** The model answered, but not with JSON matching the schema; earns one retry with more reasoning. */
 class InvalidOutputError extends Error {}
 
+export type AiAttempt = { provider: ProviderName; model: string; status: string };
+
 export class AiUnavailableError extends Error {
-  constructor() {
+  constructor(readonly attempts: AiAttempt[] = []) {
     super("AI sedang tidak tersedia, silakan isi manual.");
   }
 }
 
-const TIMEOUT_MS = 60_000; // CLAUDE.md 7.8; the reasoning-on retry takes ~45 s
+const TIMEOUT_MS = 30_000;
+// Groq's free tier allows 8K tokens/minute (input + output); inputs are capped by the callers to stay well inside.
+const MAX_OUTPUT_TOKENS = 3000;
+const MAX_RETRY_AFTER_MS = 3000; // a longer 429 wait goes to the next model instead
 
 /** Progress events for the UI: which model is being tried, in which mode, and how the last try ended. */
 export type AiProgress =
@@ -95,46 +44,50 @@ type Args<T> = {
   prompt: string;
   feature: AiFeature;
   userId: string;
+  maxOutputTokens?: number;
   onProgress?: (event: AiProgress) => void;
-  /** Called with the object as the model writes it (not yet validated), for live UI progress. */
-  onPartial?: (partial: DeepPartial<T>) => void;
+};
+
+export type AiResult<T> = {
+  object: T;
+  model: string; // "<provider>:<model id>"
+  provider: ProviderName;
+  latencyMs: number;
+  usage: Pick<LanguageModelUsage, "inputTokens" | "outputTokens" | "totalTokens">;
 };
 
 /*
- * Plain streamed text, no response_format: with any JSON response_format OpenRouter buffers the whole answer
- * into one chunk (measured in Phase 3), which would kill the live findings UI. The schema goes in the prompt,
- * partial JSON feeds onPartial, and the finished text is cut out of fences/prose and Zod-validated.
+ * Not streamed: Groq's strict json_schema and Cloudflare's JSON mode don't support streaming (decided 2026-10-19).
+ * Providers without response_format support get the schema in the prompt; either way the answer is Zod-checked.
  */
-async function callModel<T>(ref: ModelRef, args: Args<T>, prompt: string, thinking: boolean): Promise<T> {
-  const p = PROVIDERS[ref.provider];
-  const system = `${args.system}\n\nBalas HANYA dengan satu objek JSON yang valid terhadap JSON Schema berikut, tanpa markdown dan tanpa teks lain:\n${JSON.stringify(z.toJSONSchema(args.schema))}`;
-  let streamError: unknown;
-  const result = streamText({
-    model: p.client(ref.model),
-    system: ref.provider === "nvidia" && !thinking ? `/no_think\n${system}` : system,
-    prompt,
-    temperature: 0,
-    maxOutputTokens: 4000,
-    maxRetries: 0, // retries/fallback are handled below
-    abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-    providerOptions: { [ref.provider]: p.thinking(thinking) },
-    onError: ({ error }) => {
-      streamError = error;
-    },
-  });
-
-  let text = "";
-  for await (const delta of result.textStream) {
-    text += delta;
-    if (!args.onPartial) continue;
-    const { value, state } = await parsePartialJson(jsonStart(text));
-    if ((state === "successful-parse" || state === "repaired-parse") && value && typeof value === "object") {
-      args.onPartial(value as DeepPartial<T>);
+async function callModel<T>(ref: ModelRef, args: Args<T>, prompt: string, retry: boolean) {
+  const schema = responseSchema(args.schema);
+  const system = ref.structured
+    ? args.system
+    : `${args.system}\n\nBalas HANYA dengan satu objek JSON yang valid terhadap JSON Schema berikut, tanpa markdown dan tanpa teks lain:\n${JSON.stringify(schema)}`;
+  let result;
+  try {
+    result = await generateText({
+      model: ref.languageModel,
+      system: ref.provider === "nvidia" && !retry ? `/no_think\n${system}` : system,
+      prompt,
+      temperature: 0,
+      maxOutputTokens: args.maxOutputTokens ?? MAX_OUTPUT_TOKENS,
+      maxRetries: 0, // retries/fallback are handled below
+      abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+      providerOptions: { [ref.provider]: ref.options(retry) },
+      ...(ref.structured && { output: Output.object({ schema: jsonSchema(schema), name: "result" }) }),
+    });
+  } catch (error) {
+    if (NoObjectGeneratedError.isInstance(error)) throw new InvalidOutputError("Jawaban bukan JSON yang valid.");
+    // Cloudflare's JSON mode can refuse a schema it couldn't satisfy; treated like any other invalid answer.
+    if (APICallError.isInstance(error) && /JSON Mode couldn't be met/i.test(`${error.message} ${error.responseBody ?? ""}`)) {
+      throw new InvalidOutputError("JSON Mode couldn't be met");
     }
+    throw error;
   }
-  if (streamError) throw streamError;
 
-  const json = extractJsonObject(text);
+  const json = extractJsonObject(result.text);
   let parsed: unknown;
   try {
     parsed = json === null ? undefined : JSON.parse(json);
@@ -143,41 +96,64 @@ async function callModel<T>(ref: ModelRef, args: Args<T>, prompt: string, thinki
   }
   const checked = args.schema.safeParse(parsed);
   if (!checked.success) throw new InvalidOutputError(z.prettifyError(checked.error));
-  return checked.data;
+  const { inputTokens, outputTokens, totalTokens } = result.usage;
+  return { object: checked.data, usage: { inputTokens, outputTokens, totalTokens } };
 }
 
 /**
- * Per model: fast attempt with reasoning off → if the output fails validation, one retry with reasoning on
- * and the validation error fed back → on 429/5xx/timeout/other errors, next model → AiUnavailableError.
+ * Per model: first try → if the output fails validation, one retry with more reasoning and the validation error
+ * fed back → a 429 with a short retry-after is waited out once → otherwise (429/5xx/timeout/still invalid) the next
+ * model → AiUnavailableError. Throws AiConsentRequiredError, QuotaExceededError or LlmConfigError before any call.
  */
-export async function generateStructured<T>(args: Args<T>): Promise<{ object: T; model: string }> {
-  const models = configuredModels();
+export async function generateStructured<T>(args: Args<T>): Promise<AiResult<T>> {
+  const models = modelChain();
   if (!models.length) throw new AiUnavailableError();
+  await assertAiConsent(args.userId);
   await assertQuota(args.userId);
 
+  const attempts: AiAttempt[] = [];
   for (const [index, ref] of models.entries()) {
     let prompt = args.prompt;
-    for (const thinking of [false, true]) {
+    let retry = false;
+    let waited = false;
+    for (;;) {
       const started = Date.now();
-      args.onProgress?.({ kind: "attempt", provider: ref.provider, model: ref.model, thinking, fallback: index > 0 });
+      args.onProgress?.({ kind: "attempt", provider: ref.provider, model: ref.model, thinking: retry, fallback: index > 0 });
       try {
-        const object = await callModel(ref, args, prompt, thinking);
-        log(args.feature, ref.label, thinking, started, "ok");
+        const { object, usage } = await callModel(ref, args, prompt, retry);
+        const latencyMs = Date.now() - started;
+        log(args.feature, ref.label, retry, latencyMs, "ok", usage);
         await recordUsage(args.userId, args.feature, ref.label);
-        return { object, model: ref.label };
+        return { object, model: ref.label, provider: ref.provider, latencyMs, usage };
       } catch (error) {
         const status = errorStatus(error);
-        log(args.feature, ref.label, thinking, started, status);
+        log(args.feature, ref.label, retry, Date.now() - started, status);
+        attempts.push({ provider: ref.provider, model: ref.model, status });
         args.onProgress?.({ kind: "attempt_failed", provider: ref.provider, reason: progressReason(status) });
-        if (!thinking && error instanceof InvalidOutputError) {
+        if (!retry && error instanceof InvalidOutputError) {
+          retry = true;
           prompt = `${args.prompt}\n\nJawaban sebelumnya tidak valid terhadap skema: ${error.message.slice(0, 1500)}\nBalas ulang dengan JSON yang valid.`;
+          continue;
+        }
+        const wait = status === "http_429" && !waited ? retryAfterMs(error) : null;
+        if (wait !== null && wait <= MAX_RETRY_AFTER_MS) {
+          waited = true;
+          await new Promise((r) => setTimeout(r, wait));
           continue;
         }
         break;
       }
     }
   }
-  throw new AiUnavailableError();
+  throw new AiUnavailableError(attempts);
+}
+
+/** retry-after in ms (seconds or an HTTP date), or null when the provider didn't send one. */
+function retryAfterMs(error: unknown): number | null {
+  const raw = APICallError.isInstance(error) ? error.responseHeaders?.["retry-after"] : undefined;
+  if (!raw) return null;
+  const ms = /^\d+(\.\d+)?$/.test(raw.trim()) ? Number(raw) * 1000 : Date.parse(raw) - Date.now();
+  return Number.isFinite(ms) ? Math.max(0, ms) : null;
 }
 
 function progressReason(status: string): Extract<AiProgress, { kind: "attempt_failed" }>["reason"] {
@@ -192,7 +168,7 @@ function errorStatus(error: unknown) {
   return "error";
 }
 
-// Never log prompts or CV text: feature, model, duration, status only.
-function log(feature: AiFeature, model: string, thinking: boolean, started: number, status: string) {
-  console.info("ai call", { feature, model, thinking, ms: Date.now() - started, status });
+// Never log prompts, CV text or keys: feature, model, duration, tokens, status only.
+function log(feature: AiFeature, model: string, retry: boolean, ms: number, status: string, usage?: AiResult<unknown>["usage"]) {
+  console.info("ai call", { feature, model, retry, ms, status, tokensIn: usage?.inputTokens, tokensOut: usage?.outputTokens });
 }

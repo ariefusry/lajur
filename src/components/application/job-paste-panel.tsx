@@ -1,6 +1,5 @@
 "use client";
 
-import type { DeepPartial } from "ai";
 import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -35,7 +34,6 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [status, setStatus] = useState<Status>("reading");
-  const [partial, setPartial] = useState<DeepPartial<ExtractedJob> | null>(null);
 
   useEffect(() => {
     if (!startedAt) return;
@@ -48,7 +46,6 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
     setStartedAt(Date.now());
     setElapsed(0);
     setStatus(text.trim() ? "reading" : "fetching");
-    setPartial(null);
     try {
       const res = await fetch("/api/ai/extract", {
         method: "POST",
@@ -62,10 +59,6 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
       for await (const event of readEvents(res)) {
         if (event.type === "status") {
           setStatus(event.status);
-          // A retry or a fallback model starts writing from scratch.
-          if (event.status === "retrying" || event.status === "fallback") setPartial(null);
-        } else if (event.type === "partial") {
-          setPartial(event.job);
         } else if (event.type === "result") {
           onResult({ ...event, sourceUrl: url.trim() || undefined });
           toast.success(event.cached ? "Draf diisi (dari cache)." : "Draf diisi. Tinjau dulu sebelum menyimpan.");
@@ -124,7 +117,7 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
       <ShinyButton onClick={extract} disabled={pending}>
         <Sparkles /> {pending ? "AI sedang membaca…" : "Isi otomatis dengan AI"}
       </ShinyButton>
-      {pending && <AiFindings status={status} job={partial} elapsed={elapsed} />}
+      {pending && <AiFindings status={status} elapsed={elapsed} />}
     </section>
   );
 }

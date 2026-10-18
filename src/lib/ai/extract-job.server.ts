@@ -9,13 +9,13 @@ export class NothingFoundError extends Error {}
 
 type Hooks = {
   onProgress?: (e: AiProgress) => void;
-  onPartial?: Parameters<typeof generateStructured<ExtractedJob>>[0]["onPartial"];
   onVerifying?: () => void;
 };
 
 /**
- * Cache → quota → LLM → keep only items whose quote is in the text → cache (CLAUDE.md 7.3).
- * `text` must already be normalized. Throws QuotaExceededError, AiUnavailableError or NothingFoundError.
+ * Cache → consent + quota → LLM → keep only items whose quote is in the text → cache (CLAUDE.md 7.3).
+ * `text` must already be normalized. Throws AiConsentRequiredError, QuotaExceededError, AiUnavailableError
+ * or NothingFoundError.
  */
 export async function extractJob(text: string, userId: string, hooks: Hooks = {}): Promise<{ job: ExtractedJob; cached: boolean }> {
   const textHash = hashJobText(text);
@@ -30,7 +30,6 @@ export async function extractJob(text: string, userId: string, hooks: Hooks = {}
     feature: "EXTRACT_JOB",
     userId,
     onProgress: hooks.onProgress,
-    onPartial: hooks.onPartial,
   });
 
   hooks.onVerifying?.();

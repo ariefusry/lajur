@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AiConsentRequiredError } from "@/lib/ai/consent";
 import type { ExtractEvent } from "@/lib/ai/extract-events";
 import { normalizeJobText } from "@/lib/ai/extract-job";
 import { extractJob, NothingFoundError } from "@/lib/ai/extract-job.server";
@@ -9,7 +10,7 @@ import { auth } from "@/lib/auth";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 
 export const runtime = "nodejs";
-export const maxDuration = 200; // per model: fast try + reasoning retry (≤60 s each), then fallback
+export const maxDuration = 200; // per model: first try + retry (≤30 s each), up to 3 models
 
 const Body = z
   .object({ text: z.string().max(100_000).optional(), url: z.url().optional() })
@@ -17,10 +18,8 @@ const Body = z
 
 const fail = (error: string, status: number) => Response.json({ error }, { status });
 
-const PARTIAL_INTERVAL_MS = 150; // throttle live findings; the model emits a partial per token
-
 /**
- * Responds with NDJSON (one ExtractEvent per line) so the form can show what the AI has found so far.
+ * Responds with NDJSON (one ExtractEvent per line) so the form can show which step the AI is on.
  * Auth and input errors are plain JSON with an HTTP status, before the stream starts.
  */
 export async function POST(request: Request) {
@@ -50,21 +49,16 @@ export async function POST(request: Request) {
         const text = normalizeJobText(raw);
         if (text.length < 50) throw new FetchPageError("Teks lowongan terlalu pendek. Salin isi lowongannya lengkap.");
 
-        let lastPartial = 0;
         const { job, cached } = await extractJob(text, userId, {
           onProgress: (e) => {
             if (e.kind === "attempt") send({ type: "status", status: e.fallback ? "fallback" : e.thinking ? "retrying" : "reading" });
-          },
-          onPartial: (partial) => {
-            if (Date.now() - lastPartial < PARTIAL_INTERVAL_MS) return;
-            lastPartial = Date.now();
-            send({ type: "partial", job: partial });
           },
           onVerifying: () => send({ type: "status", status: "verifying" }),
         });
         send({ type: "result", job, text, cached });
       } catch (error) {
-        if (error instanceof QuotaExceededError) send({ type: "error", status: 429, error: error.message });
+        if (error instanceof AiConsentRequiredError) send({ type: "error", status: 403, error: error.message });
+        else if (error instanceof QuotaExceededError) send({ type: "error", status: 429, error: error.message });
         else if (error instanceof FetchPageError) send({ type: "error", status: 422, error: error.message });
         else if (error instanceof NothingFoundError) {
           send({

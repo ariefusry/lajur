@@ -47,7 +47,7 @@ flowchart LR
   app -->|Prisma, pooled| pg
   api -->|S3 API, presigned URL| s3
   app -->|Auth.js| google[Google OAuth]
-  api -->|teks lowongan publik /<br/>CV yang sudah disamarkan| llm{{OpenRouter → NVIDIA<br/>Nemotron 3 Super}}
+  api -->|teks lowongan publik /<br/>CV yang sudah disamarkan| llm{{Groq gpt-oss →<br/>Cloudflare Llama 3.3}}
   api -->|email pengingat| resend[Resend]
 ```
 
@@ -141,7 +141,7 @@ pnpm db:seed                           # akun demo (demo@lamarin.local) + 15 lam
 pnpm dev
 ```
 
-Lengkapi `.env.local` sesuai [`.env.example`](.env.example): Google OAuth (`AUTH_*`), AI (`OPENROUTER_API_KEY`, `NVIDIA_API_KEY`, `LLM_MODEL`, `LLM_FALLBACK_MODEL`), Resend, `CRON_SECRET`, dan `DEMO_LOGIN_ENABLED=true` untuk tombol demo. Tanpa key AI, aplikasi tetap jalan dan tombol AI disembunyikan.
+Lengkapi `.env.local` sesuai [`.env.example`](.env.example): Google OAuth (`AUTH_*`), AI (`LLM_PRIMARY`, `LLM_FALLBACK`, `GROQ_*`, `CLOUDFLARE_*`), Resend, `CRON_SECRET`, dan `DEMO_LOGIN_ENABLED=true` untuk tombol demo. Tanpa key AI, aplikasi tetap jalan dan tombol AI disembunyikan.
 
 | Perintah | Fungsi |
 |---|---|
@@ -175,8 +175,9 @@ Diaudit di Fase 5:
 - Setiap query data pengguna difilter `userId` dari session (`requireUser()`), langsung atau lewat relasi; setiap mutasi berdasarkan `id` didahului cek kepemilikan.
 - Kredensial database, storage, dan AI hanya di server (`import "server-only"`); tidak ada `NEXT_PUBLIC_` untuk secret; bundle client dipindai tanpa temuan.
 - Bucket CV privat: akses tanpa tanda tangan → 403; file hanya lewat presigned URL 60 detik setelah cek kepemilikan.
-- Teks CV ke LLM hanya lewat `redact()`. Log hanya berisi fitur, model, durasi, dan status (tanpa isi prompt atau CV).
-- Endpoint gratis NVIDIA dan model gratis OpenRouter bisa memakai data yang dikirim untuk training, karena itu teks lowongan (publik) boleh dikirim, CV harus disamarkan.
+- Teks CV ke LLM hanya lewat `redact()`: hanya bagian keahlian/pengalaman, dengan email, nomor HP, URL, NIK, nama, dan domisili diganti placeholder (`[NAME_1]`, …) yang dikembalikan di jawaban lewat `rehydrate()`. Log hanya berisi fitur, model, durasi, token, dan status (tanpa isi prompt, CV, atau key).
+- **UU PDP:** fitur AI baru aktif setelah user menyetujui di Pengaturan bahwa teksnya diproses AI pihak ketiga di luar negeri (`User.aiConsentAt`, bisa ditarik kapan saja).
+- NVIDIA API Catalog (trial, ToS melarang produksi) dan model gratis OpenRouter boleh memakai input untuk training, jadi keduanya khusus dev dan ditolak saat `NODE_ENV=production`.
 
 ## Keputusan desain
 
@@ -210,13 +211,23 @@ Diaudit di Fase 5:
 ### AI: provider dan model
 
 ```
-LLM_MODEL=openrouter:nvidia/nemotron-3-super-120b-a12b:free     # utama
-LLM_FALLBACK_MODEL=nvidia:nvidia/nemotron-3-super-120b-a12b     # cadangan
+LLM_PRIMARY=groq          GROQ_MODEL=openai/gpt-oss-20b    GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
+LLM_FALLBACK=cloudflare   CLOUDFLARE_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast
 ```
 
-Urutan di `src/lib/ai/provider.ts`: model utama dengan reasoning **mati** → kalau output gagal validasi Zod, ulang sekali dengan reasoning **menyala** + pesan error → kalau gagal/429/5xx/timeout (60 detik), model cadangan dengan urutan yang sama → `AiUnavailableError` ("AI sedang tidak tersedia, silakan isi manual"). ID model dengan nama vendor yang dilarang ditolak saat start.
+Urutan di `src/lib/ai/provider.ts` (konfigurasi di `llm-config.ts`): setiap model dicoba dengan `response_format: json_schema` (strict di Groq, `reasoning_effort: low`) → kalau output gagal validasi Zod, ulang sekali (`medium`) + pesan error → 429 dengan `retry-after` pendek ditunggu sekali → kalau gagal/429/5xx/timeout (30 detik), model berikutnya → `AiUnavailableError` ("AI sedang tidak tersedia, silakan isi manual"). Tanpa streaming, karena structured output Groq dan Cloudflare tidak mendukungnya; kartu progres menampilkan tahapnya saja. ID model dengan nama vendor yang dilarang ditolak.
 
-Uji 3 fixture (`src/lib/ai/job-fixtures.ts`, skor 8 poin: perusahaan, posisi, deadline, jenis syarat, IPK, usia, tanggal acuan usia, skill):
+Uji 2026-10-19 (`pnpm ai:fixtures off`, 3 fixture nyata, skor 9 poin: perusahaan, posisi, deadline, jenis syarat, IPK, usia, satu item per jenis, tanggal acuan usia, skill):
+
+| Model | BUMN | Bank | Startup | Token (in+out) |
+|---|---|---|---|---|
+| Groq gpt-oss-120b | 9/9 · 2,9 dtk | 9/9 · 2,6 dtk | 9/9 · 1,8 dtk | ±1,4K + 0,7–1,1K |
+| Groq gpt-oss-20b | 9/9 · 1,0 dtk | 9/9 · 1,0 dtk | 9/9 · 1,1 dtk | ±1,4K + 0,4–0,5K |
+| Cloudflare Llama 3.3 70B fp8-fast | 9/9 · 15 dtk | 8/9 · 17 dtk | tanggal tidak valid (di aplikasi: retry) | ±1,1K + 0,6K |
+
+`pnpm ai:smoke` (2 lowongan fiktif ID/EN) lulus skema di ketiga model. Dipilih 20b sebagai utama karena akurasinya sama dengan 120b tetapi 2–3× lebih cepat; jawaban yang dua kali gagal validasi otomatis naik ke 120b, lalu Cloudflare. Satu ekstraksi memakai ±2–2,5K token, jauh di bawah batas gratis Groq 8K token/menit.
+
+Riwayat: uji sebelumnya (2026-10-18, NVIDIA/OpenRouter, skor 8 poin), sebelum pindah ke Groq:
 
 | Kandidat | BUMN | Bank | Startup |
 |---|---|---|---|
@@ -231,8 +242,8 @@ Reasoning tidak menaikkan skor di tugas ekstraksi ini, tapi 4–5× lebih lambat
 
 ### AI: ekstraksi lowongan
 
-- **Progres langsung:** jawaban AI di-stream sebagai teks biasa berisi JSON (skema JSON ditulis di prompt), lalu `parsePartialJson` mengubahnya jadi temuan sementara yang tampil di form. `response_format` sengaja tidak dikirim: diukur, dengan `json_object` maupun `json_schema` OpenRouter menahan seluruh jawaban jadi satu potongan, sedangkan tanpa itu token dikirim satu per satu (temuan pertama ±2 detik). Hasil akhir dibersihkan dari fence/teks tambahan (`src/lib/ai/json-text.ts`), lalu divalidasi Zod. Route `/api/ai/extract` membalas NDJSON: `status`, `partial`, lalu `result` atau `error`.
-- **Alur:** normalisasi teks → cache (`sha256(prompt + teks)`, jadi mengubah prompt otomatis membatalkan cache lama) → kuota harian (`AiUsage`) → LLM → buang item yang kutipannya tidak ada di teks → simpan cache. Hasil kosong (halaman yang butuh JavaScript/login) tidak di-cache dan ditampilkan sebagai pesan yang jelas.
+- **Progres:** route `/api/ai/extract` membalas NDJSON: `status` (mengambil halaman, membaca, membaca ulang, pindah ke cadangan, mencocokkan kutipan), lalu `result` atau `error`. Selain field form, AI juga mengambil jenis kerja, mode kerja, rentang gaji, link, dan bahasa lowongan; gaji dan link hanya dipakai kalau tertulis persis di teks, dan ketiganya masuk ke catatan draf.
+- **Alur:** normalisasi teks (maks. 12.000 karakter) → cache (`sha256(prompt + teks)`, jadi mengubah prompt otomatis membatalkan cache lama) → persetujuan AI + kuota harian (`AiUsage`) → LLM → buang item yang kutipannya tidak ada di teks → simpan cache. Hasil kosong (halaman yang butuh JavaScript/login) tidak di-cache dan ditampilkan sebagai pesan yang jelas.
 - **Link lowongan:** diambil di server dengan pengaman SSRF (alamat privat/loopback ditolak, redirect divalidasi ulang). Data `JobPosting` JSON-LD (untuk Google Jobs) dibaca lebih dulu; di halaman panjang, dipilih potongan dengan **jenis** kata kunci lowongan terbanyak (di magentaku.id, isi lowongan ada di karakter ke-122 ribu setelah filter yang mengulang satu kata 105 kali).
 - **Syarat per jenjang** ("IPK 3,00 untuk S1 dan 3,25 untuk S2") diekstrak sebagai satu item `3.00 (S1), 3.25 (S2)`, lalu `checkRequirement` memakai angka untuk jenjang di profil.
 

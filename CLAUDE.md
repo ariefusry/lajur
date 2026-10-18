@@ -35,8 +35,9 @@ Pengguna pertama: pemilik repo sendiri. Aplikasinya harus enak dipakai setiap ha
 | File CV | **Neon Object Storage** (kompatibel S3), bucket **privat**, lewat `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` dengan `forcePathStyle: true`, akses lewat presigned URL. Cadangan: Cloudflare R2 dengan kode yang sama |
 | Parsing PDF | pdf-parse |
 | AI (abstraksi) | Vercel AI SDK (`ai`) dengan `generateObject` + skema Zod |
-| AI (utama) | **OpenRouter** (`openrouter.ai`, model gratis non-Anthropic) via `@ai-sdk/openai-compatible`, model dari env `LLM_MODEL` (format `<provider>:<model id>`) |
-| AI (cadangan) | NVIDIA API Catalog (`integrate.api.nvidia.com`, gratis), dari env `LLM_FALLBACK_MODEL`, opsional |
+| AI (utama) | **Groq** (`api.groq.com`, gpt-oss) via `@ai-sdk/openai-compatible`, dari env `LLM_PRIMARY=groq` + `GROQ_MODEL` |
+| AI (cadangan) | **Cloudflare Workers AI** (`api.cloudflare.com/.../ai/v1`), dari env `LLM_FALLBACK=cloudflare` + `CLOUDFLARE_MODEL` |
+| AI (khusus dev) | NVIDIA API Catalog dan OpenRouter, ditolak kalau `NODE_ENV=production` (7.8) |
 | **Dilarang** | API Anthropic/Claude dalam bentuk apa pun (lihat aturan 10) |
 | Rate limit | Tabel `AiUsage` di Postgres (tanpa layanan tambahan) |
 | Validasi | Zod (form, API, dan output AI) |
@@ -59,14 +60,14 @@ Package manager: **pnpm**.
 5. Setiap query database **wajib** difilter `userId` dari session. Tidak boleh ada endpoint yang mengembalikan data milik pengguna lain. Buat helper `requireUser()` dan pakai di semua server action atau route.
 6. Mutasi data lewat **Server Actions** dengan validasi Zod. Route Handler (`app/api/...`) hanya untuk cron, upload, AI, dan health check (`/api/health`, tanpa data pribadi).
 7. Fitur AI **opsional**: kalau tidak ada API key yang terpasang, atau provider utama dan cadangan sama-sama gagal, aplikasi tetap jalan dan user bisa mengisi manual.
-7a. **Jangan pernah mengirim teks CV utuh atau data pribadi ke LLM.** Semua input ke LLM yang berasal dari CV wajib melewati `lib/ai/redact.ts` lebih dulu (lihat 7.5). Endpoint gratis NVIDIA dan model gratis OpenRouter bisa memakai data yang dikirim untuk melatih model.
+7a. **Jangan pernah mengirim teks CV utuh atau data pribadi ke LLM.** Semua input ke LLM yang berasal dari CV wajib melewati `lib/ai/redact.ts` lebih dulu (lihat 7.5). Data pribadi diganti placeholder (`[NAME_1]`, `[EMAIL_1]`, …) dan dikembalikan di jawaban lewat `rehydrate()`. Fitur AI hanya jalan setelah user menyetujui pemrosesan oleh AI pihak ketiga di luar negeri (UU PDP, `User.aiConsentAt`).
 7b. Semua panggilan LLM wajib lewat `lib/ai/provider.ts`. Jangan memanggil SDK provider langsung dari route atau komponen.
 8. Commit kecil dan sering, format Conventional Commits (`feat:`, `fix:`, `test:`, `chore:`).
 9. Jangan menjalankan `prisma migrate reset` atau perintah yang menghapus data tanpa izin.
 10. **Aplikasi ini TIDAK BOLEH memakai API Anthropic/Claude.** Pemilik repo tidak ingin akun Claude-nya dipakai atau ditagih oleh aplikasi ini. Artinya:
     - Jangan menginstal `@anthropic-ai/sdk`, `@ai-sdk/anthropic`, atau SDK lain yang memanggil `api.anthropic.com`.
     - Jangan menulis atau membaca variabel `ANTHROPIC_API_KEY` (atau `CLAUDE_*`) di kode, `.env.example`, `.env.local`, maupun konfigurasi CI/Vercel.
-    - Provider LLM yang diizinkan hanya **NVIDIA API Catalog** (`integrate.api.nvidia.com`, `NVIDIA_API_KEY`) dan **OpenRouter** (`openrouter.ai`, `OPENROUTER_API_KEY`). OpenRouter ditambahkan atas persetujuan pemilik repo pada 2026-10-18.
+    - Provider LLM yang diizinkan: **Groq** (`api.groq.com`, `GROQ_API_KEY`) dan **Cloudflare Workers AI** (`CLOUDFLARE_API_TOKEN`) untuk produksi, ditambahkan atas persetujuan pemilik repo pada 2026-10-19. **NVIDIA API Catalog** (`NVIDIA_API_KEY`) dan **OpenRouter** (`OPENROUTER_API_KEY`) hanya untuk dev.
     - OpenRouter juga menyediakan model Anthropic/Claude: **jangan pernah** memakai model itu. `lib/ai/provider.ts` menolak ID model yang mengandung nama vendor tersebut. Jangan memakai router acak seperti `openrouter/free`, karena modelnya tidak bisa dikendalikan.
     - Kalau suatu saat butuh provider lain, **tanya dulu**. Jangan menambahkannya sendiri.
     - Di akhir setiap fase, jalankan `pnpm check:llm-provider` (lihat bagian 9) dan pastikan hasilnya bersih.
@@ -84,13 +85,15 @@ Package manager: **pnpm**.
 AUTH_SECRET=
 AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
-# AI — provider utama (NVIDIA API Catalog, gratis)
-NVIDIA_API_KEY=
-NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
-LLM_MODEL=deepseek-ai/deepseek-v4.1-flash   # ID sesuai contoh kode resmi di build.nvidia.com
-# AI — model cadangan (opsional): ID model gratis lain dari build.nvidia.com, memakai NVIDIA_API_KEY yang sama.
-# Kosongkan kalau tidak dipakai. JANGAN isi dengan model Claude/Anthropic.
-LLM_FALLBACK_MODEL=
+# AI — lihat 7.8 dan .env.example. JANGAN isi dengan model Claude/Anthropic.
+LLM_PRIMARY=groq
+LLM_FALLBACK=cloudflare
+GROQ_API_KEY=
+GROQ_MODEL=openai/gpt-oss-20b
+GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast
 # AI — batas pemakaian
 AI_DAILY_LIMIT_PER_USER=30
 AI_DAILY_LIMIT_DEMO=10
@@ -133,7 +136,7 @@ Project Neon sudah dibuat oleh pemilik repo (region AWS Asia Pacific 1, Singapor
 
 Catatan:
 - Instruksi asli Neon memakai `npm run build`. Project ini memakai pnpm, jadi pakai `pnpm build`. CLI `neon` sendiri boleh diinstal global lewat npm.
-- Layanan Neon lain (Functions, AI gateway, Realtime, Neon Auth) **tidak dipakai**. Jangan menambahkannya ke `neon.ts`. AI gateway khususnya dilarang, karena satu-satunya provider LLM adalah NVIDIA (aturan 10).
+- Layanan Neon lain (Functions, AI gateway, Realtime, Neon Auth) **tidak dipakai**. Jangan menambahkannya ke `neon.ts`. AI gateway khususnya dilarang, karena provider LLM dibatasi aturan 10.
 - Region function di Vercel harus diset ke Singapore (`sin1`), sama dengan region database, misalnya lewat `"regions": ["sin1"]` di `vercel.json`.
 
 ---
@@ -323,7 +326,7 @@ model AiUsage {
   userId    String
   day       DateTime @db.Date                 // tanggal Asia/Jakarta
   feature   AiFeature
-  model     String                            // ID model NVIDIA yang dipakai (utama atau cadangan)
+  model     String                            // "<provider>:<model id>" yang benar-benar dipakai
   count     Int      @default(0)
   @@unique([userId, day, feature, model])
 }
@@ -461,46 +464,28 @@ Input berupa daftar skill hasil ekstraksi + `extractedText` dari CV yang dipilih
 - Semua agregasi dilakukan di server (Prisma/SQL), bukan di client.
 
 ### 7.8 Provider AI, fallback, dan rate limit
-`lib/ai/provider.ts` mengekspor `generateStructured({ schema, system, prompt, feature, userId })`:
+`lib/ai/provider.ts` mengekspor `generateStructured({ schema, system, prompt, feature, userId, maxOutputTokens? })` → `{ object, model, provider, latencyMs, usage }`. Konfigurasi provider ada di `lib/ai/llm-config.ts` (dipakai juga oleh script di `scripts/`), semuanya lewat `@ai-sdk/openai-compatible`:
 
-```ts
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+| Provider | Base URL | Env | Dipakai di |
+|---|---|---|---|
+| Groq | `https://api.groq.com/openai/v1` | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_FALLBACK_MODEL` | produksi (utama) |
+| Cloudflare Workers AI | `https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1` | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_MODEL` | produksi (cadangan) |
+| NVIDIA API Catalog | `NVIDIA_BASE_URL` (harus `integrate.api.nvidia.com`) | `NVIDIA_API_KEY`, `NVIDIA_MODEL` | **khusus dev** |
+| OpenRouter | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | **khusus dev** |
 
-const nvidia = createOpenAICompatible({
-  name: "nvidia",
-  baseURL: process.env.NVIDIA_BASE_URL!,
-  apiKey: process.env.NVIDIA_API_KEY,
-});
-// primary  = nvidia(process.env.LLM_MODEL)
-// fallback = nvidia(process.env.LLM_FALLBACK_MODEL)  -> hanya jika LLM_FALLBACK_MODEL diisi
-// Tidak ada provider lain. Base URL harus selalu integrate.api.nvidia.com.
-```
+`LLM_PRIMARY` dan `LLM_FALLBACK` memilih provider. Urutan model: semua model provider utama, lalu provider cadangan. Kalau `NODE_ENV=production` dan salah satunya `nvidia`/`openrouter`, `LlmConfigError` dilempar dan AI dinonaktifkan (ToS trial NVIDIA melarang produksi, dan tier gratis keduanya boleh memakai input untuk training).
 
-Contoh resmi NVIDIA untuk model ini memakai package `openai` langsung:
-
-```ts
-import OpenAI from "openai";
-const openai = new OpenAI({
-  apiKey: process.env.NVIDIA_API_KEY,
-  baseURL: "https://integrate.api.nvidia.com/v1",
-});
-await openai.chat.completions.create({ model: "deepseek-ai/deepseek-v4.1-flash", messages, ... });
-```
-
-Endpoint dan format request-nya sama dengan `createOpenAICompatible` di atas, jadi tetap pakai AI SDK. Kalau AI SDK bermasalah dengan model ini (misalnya structured output tidak jalan), boleh ganti implementasi di dalam `provider.ts` ke package `openai` seperti contoh di atas, asalkan antarmuka `generateStructured` tidak berubah.
-
-**Jangan salin parameter dari contoh NVIDIA.** Contoh itu dibuat untuk demo deskripsi gambar (`temperature: 1`, `top_p: 0.95`, `max_tokens: 262144`). Untuk ekstraksi data terstruktur pakai:
-
-Perilaku:
-- `temperature: 0`, `maxOutputTokens: 4000`, timeout 60 detik. Output **di-stream** (diputuskan 2026-10-18 atas permintaan pemilik repo) hanya supaya UI bisa menampilkan temuan AI saat itu juga; validasi Zod, cek kutipan, retry, dan fallback tetap memakai hasil akhir. Tanpa `response_format`, karena OpenRouter menahan seluruh jawaban kalau `response_format` JSON dipakai; skema JSON ditulis di prompt, dan teks jawaban dibersihkan dari fence/teks tambahan sebelum divalidasi (dinaikkan dari 30 detik pada 2026-10-17; percobaan dengan reasoning menyala butuh ±45 detik).
-- Urutan percobaan (diputuskan 2026-10-18 dari uji 3 fixture): model utama dengan **reasoning mati** (±10 detik) → kalau output gagal divalidasi Zod, ulang **sekali** dengan **reasoning menyala** dan pesan error validasinya → kalau masih gagal, atau kena error 429/5xx/timeout, pindah ke model cadangan (jika `LLM_FALLBACK_MODEL` diisi) dengan urutan yang sama → kalau semua gagal, lempar `AiUnavailableError` yang di UI ditampilkan sebagai "AI sedang tidak tersedia, silakan isi manual".
-- Mode output: teks biasa berisi JSON, dengan skema JSON di prompt (lihat poin di atas dan README). AI SDK v7 tidak lagi punya `generateObject({ mode })`; dipakai `streamText` + `parsePartialJson` untuk temuan sementara.
+Perilaku (diputuskan 2026-10-19):
+- `temperature: 0`, `maxOutputTokens: 3000`, timeout 30 detik. **Tanpa streaming**: Groq `response_format: json_schema` (strict) dan JSON mode Cloudflare tidak bisa digabung dengan streaming. Skema dikirim lewat `response_format` (kata kunci `format`/`pattern` dibuang, Zod tetap memvalidasinya). Provider dev tanpa structured output mendapat skema di prompt.
+- Reasoning gpt-oss tidak bisa dimatikan: percobaan pertama `reasoning_effort: "low"`, retry `"medium"`.
+- Urutan percobaan per model: percobaan pertama → kalau output gagal Zod (termasuk "JSON Mode couldn't be met" dari Cloudflare), ulang **sekali** dengan pesan error validasinya → 429 dengan `retry-after` ≤ 3 detik ditunggu sekali → selain itu (429/5xx/timeout/masih gagal) pindah ke model berikutnya → kalau semua gagal, `AiUnavailableError` (berisi daftar percobaan) yang di UI ditampilkan sebagai "AI sedang tidak tersedia, silakan isi manual".
+- Batas token gratis Groq 8K/menit: teks lowongan dipotong 12.000 karakter, CV teredaksi 6.000 karakter.
+- Sebelum memanggil: cek persetujuan AI user (`User.aiConsentAt`, `lib/ai/consent.ts`) dan kuota.
 - Catat setiap panggilan yang berhasil ke `AiUsage` (model yang benar-benar dipakai).
-- Saat aplikasi start, kalau `NVIDIA_BASE_URL` tidak mengarah ke `integrate.api.nvidia.com`, matikan provider NVIDIA dan tulis peringatan di log. Base URL OpenRouter di-hardcode ke `https://openrouter.ai/api/v1`.
 - **Rate limit:** sebelum memanggil, jumlahkan `AiUsage.count` hari ini untuk user tersebut. Lewat `AI_DAILY_LIMIT_PER_USER` (akun demo: `AI_DAILY_LIMIT_DEMO`) → tolak dengan 429. Cache hit tidak menambah hitungan.
-- Jangan pernah log isi prompt atau CV ke console di production. Log hanya fitur, provider, durasi, dan status.
+- Jangan pernah log isi prompt, CV, atau key. Log hanya fitur, model, durasi, token, dan status.
 
-Catatan: endpoint NVIDIA berstatus trial (sekitar 40 request/menit, sering penuh) dan model gratis OpenRouter punya batas harian. Model bisa berubah, karena itu ID model disimpan di env, bukan di-hardcode.
+Catatan: tier gratis Groq 30 RPM / 1K RPD / 8K TPM per model; Cloudflare 10.000 Neurons/hari (lewat batas = error, bukan tagihan). Model bisa berubah, karena itu ID model disimpan di env, bukan di-hardcode. Uji live: `pnpm ai:smoke` (Groq + Cloudflare, 2 lowongan fiktif) dan `pnpm ai:fixtures` (3 lowongan nyata, semua model yang terpasang).
 
 ---
 
