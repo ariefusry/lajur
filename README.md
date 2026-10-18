@@ -1,21 +1,21 @@
 # Lajur
 
-Tracker lamaran kerja dengan bantuan AI, untuk pencari kerja di Indonesia yang melamar ke banyak tempat sekaligus: BUMN, bank, startup, atau perusahaan di bidang apa pun.
+Tracker lamaran kerja untuk pencari kerja di Indonesia yang melamar ke banyak tempat sekaligus: BUMN, bank, startup, atau perusahaan di bidang apa pun.
 
-**Coba langsung:** https://lajur.vercel.app → **Masuk sebagai demo** (akun contoh berisi 15 lamaran; hanya bisa dilihat).
+Coba di https://lajur.vercel.app, lalu pilih **Masuk sebagai demo**. Akun demo berisi 15 lamaran contoh dan hanya bisa dilihat.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ## Fitur
 
-- **Board kanban** dengan tahap seleksi khas Indonesia (Administrasi, Tes Online/TPA, Psikotes, LGD, Interview HR/User, MCU, Offering). Geser kartu antar kolom; riwayat tahap tercatat otomatis. Template BUMN/Bank, Startup, dan Umum.
-- **Tambah dengan AI → form terisi otomatis.** Tempel teks atau link lowongan, lalu AI mengisi perusahaan, posisi, lokasi, deadline, skill, dan syarat administratif sebagai draf. Setiap isian disertai **kutipan bukti** dari lowongan, dan temuan AI muncul langsung saat AI membaca.
-- **Cek kelayakan tanpa AI:** IPK minimal, batas usia (termasuk "per tanggal X" dan tanggal lahir 29 Februari), jurusan (dengan sinonim lintas bidang), jenjang pendidikan, penempatan, dan ikatan dinas, dibandingkan dengan profilmu. Hasilnya tampil sebagai badge di board.
-- **Versi CV:** unggah PDF, tautkan ke lamaran, lihat lewat tautan sementara 60 detik.
-- **Gap skill:** skill yang diminta lowongan vs CV-mu. Pencocokan teks dulu; AI hanya untuk sisanya, dan hanya menerima bagian keahlian/pengalaman yang sudah disamarkan (tanpa nama dan kontak).
-- **Kalender dan pengingat email** H-3 dan H-1 untuk tes, interview, dan deadline.
-- **Dashboard (apa yang harus dikerjakan hari ini):** jadwal dan deadline 7 hari ke depan, lamaran yang mulai tanpa kabar, pipeline saat ini (termasuk ghosted), lamaran per minggu, aktivitas terbaru.
-- **Analytics (strategi mana yang berhasil):** response, interview, dan offer rate, persentase ghosted, funnel seleksi, tahap yang paling sering membuat gagal, serta respons dan lolos administrasi per sumber lowongan dan per versi CV.
+- Board kanban dengan tahap seleksi yang umum di sini: Administrasi, Tes Online/TPA, Psikotes, LGD, Interview HR/User, MCU, Offering. Riwayat tahap tercatat setiap kali kartu digeser. Ada template BUMN/Bank, Startup, dan Umum, serta tampilan daftar dengan pencarian dan filter.
+- Tambah dengan AI: tempel teks atau link lowongan, dan form terisi sebagai draf (perusahaan, posisi, lokasi, deadline, skill, syarat). Setiap isian disertai kutipan dari lowongan sebagai bukti.
+- Cek kelayakan tanpa AI: IPK minimal, batas usia (termasuk "per tanggal X" dan lahir 29 Februari), jurusan dengan sinonim, jenjang, penempatan, dan ikatan dinas dibandingkan dengan profilmu.
+- Versi CV: unggah PDF, tautkan ke lamaran, buka lewat tautan sementara 60 detik.
+- Cek CV: skill lowongan yang sudah dan belum terlihat di CV, plus saran perbaikan yang tidak mengarang pengalaman. Bisa dipakai sebelum menyimpan lamaran.
+- Kalender, pengingat email H-3 dan H-1 untuk tes dan interview, dan pengingat follow-up.
+- Dashboard untuk hari ini (jadwal 7 hari, lamaran yang perlu di-follow-up, pipeline) dan halaman Analytics (funnel, tahap yang paling sering gagal, respons per sumber lowongan dan per versi CV).
+- Ekspor semua data ke CSV, dan hapus akun beserta isinya.
 
 | Board | Detail lamaran |
 |---|---|
@@ -33,8 +33,8 @@ flowchart LR
 
   subgraph vercel[Vercel · sin1]
     app[Next.js 15 App Router<br/>Server Components + Server Actions]
-    api[Route Handlers<br/>/api/ai/* · /api/resumes/upload<br/>/api/cron/reminders · /api/health]
-    cron[[Vercel Cron<br/>07.00 WIB]]
+    api[Route Handlers<br/>/api/ai/* · /api/resumes/upload<br/>/api/cron/* · /api/health]
+    cron[[Vercel Cron]]
     app --- api
     cron --> api
   end
@@ -47,7 +47,7 @@ flowchart LR
   app -->|Prisma, pooled| pg
   api -->|S3 API, presigned URL| s3
   app -->|Auth.js| google[Google OAuth]
-  api -->|teks lowongan publik /<br/>CV yang sudah disamarkan| llm{{Groq gpt-oss →<br/>Cloudflare Llama 3.3}}
+  api -->|teks lowongan /<br/>CV yang sudah disamarkan| llm{{Groq gpt-oss →<br/>Cloudflare Llama 3.3}}
   api -->|email pengingat| resend[Resend]
 ```
 
@@ -62,7 +62,7 @@ erDiagram
   Resume |o--o{ Application : "dikirim ke"
   Stage ||--o{ Application : "tahap saat ini"
   Application ||--o{ StageHistory : riwayat
-  Stage ||--o{ StageHistory : ""
+  Stage ||--o{ StageHistory : "dimasuki"
   Application ||--o{ Event : jadwal
   Application ||--o{ Requirement : syarat
   Application ||--o{ SkillGap : "skill vs CV"
@@ -73,6 +73,7 @@ erDiagram
     date birthDate
     string major
     enum degree
+    datetime aiConsentAt
   }
   Stage {
     string name
@@ -85,7 +86,9 @@ erDiagram
     enum source
     datetime deadline
     datetime appliedAt
+    datetime nextActionAt
     text jobPostingText
+    json cvTweaks
   }
   StageHistory {
     datetime enteredAt
@@ -114,167 +117,96 @@ erDiagram
     bool inResume
     string suggestion
   }
-  AiUsage {
-    date day
-    enum feature
-    string model
-    int count
-  }
-  ExtractionCache {
-    string textHash
-    json result
-  }
 ```
 
-Skema lengkap: [`prisma/schema.prisma`](prisma/schema.prisma). `AiUsage` (kuota harian) dan `ExtractionCache` (hasil ekstraksi per teks lowongan) tidak berelasi langsung.
+Skema lengkap ada di [`prisma/schema.prisma`](prisma/schema.prisma). `AiUsage` (kuota AI harian) dan `ExtractionCache` (hasil ekstraksi per teks lowongan) berdiri sendiri.
 
 ## Setup lokal
 
-Butuh Node 24, pnpm 12 (`corepack enable` atau `npm i -g pnpm`), dan akun Neon.
+Butuh Node 24, pnpm 12 (`corepack enable`), dan akun Neon.
 
 ```bash
-pnpm install                           # juga menjalankan `prisma generate`
+pnpm install                    # juga menjalankan prisma generate
 npm i -g neon@latest && neon login
-neon checkout dev --create             # branch Neon "dev" untuk lokal; tulis DATABASE_URL & AWS_* ke .env.local
+neon checkout dev --create      # branch Neon "dev"; menulis DATABASE_URL dan AWS_* ke .env.local
 pnpm db:migrate
-pnpm db:seed                           # akun demo (demo@lamarin.local) + 15 lamaran + 2 CV; hanya me-reset akun demo
+pnpm db:seed                    # akun demo + 15 lamaran + 2 CV (hanya akun demo yang di-reset)
 pnpm dev
 ```
 
-Lengkapi `.env.local` sesuai [`.env.example`](.env.example): Google OAuth (`AUTH_*`), AI (`LLM_PRIMARY`, `LLM_FALLBACK`, `GROQ_*`, `CLOUDFLARE_*`), Resend, `CRON_SECRET`, dan `DEMO_LOGIN_ENABLED=true` untuk tombol demo. Tanpa key AI, aplikasi tetap jalan dan tombol AI disembunyikan.
+Variabel lainnya ada di [`.env.example`](.env.example): Google OAuth, provider AI, Resend, `CRON_SECRET`, dan `DEMO_LOGIN_ENABLED=true` untuk tombol demo. Tanpa key AI aplikasi tetap jalan; tombol AI disembunyikan dan form diisi manual. Email akun demo masih `demo@lamarin.local` dari nama lama aplikasi; mengubahnya akan membuat reset harian membuat akun demo baru.
 
 | Perintah | Fungsi |
 |---|---|
-| `pnpm dev` / `pnpm build` / `pnpm start` | jalankan / build / jalankan build (lokal butuh `AUTH_TRUST_HOST=true`) |
-| `pnpm lint` · `pnpm typecheck` · `pnpm test` | ESLint · `tsc --noEmit` · Vitest (unit) |
-| `pnpm test:e2e` | Playwright: login demo → buat lamaran → geser tahap → cek dashboard |
-| `pnpm db:migrate` · `pnpm db:seed` | Prisma migrate dev · seed akun demo |
-| `pnpm check:llm-provider` | gagal kalau ada jejak SDK/API vendor LLM yang dilarang (aturan 10 `CLAUDE.md`) |
-| `pnpm ai:fixtures` | uji model AI dengan 3 contoh lowongan (hanya teks publik) |
-| `pnpm storage:smoke` | upload PDF → presigned URL → bandingkan → hapus |
+| `pnpm dev` · `pnpm build` · `pnpm start` | jalankan, build, jalankan hasil build (lokal butuh `AUTH_TRUST_HOST=true`) |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` | ESLint, `tsc --noEmit`, Vitest |
+| `pnpm test:e2e` | Playwright: login demo, buat lamaran, geser tahap, cek dashboard |
+| `pnpm db:migrate` · `pnpm db:seed` | Prisma migrate dev, seed akun demo |
+| `pnpm check:llm-provider` | gagal kalau repo memakai SDK vendor LLM yang tidak diizinkan |
+| `pnpm ai:smoke` · `pnpm ai:fixtures` | uji provider AI sungguhan dengan lowongan contoh (hanya teks publik) |
+| `pnpm storage:smoke` | upload PDF, buka presigned URL, bandingkan isinya, hapus |
 
 ## Test dan CI
 
-- **Unit (Vitest):** cek kelayakan, redaksi CV, alias skill, ekstraksi dan verifikasi kutipan, urutan retry/fallback provider AI, pengaman SSRF, pengingat, dan dashboard (angka dicocokkan dengan hitungan manual atas data demo).
-- **E2E (Playwright):** alur utama di build produksi dengan akun demo yang bisa ditulisi.
-- **GitHub Actions** ([`ci.yml`](.github/workflows/ci.yml)): lint, typecheck, unit test, `check:llm-provider`, lalu E2E pada branch Neon `ci` (dibuat *schema-only*, jadi tidak ada data asli; diisi `pnpm db:seed` di setiap run). Kredensial branch `ci` disimpan sebagai GitHub Secrets; `AUTH_SECRET` dibuat acak per run dan disamarkan di log.
+- Unit test (Vitest) untuk cek kelayakan, redaksi CV, alias skill, verifikasi kutipan, Cek CV, urutan retry dan fallback provider AI, pengaman SSRF, pengingat, dan angka dashboard (dicocokkan dengan hitungan manual atas data demo).
+- E2E (Playwright) menjalankan alur utama di build produksi dengan akun demo yang bisa ditulisi.
+- GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)) menjalankan lint, typecheck, unit test, `check:llm-provider`, lalu E2E di branch Neon `ci`. Branch itu dibuat schema-only, jadi tidak berisi data asli, dan diisi `pnpm db:seed` setiap run.
 
-## Deploy (Vercel)
+## Deploy
 
-- Project terhubung ke repo GitHub: push ke `master` → deploy produksi. Region fungsi `sin1`, sama dengan database.
-- Build command (`vercel.json`): `prisma generate && prisma migrate deploy && next build`, jadi migrasi baru otomatis diterapkan.
-- Env produksi memakai branch Neon `production`. `DEMO_READ_ONLY=true` membuat akun demo hanya bisa dilihat: semua server action dan route penulisan menolak, dan fitur AI dimatikan untuk demo.
-- Akun demo di-reset setiap hari pukul 06.00 WIB oleh Vercel Cron (`/api/cron/demo-reset`, butuh `CRON_SECRET`). Isinya dibuat ulang dengan tanggal relatif terhadap hari itu, jadi demo selalu terlihat baru. Baris user-nya dipertahankan, jadi sesi pengunjung tidak terputus. Logikanya sama dengan `pnpm db:seed` (`src/lib/demo-reset.ts`).
-- `vercel env run` tidak bisa membaca `DATABASE_URL` produksi (variabel sensitif), jadi perintah DB dari laptop selalu mengenai database di `.env.local`. Untuk menulis ke produksi, pakai cron atau build Vercel.
+- Push ke `master` men-deploy produksi di Vercel. Region fungsi `sin1`, sama dengan database.
+- Build command di `vercel.json` adalah `prisma generate && prisma migrate deploy && next build`, jadi migrasi baru ikut diterapkan.
+- `DEMO_READ_ONLY=true` di produksi membuat akun demo hanya bisa dilihat. Akun demo di-reset setiap hari pukul 06.00 WIB (`/api/cron/demo-reset`) dengan logika yang sama dengan `pnpm db:seed`.
+- Perintah database dari laptop selalu mengenai database di `.env.local`, karena `DATABASE_URL` produksi disimpan sebagai variabel sensitif. Untuk mengubah data produksi, pakai cron atau build Vercel.
 - Redirect URI Google: `https://<domain>/api/auth/callback/google`.
 
 ## Keamanan dan privasi
 
-Diaudit di Fase 5:
+- Setiap query data pengguna difilter dengan `userId` dari session (`requireUser()`), dan setiap mutasi berdasarkan `id` didahului cek kepemilikan.
+- Kredensial database, storage, dan AI hanya ada di server (`import "server-only"`), tanpa `NEXT_PUBLIC_`.
+- Bucket CV privat. File hanya bisa dibuka lewat presigned URL 60 detik setelah cek kepemilikan.
+- Sebelum dikirim ke AI, CV dipotong ke bagian keahlian dan pengalaman, lalu email, nomor HP, URL, NIK, nama, dan domisili diganti placeholder (`[NAME_1]`, …) yang dikembalikan di jawabannya. Log hanya berisi fitur, model, durasi, token, dan status.
+- Sesuai UU PDP, fitur AI baru aktif setelah pengguna setuju di Pengaturan bahwa teksnya diproses AI pihak ketiga di luar negeri. Persetujuan bisa ditarik kapan saja.
+- Produksi hanya memakai Groq dan Cloudflare Workers AI. NVIDIA API Catalog dan OpenRouter khusus pengembangan, karena tier gratisnya boleh memakai input untuk training, dan aplikasi menolaknya saat `NODE_ENV=production`.
 
-- Setiap query data pengguna difilter `userId` dari session (`requireUser()`), langsung atau lewat relasi; setiap mutasi berdasarkan `id` didahului cek kepemilikan.
-- Kredensial database, storage, dan AI hanya di server (`import "server-only"`); tidak ada `NEXT_PUBLIC_` untuk secret; bundle client dipindai tanpa temuan.
-- Bucket CV privat: akses tanpa tanda tangan → 403; file hanya lewat presigned URL 60 detik setelah cek kepemilikan.
-- Teks CV ke LLM hanya lewat `redact()`: hanya bagian keahlian/pengalaman, dengan email, nomor HP, URL, NIK, nama, dan domisili diganti placeholder (`[NAME_1]`, …) yang dikembalikan di jawaban lewat `rehydrate()`. Log hanya berisi fitur, model, durasi, token, dan status (tanpa isi prompt, CV, atau key).
-- **UU PDP:** fitur AI baru aktif setelah user menyetujui di Pengaturan bahwa teksnya diproses AI pihak ketiga di luar negeri (`User.aiConsentAt`, bisa ditarik kapan saja).
-- NVIDIA API Catalog (trial, ToS melarang produksi) dan model gratis OpenRouter boleh memakai input untuk training, jadi keduanya khusus dev dan ditolak saat `NODE_ENV=production`.
+## Catatan desain
 
-## Keputusan desain
+### Database dan storage
 
-### Koneksi database (Neon + Prisma 7)
-
-- **Runtime:** Prisma Client dengan driver adapter `@prisma/adapter-pg` (node-postgres) ke `DATABASE_URL`, yaitu connection string **pooled** (`-pooler`, PgBouncer). Skill agent Neon merekomendasikan node-postgres untuk Vercel (Fluid compute, pool dipakai ulang antar request), ditambah `attachDatabasePool` dari `@vercel/functions` supaya koneksi idle ditutup rapi. Driver HTTP `@neondatabase/serverless` hanya disarankan untuk runtime edge, dan kita tidak memakai edge.
-- **Migrasi:** `prisma.config.ts` memakai `DATABASE_URL_UNPOOLED` (koneksi langsung). Prisma Migrate lewat PgBouncer mode transaksi bisa gagal (`prepared statement "s0" already exists`). Prisma 7 tidak lagi memakai `directUrl` di `schema.prisma`; URL CLI ada di `prisma.config.ts` (opsional, supaya `prisma generate` jalan tanpa database), URL runtime ada di `src/lib/db.ts`.
-- **Branch Neon:** `production` (Vercel), `dev` (lokal), `ci` (GitHub Actions, schema-only). Database gratis Neon tidur setelah 5 menit tidak dipakai, jadi request pertama setelahnya bisa lambat.
-
-### File CV (Neon Object Storage)
-
-- `src/lib/storage.ts`: `S3Client` dengan `forcePathStyle: true`. Endpoint, region, dan kredensial dibaca otomatis oleh AWS SDK dari variabel standar `AWS_*` yang ditulis Neon CLI.
-- Upload lewat `POST /api/resumes/upload`: validasi MIME + magic bytes `%PDF` + maks. 4 MB, teks diekstrak dengan pdf-parse (`serverExternalPackages` di `next.config.ts`), lalu disimpan di `cv/{userId}/{resumeId}.pdf`.
+- Prisma Client memakai driver adapter `@prisma/adapter-pg` ke `DATABASE_URL` yang pooled. node-postgres cocok untuk Fluid compute di Vercel karena pool dipakai ulang antar request; `attachDatabasePool` dari `@vercel/functions` menutup koneksi yang menganggur.
+- Migrasi memakai `DATABASE_URL_UNPOOLED` (lewat `prisma.config.ts`), karena Prisma Migrate lewat PgBouncer mode transaksi bisa gagal.
+- Branch Neon: `production` (Vercel), `dev` (lokal), `ci` (GitHub Actions). Database gratis Neon tidur setelah 5 menit, jadi request pertama setelahnya agak lambat.
+- `src/lib/storage.ts` memakai `S3Client` dengan `forcePathStyle: true`. Upload lewat `POST /api/resumes/upload` divalidasi (MIME, magic bytes `%PDF`, maks. 4 MB), teksnya diekstrak dengan pdf-parse, lalu disimpan di `cv/{userId}/{resumeId}.pdf`.
 
 ### Auth dan demo
 
-- Auth.js v5, Google provider, Prisma adapter, session **database** (bukan JWT), jadi session bisa dicabut dengan menghapus baris `Session`.
-- Tidak ada middleware: guard login ada di `src/app/(app)/layout.tsx`, dan setiap server action/halaman memanggil `requireUser()`.
-- "Masuk sebagai demo" (`src/actions/demo.ts`) membuat session database untuk akun demo dan memasang cookie session yang sama dengan Auth.js. Aktif hanya dengan `DEMO_LOGIN_ENABLED=true`; `DEMO_READ_ONLY=true` di produksi.
+- Auth.js v5 dengan Google dan session database, jadi session bisa dicabut dengan menghapus barisnya.
+- Guard login ada di `src/app/(app)/layout.tsx`, dan setiap server action serta halaman memanggil `requireUser()`.
+- "Masuk sebagai demo" (`src/actions/demo.ts`) membuat session database untuk akun demo, hanya kalau `DEMO_LOGIN_ENABLED=true`.
 
-### Seed dan data demo
+### Pengingat
 
-`prisma/seed.mts` dijalankan langsung oleh Node (tanpa `tsx`); Prisma Client digenerate dengan `importFileExtension = "ts"`. Data demo ada di `src/lib/demo-data.ts`, dipakai bersama oleh seed dan unit test dashboard.
+Vercel Cron memanggil `/api/cron/reminders` setiap hari pukul 07.00 WIB dengan `Authorization: Bearer $CRON_SECRET`. Kolom `remindedH3At`/`remindedH1At` diklaim dengan update bersyarat sebelum email dikirim, jadi cron yang berjalan dua kali tidak mengirim email dua kali; kalau Resend gagal, klaimnya dilepas. Tanpa domain sendiri, `EMAIL_FROM=onboarding@resend.dev` hanya bisa mengirim ke pemilik akun Resend.
 
-### Kalender dan pengingat
+### AI
 
-- Kalender: grid bulanan buatan sendiri (tanpa library kalender), menampilkan event + deadline lamaran.
-- Pengingat: Vercel Cron `0 0 * * *` (07.00 WIB) → `/api/cron/reminders` dengan `Authorization: Bearer $CRON_SECRET`. Reminder H-3 juga dikirim pada H-2 kalau H-3 terlewat. Kolom `remindedH3At`/`remindedH1At` di-*claim* (update bersyarat) **sebelum** email dikirim, jadi run ganda/bersamaan tidak mengirim dua kali; kalau Resend gagal, claim dilepas supaya bisa dicoba lagi. Event yang dijadwal ulang mendapat pengingat baru.
-- Tanpa domain sendiri, `EMAIL_FROM=onboarding@resend.dev` hanya bisa mengirim ke email pemilik akun Resend.
-
-### AI: provider dan model
-
-```
-LLM_PRIMARY=groq          GROQ_MODEL=openai/gpt-oss-20b    GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
-LLM_FALLBACK=cloudflare   CLOUDFLARE_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast
-```
-
-Urutan di `src/lib/ai/provider.ts` (konfigurasi di `llm-config.ts`): setiap model dicoba dengan `response_format: json_schema` (strict di Groq, `reasoning_effort: low`) → kalau output gagal validasi Zod, ulang sekali (`medium`) + pesan error → 429 dengan `retry-after` pendek ditunggu sekali → kalau gagal/429/5xx/timeout (30 detik), model berikutnya → `AiUnavailableError` ("AI sedang tidak tersedia, silakan isi manual"). Tanpa streaming, karena structured output Groq dan Cloudflare tidak mendukungnya; kartu progres menampilkan tahapnya saja. ID model dengan nama vendor yang dilarang ditolak.
-
-Uji 2026-10-19 (`pnpm ai:fixtures off`, 3 fixture nyata, skor 9 poin: perusahaan, posisi, deadline, jenis syarat, IPK, usia, satu item per jenis, tanggal acuan usia, skill):
-
-| Model | BUMN | Bank | Startup | Token (in+out) |
-|---|---|---|---|---|
-| Groq gpt-oss-120b | 9/9 · 2,9 dtk | 9/9 · 2,6 dtk | 9/9 · 1,8 dtk | ±1,4K + 0,7–1,1K |
-| Groq gpt-oss-20b | 9/9 · 1,0 dtk | 9/9 · 1,0 dtk | 9/9 · 1,1 dtk | ±1,4K + 0,4–0,5K |
-| Cloudflare Llama 3.3 70B fp8-fast | 9/9 · 15 dtk | 8/9 · 17 dtk | tanggal tidak valid (di aplikasi: retry) | ±1,1K + 0,6K |
-
-`pnpm ai:smoke` (2 lowongan fiktif ID/EN) lulus skema di ketiga model. Dipilih 20b sebagai utama karena akurasinya sama dengan 120b tetapi 2–3× lebih cepat; jawaban yang dua kali gagal validasi otomatis naik ke 120b, lalu Cloudflare. Satu ekstraksi memakai ±2–2,5K token, jauh di bawah batas gratis Groq 8K token/menit.
-
-Riwayat: uji sebelumnya (2026-10-18, NVIDIA/OpenRouter, skor 8 poin), sebelum pindah ke Groq:
-
-| Kandidat | BUMN | Bank | Startup |
-|---|---|---|---|
-| DeepSeek V4.1 Flash, GLM 5.3 Flash (NVIDIA) | timeout >90 dtk | – | – |
-| Nemotron Super, NVIDIA, reasoning on | 8/8 · 43–56 dtk | timeout | 8/8 · 28–53 dtk |
-| Nemotron Super, NVIDIA, reasoning off | 8/8 · 15 dtk | 8/8 · 20 dtk | JSON tidak valid |
-| **Nemotron Super, OpenRouter, reasoning off** | **8/8 · 10 dtk** | **8/8 · 13 dtk** | **8/8 · 6 dtk** |
-| Nemotron Super, OpenRouter, reasoning on | 8/8 · 37 dtk | 8/8 · 51 dtk | 8/8 · 48 dtk |
-| Nemotron Nano (NVIDIA), Gemma 4 / Nemotron 3.5 VL (OpenRouter) | sering timeout / 429 / 502 | | |
-
-Reasoning tidak menaikkan skor di tugas ekstraksi ini, tapi 4–5× lebih lambat dan sering timeout, jadi hanya dipakai saat percobaan ulang. Router acak `openrouter/free` tidak dipakai: modelnya berganti tiap request dan tidak bisa dikendalikan.
-
-### AI: ekstraksi lowongan
-
-- **Progres:** route `/api/ai/extract` membalas NDJSON: `status` (mengambil halaman, membaca, membaca ulang, pindah ke cadangan, mencocokkan kutipan), lalu `result` atau `error`. Selain field form, AI juga mengambil jenis kerja, mode kerja, rentang gaji, link, dan bahasa lowongan; gaji dan link hanya dipakai kalau tertulis persis di teks, dan ketiganya masuk ke catatan draf.
-- **Alur:** normalisasi teks (maks. 12.000 karakter) → cache (`sha256(prompt + teks)`, jadi mengubah prompt otomatis membatalkan cache lama) → persetujuan AI + kuota harian (`AiUsage`) → LLM → buang item yang kutipannya tidak ada di teks → simpan cache. Hasil kosong (halaman yang butuh JavaScript/login) tidak di-cache dan ditampilkan sebagai pesan yang jelas.
-- **Link lowongan:** diambil di server dengan pengaman SSRF (alamat privat/loopback ditolak, redirect divalidasi ulang). Data `JobPosting` JSON-LD (untuk Google Jobs) dibaca lebih dulu; di halaman panjang, dipilih potongan dengan **jenis** kata kunci lowongan terbanyak (di magentaku.id, isi lowongan ada di karakter ke-122 ribu setelah filter yang mengulang satu kata 105 kali).
-- **Kutipan skill:** gpt-oss-20b kadang menyusun kutipan sendiri ("Menguasai TypeScript" dari "Menguasai React, TypeScript, dan Tailwind CSS"). Skill seperti itu tetap dipakai kalau namanya (atau aliasnya) memang tertulis di lowongan, dengan baris itu sebagai bukti. Cache diberi versi (`CACHE_VERSION`) karena isinya hasil yang sudah diverifikasi.
-- **Cek CV** (`src/lib/ai/cv-check.ts`, di form Lamaran baru sebelum menyimpan dan di tab "Cek CV"): skill dicocokkan tanpa AI dulu, lalu **satu** panggilan AI mengecek sisanya dan memberi maks. 8 saran. Saran `rewrite` hanya memoles teks yang ada di CV (bisa disalin); saran `add` berupa instruksi "kalau memang punya". Server membuang saran yang menulis ulang teks yang tidak ada di CV, memuat angka yang tidak ada di CV, mengklaim skill yang tidak dimiliki, atau menyodorkan contoh kalimat CV karangan. Hasilnya disimpan di `SkillGap` + `Application.cvTweaks`.
-- **Syarat per jenjang** ("IPK 3,00 untuk S1 dan 3,25 untuk S2") diekstrak sebagai satu item `3.00 (S1), 3.25 (S2)`, lalu `checkRequirement` memakai angka untuk jenjang di profil.
+- Semua panggilan lewat `src/lib/ai/provider.ts`, dengan daftar provider di `llm-config.ts`. Urutannya Groq gpt-oss-20b, lalu gpt-oss-120b, lalu Cloudflare Llama 3.3 70B. Output memakai `response_format: json_schema` dan divalidasi Zod. Output yang tidak valid diulang sekali dengan pesan error-nya; 429, 5xx, dan timeout pindah ke model berikutnya.
+- Jawaban AI tidak di-stream, karena structured output Groq dan Cloudflare tidak mendukungnya. `/api/ai/extract` hanya mengirim status tahapannya ke browser (NDJSON).
+- Teks lowongan dipotong 12.000 karakter dan CV teredaksi 6.000 karakter, supaya muat di batas gratis Groq 8K token per menit.
+- Hasil ekstraksi di-cache per `sha256` teks lowongan, jadi lowongan yang sama tidak memakai kuota lagi. Item yang kutipannya tidak ada di lowongan dibuang. Skill yang kutipannya disusun ulang oleh model tetap dipakai kalau nama skill-nya memang tertulis.
+- Link lowongan diambil di server dengan pengaman SSRF. Data `JobPosting` JSON-LD dibaca lebih dulu; di halaman panjang, dipilih bagian dengan kata kunci lowongan paling beragam.
+- Cek CV (`src/lib/ai/cv-check.ts`) mencocokkan skill dengan alias lebih dulu, lalu satu panggilan AI mengecek sisanya dan memberi maks. 8 saran. Saran "tulis ulang" hanya memoles teks yang ada di CV; saran "lengkapi" berupa instruksi. Server membuang saran yang menulis ulang teks yang tidak ada di CV, memuat angka baru, mengklaim skill yang tidak dimiliki, atau menyodorkan contoh kalimat CV.
 
 ### Cek kelayakan
 
-`src/lib/eligibility/check.ts` murni deterministik, tanpa AI, dan dihitung saat halaman dibuka (bukan disimpan), supaya selalu mengikuti profil terbaru. Status keseluruhan = status terburuk (Tidak memenuhi > Perlu dicek > Belum bisa dicek > Memenuhi). Jurusan yang tidak cocok → "Perlu dicek", bukan "Tidak memenuhi", karena lowongan sering menulis "jurusan terkait".
-
-### Gap skill dan redaksi CV
-
-`POST /api/ai/skill-gap { applicationId }`:
-
-1. Skill lowongan diambil dari `ExtractionCache` (teks lowongan tersimpan di `Application.jobPostingText`).
-2. **Tanpa AI:** skill dicocokkan dengan teks CV memakai alias (`src/lib/ai/skill-aliases.ts`, termasuk tools non-IT: Excel, SAP, Accurate, AutoCAD, Canva, bahasa Inggris/TOEFL, Brevet, K3, dll.). Yang ketemu langsung ✅.
-3. Sisanya + CV yang sudah melewati `redact()` (`src/lib/ai/redact.ts`: hanya bagian keahlian/pengalaman/proyek/organisasi; email, nomor HP, URL, NIK/angka panjang, baris alamat, dan setiap kata nama pemilik dihapus; maks. 6.000 karakter) dikirim ke LLM. Klaim "ada di CV" tanpa kutipan yang benar-benar ada di teks redaksi diturunkan jadi ❌. Kalau CV tidak punya judul bagian yang dikenali, seluruh teks yang sudah dibersihkan dipakai supaya analisis tetap jalan.
-4. Tanpa AI (key kosong, kuota habis, server down), hasil pencocokan teks tetap disimpan.
+`src/lib/eligibility/check.ts` deterministik, tanpa AI, dan dihitung setiap halaman dibuka supaya selalu mengikuti profil terbaru. Status keseluruhan diambil dari status terburuk. Jurusan yang tidak cocok ditandai "Perlu dicek", bukan "Tidak memenuhi", karena lowongan sering menulis "jurusan terkait". Syarat per jenjang ("IPK 3,00 untuk S1 dan 3,25 untuk S2") disimpan sebagai satu item, dan angkanya dipilih sesuai jenjang di profil.
 
 ### Dashboard dan Analytics
 
-Dashboard (`/dashboard`) menjawab "hari ini harus ngapain"; Analytics (`/analytics`) menjawab "strategi mana yang berhasil". Semua angka dihitung di server oleh fungsi murni `computeDashboard` (`src/lib/dashboard.ts`), lalu dirender sebagai HTML/CSS biasa (bar satu warna + label langsung + tabel), tanpa library chart dan tanpa JS di client. Recharts belum dipakai; tambahkan kalau perlu grafik tren waktu.
+Semua angka dihitung di server oleh `computeDashboard` (`src/lib/dashboard.ts`) dan dirender sebagai HTML/CSS biasa, tanpa library chart.
 
-- **Funnel:** lamaran yang pernah mencapai tiap tahap seleksi (tahap terjauh yang IN_PROGRESS/OFFER di `StageHistory`; Ditolak tidak dihitung sebagai kemajuan) + persentase lanjut dari tahap sebelumnya.
-- **Lolos administrasi** (per sumber, per versi CV): sudah melewati tahap seleksi pertama, dihitung dari lamaran yang sudah sampai tahap itu.
-- **Melamar** = tanggal melamar, atau saat pertama masuk tahap seleksi. **Respons** = perpindahan tahap pertama sesudahnya (ditolak juga dihitung). **Waktu respons** = median selisih keduanya.
-- **Interview rate:** pernah sampai tahap yang namanya berisi "Interview"/"Wawancara". **Offer rate:** pernah sampai tahap OFFER.
-- **Ghosted** (dihitung, tidak disimpan): masih di tahap seleksi tanpa perpindahan tahap 30 hari atau lebih; 14–29 hari tampil sebagai "mulai tanpa kabar". Kartu tidak dipindah otomatis, jadi data asli tetap utuh; badge "Ghosted" muncul di board dan daftar, dan hilang begitu kartunya digeser.
-- **Sampel kecil:** persentase baru tampil kalau ada minimal 5 lamaran di belakangnya; sebelum itu hanya jumlahnya ("3/4").
-
-`src/lib/dashboard.test.ts` memakai data demo yang sama dengan `pnpm db:seed` dan mencocokkan setiap angka dengan hitungan manual (funnel 13 → 10 → 8 → 6 → 5 → 4 → 2 → 1, median 5 hari, dst.).
-
----
-
-Spesifikasi dan aturan kerja proyek: [`CLAUDE.md`](CLAUDE.md).
+- Funnel: lamaran yang pernah mencapai tiap tahap seleksi, dari tahap terjauh di riwayatnya. Ditolak tidak dihitung sebagai kemajuan.
+- Lolos administrasi (per sumber dan per versi CV): sudah melewati tahap seleksi pertama.
+- Waktu respons: median hari dari tanggal melamar sampai perpindahan tahap berikutnya.
+- Ghosted dihitung, tidak disimpan: masih di tahap seleksi tanpa kabar 30 hari atau lebih (14–29 hari tampil sebagai "mulai tanpa kabar"). Badge-nya hilang begitu kartu digeser.
+- Persentase baru tampil kalau ada minimal 5 lamaran di belakangnya.
