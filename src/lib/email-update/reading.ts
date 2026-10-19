@@ -41,8 +41,8 @@ Aturan:
 - Hanya ambil informasi yang TERTULIS di email. Kalau tidak ada, isi null atau array kosong. Dilarang menebak, dilarang memberi saran, tanpa basa-basi.
 - quote pada setiap event WAJIB memuat tanggal (dan jam, kalau ada) yang dimaksud; untuk rentang waktu, kutip baris penutupnya.
 - Setiap "quote" (kindQuote, companyQuote, quote pada events) WAJIB berupa potongan teks yang disalin persis karakter demi karakter dari email. Jangan parafrase, jangan terjemahkan.
-- kind: TEST_INVITE (undangan tes online/psikotes), DOCUMENT_REQUEST (permintaan berkas), INTERVIEW, MCU, OFFER, REJECTION (tidak lolos), APPLICATION_RECEIVED (konfirmasi lamaran diterima), atau OTHER.
-- stageName: nama tahap seleksi disalin persis seperti ditulis di email, termasuk salah ketik, jangan dikoreksi. Untuk REJECTION, isi dengan tahap tempat pelamar dinyatakan tidak lolos kalau email menyebutnya, kalau tidak null.
+- kind: TEST_INVITE (undangan tes online/psikotes), DOCUMENT_REQUEST (permintaan berkas), INTERVIEW, MCU, OFFER, REJECTION (tidak lolos), APPLICATION_RECEIVED (konfirmasi lamaran diterima atau terkirim, termasuk email portal karier yang hanya berisi tabel posisi, perusahaan, dan link), atau OTHER. kindQuote WAJIB berisi kalimat email yang menunjukkan jenis itu (untuk REJECTION: kalimat penolakannya). Hanya kalau email sama sekali tidak punya kalimat seperti itu (misalnya tabel portal), isi "" (string kosong), jangan null.
+- stageName: nama tahap seleksi disalin persis seperti ditulis di email, termasuk salah ketik, jangan dikoreksi. Untuk REJECTION, isi dengan tahap terakhir yang diikuti pelamar kalau email menyebutnya (contoh: "terima kasih telah mengikuti seleksi sampai tahap Psikotes" → "Psikotes"), kalau tidak null.
 - Untuk APPLICATION_RECEIVED isi company, position, dan sourceUrl (link yang tertulis di email) kalau ada.
 - events: jadwal atau batas waktu yang disebut. type: DEADLINE, ONLINE_TEST, PSYCHOTEST, LGD, INTERVIEW_HR, INTERVIEW_USER, MCU, atau OTHER.
 - Semua waktu dalam WIB (Asia/Jakarta). Format "YYYY-MM-DD" atau "YYYY-MM-DDTHH:mm" (24 jam). Kalau email hanya menyebut tanggal, isi tanggalnya saja tanpa jam. Kalau tahun tidak disebut, jangan buat event itu.
@@ -81,29 +81,49 @@ const hasNumber = (s: string, n: number) => new RegExp(`(?<!\\d)0?${n}(?!\\d)`).
 
 /**
  * Nothing the model made up survives: quotes must be exact substrings of the (redacted) email (line breaks and
- * case forgiven); an event stays only if its quote carries the closing day; opensAt stays only if it is before
- * closesAt and its day appears in the email; company, position, stage and link are nulled unless written in the
- * email; the kind falls back to OTHER without evidence.
+ * case forgiven); an event stays only if its quote carries the closing day (a window quoted by its opening line
+ * gets the next line of the email added to its quote); opensAt stays only if it is before closesAt and its day
+ * appears in the email; company, position, stage and link are nulled unless written in the email; the kind falls
+ * back to OTHER without evidence.
  */
 export function verifyReading(r: EmailReading, text: string): EmailReading {
   const haystack = fold(text);
   const found = (q: string | null) => !!q && fold(q).length > 0 && haystack.includes(fold(q));
-  const companyOk = found(r.companyQuote);
-  const events = r.events.flatMap((e) => {
+  const lines = text.split("\n");
+  const withNextLine = (q: string) => {
+    const i = lines.findIndex((l) => fold(l).includes(fold(q)));
+    const next = i < 0 ? undefined : lines.slice(i + 1).find((l) => l.trim());
+    return next ? `${lines[i]}\n${next}` : q;
+  };
+  const kept = r.events.flatMap((e) => {
     const close = parseWib(e.closesAt);
-    if (!close || !found(e.quote) || !hasNumber(e.quote, +e.closesAt.slice(8, 10))) return [];
+    if (!close || !found(e.quote)) return [];
+    const day = +e.closesAt.slice(8, 10);
+    const quote = hasNumber(e.quote, day) || !e.opensAt ? e.quote : withNextLine(e.quote);
+    if (!hasNumber(quote, day)) return [];
     const open = e.opensAt ? parseWib(e.opensAt) : null;
     const opensOk = !!open && open < close && hasNumber(text, +e.opensAt!.slice(8, 10));
-    return [{ ...e, opensAt: opensOk ? e.opensAt : null }];
+    return [{ ...e, quote, opensAt: opensOk ? e.opensAt : null }];
   });
+  // Models sometimes add the close line of a window again as an event of its own.
+  const events = kept.filter(
+    (e) => e.opensAt || !kept.some((w) => w.opensAt && w.type === e.type && w.closesAt === e.closesAt),
+  );
+  // Either is enough: models often name the company but leave companyQuote null.
+  const companyOk = found(r.companyQuote) || found(r.company);
+  const position = found(r.position) ? r.position : null;
+  const sourceUrl = found(r.sourceUrl) ? r.sourceUrl : null;
+  // A portal's "application received" table has no sentence to quote; the company, position or link written in it
+  // is the evidence, and this kind moves no stage.
+  const received = r.kind === "APPLICATION_RECEIVED" && (companyOk || !!position || !!sourceUrl);
   return {
     ...r,
     company: companyOk ? r.company : null,
-    companyQuote: companyOk ? r.companyQuote : null,
-    position: found(r.position) ? r.position : null,
+    companyQuote: found(r.companyQuote) ? r.companyQuote : null,
+    position,
     stageName: found(r.stageName) ? r.stageName : null,
-    sourceUrl: found(r.sourceUrl) ? r.sourceUrl : null,
-    kind: found(r.kindQuote) ? r.kind : "OTHER",
+    sourceUrl,
+    kind: found(r.kindQuote) || received ? r.kind : "OTHER",
     events,
   };
 }

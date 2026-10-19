@@ -94,8 +94,8 @@ Link: [URL_1]`;
     const r = verifyReading({ ...base, position: "Data Analyst", sourceUrl: "[URL_1]" }, t2);
     expect([r.position, r.stageName, r.sourceUrl]).toEqual(["Data Analyst", "Online Entry Test", "[URL_1]"]);
   });
-  it("nulls company and falls back to OTHER when the quote is missing", () => {
-    const r = verifyReading({ ...base, companyQuote: "PT Lain", kindQuote: "tidak ada" }, text);
+  it("nulls a company that is neither quoted nor written, and falls back to OTHER without a kind quote", () => {
+    const r = verifyReading({ ...base, company: "Lain", companyQuote: "PT Lain", kindQuote: "tidak ada" }, text);
     expect(r.company).toBeNull();
     expect(r.companyQuote).toBeNull();
     expect(r.kind).toBe("OTHER");
@@ -104,6 +104,76 @@ Link: [URL_1]`;
     const r = verifyReading(base, text);
     expect(r.company).toBe("Acme");
     expect(r.kind).toBe("TEST_INVITE");
+  });
+});
+
+// Answer shapes seen in live runs (pnpm ai:email) against the fixtures.
+describe("verifyReading on live answer shapes", () => {
+  const fixture = (start: string) => normalizeEmailText(EMAIL_FIXTURES.find((f) => f.name.startsWith(start))!.text);
+
+  it("keeps a company written in the email when the model left companyQuote null", () => {
+    const bni = { ...base, company: "BNI", companyQuote: null, kindQuote: "tidak dapat melanjutkan" };
+    expect(verifyReading(bni, fixture("BNI")).company).toBe("BNI");
+    const apple = { ...base, company: "Apple Developer Academy Indonesia", companyQuote: null };
+    expect(verifyReading(apple, fixture("Apple")).company).toBe("Apple Developer Academy Indonesia");
+  });
+
+  it("still nulls a company that is not written in the email", () => {
+    const r = verifyReading({ ...base, company: "Bank Negara Indonesia", companyQuote: null }, fixture("BNI"));
+    expect(r.company).toBeNull();
+  });
+
+  const appleWindow = (quote: string) => ({
+    ...base,
+    events: [{ type: "ONLINE_TEST" as const, opensAt: "2026-09-17T08:00", closesAt: "2026-09-24T11:00", quote }],
+  });
+
+  it("keeps a window quoted by its opening line, extending the quote to the closing line below it", () => {
+    const r = verifyReading(appleWindow("Test Open : September 17, 2026 - 08:00 WIB (GMT+7)"), fixture("Apple"));
+    expect(r.events).toHaveLength(1);
+    expect(r.events[0].quote).toBe(
+      "Test Open : September 17, 2026 - 08:00 WIB (GMT+7)\nTest Closes : September 24, 2026 - 11:00 WIB (GMT+7)",
+    );
+    expect(r.events[0].opensAt).toBe("2026-09-17T08:00");
+  });
+
+  it("drops a close-only copy of a window", () => {
+    const window = appleWindow("Test Open : September 17, 2026 - 08:00 WIB (GMT+7)");
+    const closeOnly = { ...window.events[0], opensAt: null, quote: "Test Closes : September 24, 2026 - 11:00 WIB" };
+    const r = verifyReading({ ...window, events: [...window.events, closeOnly] }, fixture("Apple"));
+    expect(r.events.map((e) => e.opensAt)).toEqual(["2026-09-17T08:00"]);
+  });
+
+  it("still drops a window whose quote and the line below lack the closing day", () => {
+    const r = verifyReading(appleWindow("Test Duration: 120 minutes"), fixture("Apple"));
+    expect(r.events).toHaveLength(0);
+  });
+
+  it("falls back to OTHER on the empty kindQuote the prompt asks for instead of null", () => {
+    // Groq's strict schema rejects a null kindQuote outright, so the prompt asks for "" instead.
+    expect(EMAIL_SYSTEM).toContain('isi "" (string kosong), jangan null');
+    const raw = { ...base, kind: "DOCUMENT_REQUEST" as const, kindQuote: "" };
+    expect(verifyReading(raw, fixture("ISS")).kind).toBe("OTHER");
+  });
+
+  it("keeps APPLICATION_RECEIVED without a quote when the company or link is in the email", () => {
+    const astra = {
+      ...base,
+      company: "PT Global Service Indonesia",
+      companyQuote: null,
+      position: "Mobile Developer - GSI",
+      kind: "APPLICATION_RECEIVED" as const,
+      kindQuote: "",
+      stageName: null,
+    };
+    const r = verifyReading(astra, fixture("Astra"));
+    expect([r.kind, r.company, r.position]).toEqual([
+      "APPLICATION_RECEIVED",
+      "PT Global Service Indonesia",
+      "Mobile Developer - GSI",
+    ]);
+    const made = { ...astra, company: "PT Lain", position: "Lain" };
+    expect(verifyReading(made, fixture("Astra")).kind).toBe("OTHER");
   });
 });
 
