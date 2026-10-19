@@ -8,10 +8,40 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 import { applicationSnapshotSchema, type ApplicationSnapshot } from "@/lib/application-snapshot";
+import { planStageChange } from "@/lib/stage-history";
 import { applicationSchema, cvCheckSchema, draftSchema, type FormState } from "@/lib/validation";
+import type { Prisma } from "@/generated/prisma/client";
 
 function parse(formData: FormData) {
   return applicationSchema.safeParse(Object.fromEntries(formData));
+}
+
+/**
+ * Moves an application to another stage and fixes up its history (see planStageChange). Shared by the board
+ * and the edit form. The row lock makes two moves at once (two tabs, two devices) run one after the other
+ * instead of both reading the same history.
+ */
+async function changeStage(tx: Prisma.TransactionClient, id: string, userId: string, stageId: string) {
+  const [app] = await tx.$queryRaw<{ currentStageId: string }[]>`
+    SELECT "currentStageId" FROM "Application" WHERE id = ${id} AND "userId" = ${userId} FOR UPDATE`;
+  const target = await tx.stage.findFirst({ where: { id: stageId, userId }, select: { id: true, order: true } });
+  if (!app || !target) throw new Error("not found");
+  if (app.currentStageId === stageId) return;
+
+  const history = await tx.stageHistory.findMany({
+    where: { applicationId: id },
+    orderBy: { enteredAt: "asc" },
+    select: { id: true, stageId: true, notes: true, result: true, stage: { select: { order: true } } },
+  });
+  const { drop, append } = planStageChange(
+    history.map((h) => ({ id: h.id, stageId: h.stageId, order: h.stage.order, kept: !!h.notes?.trim() || !!h.result })),
+    target,
+  );
+  if (drop.length) await tx.stageHistory.deleteMany({ where: { id: { in: drop } } });
+  await tx.application.update({
+    where: { id },
+    data: { currentStageId: stageId, ...(append && { history: { create: { stageId } } }) },
+  });
 }
 
 /** Optional hidden JSON field (AI draft, CV check); absent or malformed → ignored, manual flow still works. */
@@ -71,18 +101,15 @@ export async function updateApplication(id: string, _: FormState, formData: Form
   const parsed = parse(formData);
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors };
 
-  const existing = await db.application.findFirst({ where: { id, userId: user.id }, select: { currentStageId: true } });
+  const existing = await db.application.findFirst({ where: { id, userId: user.id }, select: { id: true } });
   if (!existing) return { message: "Lamaran tidak ditemukan." };
   if (!(await ownsStage(user.id, parsed.data.currentStageId))) return { message: "Tahap tidak valid." };
   if (!(await ownsResume(user.id, parsed.data.resumeId))) return { message: "CV tidak valid." };
 
-  const stageChanged = existing.currentStageId !== parsed.data.currentStageId;
-  await db.application.update({
-    where: { id },
-    data: {
-      ...parsed.data,
-      ...(stageChanged && { history: { create: { stageId: parsed.data.currentStageId } } }),
-    },
+  const { currentStageId, ...fields } = parsed.data;
+  await db.$transaction(async (tx) => {
+    await tx.application.update({ where: { id }, data: fields });
+    await changeStage(tx, id, user.id, currentStageId);
   });
   revalidatePath("/board");
   revalidatePath(`/applications/${id}`);
@@ -172,32 +199,7 @@ export async function moveApplication(id: string, stageId: string): Promise<{ ok
   const user = await requireUser();
   if (isReadOnly(user)) return { ok: false, message: DEMO_READ_ONLY_MESSAGE };
   try {
-    await db.$transaction(async (tx) => {
-      const [app, stage] = await Promise.all([
-        tx.application.findFirst({ where: { id, userId: user.id }, select: { currentStageId: true } }),
-        tx.stage.findFirst({ where: { id: stageId, userId: user.id }, select: { id: true } }),
-      ]);
-      if (!app || !stage) throw new Error("not found");
-      if (app.currentStageId === stageId) return;
-      const history = await tx.stageHistory.findMany({
-        where: { applicationId: id },
-        orderBy: { enteredAt: "asc" },
-        select: { id: true, stageId: true, notes: true },
-      });
-      // Dragged back to a stage it already went through = a correction (or back-and-forth): drop the steps after
-      // it instead of logging the same stages again. Steps with notes are kept, so nothing written is lost.
-      const back = history.findLastIndex((h) => h.stageId === stageId);
-      const later = back === -1 ? [] : history.slice(back + 1);
-      if (back !== -1 && later.every((h) => !h.notes?.trim())) {
-        await tx.stageHistory.deleteMany({ where: { id: { in: later.map((h) => h.id) } } });
-        await tx.application.update({ where: { id }, data: { currentStageId: stageId } });
-        return;
-      }
-      await tx.application.update({
-        where: { id },
-        data: { currentStageId: stageId, history: { create: { stageId } } },
-      });
-    });
+    await db.$transaction((tx) => changeStage(tx, id, user.id, stageId));
   } catch (error) {
     console.error("moveApplication failed", { id, stageId, error });
     return { ok: false };
