@@ -3,23 +3,28 @@
 import { X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 /** "Lihat semua (N)": the card shows a few rows, this opens every one of them. The rows come in as children. */
 export function ListDialog({
   title,
   description,
   count,
+  triggerClassName,
   children,
 }: {
   title: string;
   description?: string;
   count: number;
+  triggerClassName?: string;
   children: ReactNode;
 }) {
   return (
     <Dialog.Root>
-      <Dialog.Trigger className="text-primary hover:bg-primary/10 -mx-2 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors">
-        Lihat semua ({count})
+      <Dialog.Trigger
+        className={cn("text-primary hover:bg-primary/10 text-xs font-medium transition-colors", triggerClassName)}
+      >
+        Lihat semua ({count}) →
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />

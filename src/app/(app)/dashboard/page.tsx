@@ -326,20 +326,9 @@ export default async function DashboardPage() {
             title={`${AHEAD_DAYS} hari ke depan`}
             description="Tes, interview, MCU, dan deadline yang hampir tutup."
             action={
-              <div className="flex items-center gap-3">
-                {upcoming.length > UPCOMING_ROWS && (
-                  <ListDialog
-                    title={`${AHEAD_DAYS} hari ke depan`}
-                    description="Semua jadwal dan deadline yang akan datang."
-                    count={upcoming.length}
-                  >
-                    {upcomingRows}
-                  </ListDialog>
-                )}
-                <Link href="/calendar" className="text-primary text-sm font-medium hover:underline">
-                  Kalender
-                </Link>
-              </div>
+              <Link href="/calendar" className="text-primary text-sm font-medium hover:underline">
+                Kalender
+              </Link>
             }
           >
             {upcoming.length === 0 ? (
@@ -347,7 +336,21 @@ export default async function DashboardPage() {
                 Tidak ada jadwal atau deadline dalam {AHEAD_DAYS} hari ke depan.
               </p>
             ) : (
-              <ul className="-mx-5 -mb-5 divide-y border-t">{upcomingRows.slice(0, UPCOMING_ROWS)}</ul>
+              <ul className="-mx-5 -mb-5 divide-y border-t">
+                {upcomingRows.slice(0, UPCOMING_ROWS)}
+                {upcoming.length > UPCOMING_ROWS && (
+                  <li>
+                    <ListDialog
+                      title={`${AHEAD_DAYS} hari ke depan`}
+                      description="Semua jadwal dan deadline yang akan datang."
+                      count={upcoming.length}
+                      triggerClassName="block w-full px-5 py-3 text-left"
+                    >
+                      {upcomingRows}
+                    </ListDialog>
+                  </li>
+                )}
+              </ul>
             )}
           </Card>
 
@@ -392,27 +395,30 @@ export default async function DashboardPage() {
             description={`Follow-up yang jatuh tempo, dan lamaran ${QUIET_DAYS}–${GHOSTED_DAYS - 1} hari tanpa kabar (jadi ghosted di ${GHOSTED_DAYS} hari).`}
             action={
               followUps.length > 0 && (
-                <div className="flex items-center gap-2">
-                  {followUps.length > FOLLOW_UP_ROWS && (
-                    <ListDialog
-                      title="Perlu follow-up"
-                      description="Semua lamaran yang perlu di-follow-up atau sudah lama tanpa kabar."
-                      count={followUps.length}
-                    >
-                      {followUpRows}
-                    </ListDialog>
-                  )}
-                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
-                    {followUps.length}
-                  </span>
-                </div>
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
+                  {followUps.length}
+                </span>
               )
             }
           >
             {followUps.length === 0 ? (
               <p className="text-muted-foreground text-sm">Tidak ada yang perlu di-follow-up hari ini.</p>
             ) : (
-              <ul className="-mx-5 divide-y border-y">{followUpRows.slice(0, FOLLOW_UP_ROWS)}</ul>
+              <ul className="-mx-5 divide-y border-y">
+                {followUpRows.slice(0, FOLLOW_UP_ROWS)}
+                {followUps.length > FOLLOW_UP_ROWS && (
+                  <li>
+                    <ListDialog
+                      title="Perlu follow-up"
+                      description="Semua lamaran yang perlu di-follow-up atau sudah lama tanpa kabar."
+                      count={followUps.length}
+                      triggerClassName="block w-full px-5 py-3 text-left"
+                    >
+                      {followUpRows}
+                    </ListDialog>
+                  </li>
+                )}
+              </ul>
             )}
             {d.totals.ghosted > 0 && (
               <Link
