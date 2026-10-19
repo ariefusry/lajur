@@ -101,14 +101,19 @@ export async function updateApplication(id: string, _: FormState, formData: Form
   const parsed = parse(formData);
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors };
 
-  const existing = await db.application.findFirst({ where: { id, userId: user.id }, select: { id: true } });
+  const existing = await db.application.findFirst({ where: { id, userId: user.id }, select: { resumeId: true } });
   if (!existing) return { message: "Lamaran tidak ditemukan." };
   if (!(await ownsStage(user.id, parsed.data.currentStageId))) return { message: "Tahap tidak valid." };
   if (!(await ownsResume(user.id, parsed.data.resumeId))) return { message: "CV tidak valid." };
 
   const { currentStageId, ...fields } = parsed.data;
+  // A Cek CV result belongs to the CV it checked; a different CV makes it stale.
+  const cvChanged = existing.resumeId !== fields.resumeId;
   await db.$transaction(async (tx) => {
-    await tx.application.update({ where: { id }, data: fields });
+    await tx.application.update({
+      where: { id },
+      data: { ...fields, ...(cvChanged && { cvTweaks: [], skillGaps: { deleteMany: {} } }) },
+    });
     await changeStage(tx, id, user.id, currentStageId);
   });
   revalidatePath("/board");
