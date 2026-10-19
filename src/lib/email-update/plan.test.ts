@@ -138,11 +138,19 @@ describe("planEmailUpdate", () => {
   });
 
   it("skips an event the application already has", () => {
+    const startsAt = new Date("2026-10-01T02:00:00.000Z");
     const app = {
       ...atAdm,
-      events: [{ type: "ONLINE_TEST" as const, startsAt: new Date("2026-10-01T02:00:00.000Z"), opensAt: null }],
+      events: [{ type: "ONLINE_TEST" as const, startsAt, opensAt: new Date("2026-09-29T07:00:00.000Z") }],
     };
     expect(planEmailUpdate(peepl, { stages: bumn, app }).map((c) => c.kind)).toEqual(["move", "notes"]);
+    // Same close time without the open time: the email adds the window, so it is still proposed.
+    const closeOnly = { ...atAdm, events: [{ type: "ONLINE_TEST" as const, startsAt, opensAt: null }] };
+    expect(planEmailUpdate(peepl, { stages: bumn, app: closeOnly }).map((c) => c.kind)).toEqual([
+      "move",
+      "event",
+      "notes",
+    ]);
   });
 
   it("does not move to the current stage", () => {

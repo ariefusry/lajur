@@ -151,14 +151,20 @@ export function planEmailUpdate(reading: EmailReading, ctx: PlanContext): Change
     reading.events.forEach((e, i) => {
       const startsAt = parseWib(e.closesAt);
       if (!startsAt) return;
-      const known = app?.events.some((x) => x.type === e.type && x.startsAt.getTime() === startsAt.getTime());
+      const opensAt = (e.opensAt && parseWib(e.opensAt)?.toISOString()) || null;
+      const known = app?.events.some(
+        (x) =>
+          x.type === e.type &&
+          x.startsAt.getTime() === startsAt.getTime() &&
+          (x.opensAt?.toISOString() ?? null) === opensAt,
+      );
       if (known) return;
       changes.push({
         id: `event-${i}`,
         kind: "event",
         type: e.type,
         startsAt: startsAt.toISOString(),
-        opensAt: (e.opensAt && parseWib(e.opensAt)?.toISOString()) || null,
+        opensAt,
         locationOrUrl: reading.sourceUrl,
         quote: e.quote,
       });
