@@ -41,9 +41,10 @@ export function AiConsent({
   return (
     <div className="space-y-3 text-sm">
       <p className="text-muted-foreground">
-        Fitur AI (isi otomatis dari lowongan, cek CV, draf follow-up) mengirim teks ke penyedia AI pihak ketiga yang
-        servernya di luar Indonesia: Groq, dengan cadangan Cloudflare. Teks lowongan dikirim apa adanya. Dari CV hanya
-        bagian keahlian dan pengalaman yang dikirim, dengan nama, kontak, dan alamat diganti tanda.
+        Fitur AI (isi otomatis dari lowongan, cek CV, update dari email, draf follow-up) mengirim teks ke penyedia AI
+        pihak ketiga yang servernya di luar Indonesia: Groq, dengan cadangan Cloudflare. Teks lowongan dikirim apa
+        adanya. Dari CV hanya bagian keahlian dan pengalaman yang dikirim, dengan nama, kontak, dan alamat diganti
+        tanda. Isi email yang kamu tempel dikirim setelah nama, kontak, kode peserta, dan info login diganti tanda.
       </p>
       <div className="flex flex-wrap items-center gap-3">
         {at ? (
