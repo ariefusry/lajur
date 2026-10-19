@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { EMAIL_FIXTURES } from "../email-update/fixtures";
 import { MAX_REDACTED_CHARS, redact, redactPII, rehydrate } from "./redact";
 
 const CV = `Rina Kartika Sari
@@ -115,5 +116,21 @@ describe("redactPII", () => {
 
   it("leaves placeholders it doesn't know alone", () => {
     expect(rehydrate("[NAME_9] dan [nama]", {})).toBe("[NAME_9] dan [nama]");
+  });
+
+  it("hides login credentials and puts them back exactly", () => {
+    const text =
+      "Username     :     APSC0099999\nPassword\t:\tXk9#pq!L\nKata sandi: rahasia123\nLink : https://contoh.tech/login";
+    const { text: out, map } = redactPII(text);
+    expect(out).not.toMatch(/APSC0099999|Xk9#pq!L|rahasia123|contoh\.tech/);
+    expect(out).toMatch(/Username\s+:\s+\[CRED_1\]/);
+    expect(rehydrate(out, map)).toBe(text);
+  });
+
+  it("leaves no name, contact, code or credential from the email fixtures", () => {
+    for (const f of EMAIL_FIXTURES) {
+      const { text } = redactPII(f.text, { name: f.userName });
+      for (const secret of f.secrets) expect(text).not.toContain(secret);
+    }
   });
 });

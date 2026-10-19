@@ -17,6 +17,9 @@ const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 const PHONE = /(?:\+?62|\b0)[\s.-]?8\d{1,3}(?:[\s.-]?\d{2,5}){2,3}\b/g;
 const URL =
   /\b(?:https?:\/\/|www\.)\S+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|id|io|dev|me|net|org|co|app|site|xyz|tech)(?:\/\S*)?/gi;
+// "Label : value" lines carrying login credentials or participant codes; the value is a single token.
+const CREDENTIAL =
+  /(\b(?:user ?name|user id|login id|password|kata sandi|pin|token|kode akses|kode id|kode peserta)[ \t]*[:=][ \t]*)(\S+)/gi;
 // NIK (16 digits) and other long ID numbers, allowing separators.
 const LONG_NUMBER = /\b\d(?:[\s.-]?\d){9,}\b/g;
 const ADDRESS_LINE =
@@ -61,11 +64,12 @@ function wordsRegExp(words: string[]) {
 export type PiiMap = Record<string, string>;
 export type KnownPii = { name?: string | null; address?: string | null };
 
-export const PLACEHOLDER = /\[(?:EMAIL|PHONE|URL|ID|NAME|ADDRESS)_\d+\]/g;
+export const PLACEHOLDER = /\[(?:EMAIL|PHONE|URL|ID|NAME|ADDRESS|CRED)_\d+\]/g;
 
 /**
  * Swaps personal data for numbered placeholders ([EMAIL_1], [PHONE_1], [NAME_1], …): emails, Indonesian phone
- * numbers, URLs, long ID numbers (NIK), and the user's own name and address from the profile.
+ * numbers, URLs, long ID numbers (NIK), login credentials and participant codes ([CRED_1]), and the user's own name
+ * and address from the profile.
  * The same value always gets the same placeholder.
  */
 export function redactPII(text: string, known: KnownPii = {}): { text: string; map: PiiMap } {
@@ -87,7 +91,9 @@ export function redactPII(text: string, known: KnownPii = {}): { text: string; m
   const NAME = wordsRegExp((known.name ?? "").split(/[\s.,]+/).filter((w) => w.length >= 3));
   const ADDRESS = wordsRegExp(known.address?.trim() ? [known.address.trim()] : []);
 
+  // Credentials first, so a password that looks like a URL or long number still becomes CRED.
   let out = text
+    .replace(CREDENTIAL, (_, label: string, value: string) => label + swap("CRED")(value))
     .replace(EMAIL, swap("EMAIL"))
     .replace(URL, swap("URL"))
     .replace(PHONE, swap("PHONE"))
