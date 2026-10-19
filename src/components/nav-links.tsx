@@ -54,20 +54,37 @@ export function NavLinks() {
     <nav className="flex flex-col gap-1" aria-label="Navigasi utama">
       {LINKS.map(({ href, label, icon: Icon, sub }) =>
         sub ? (
-          <div key={href} className="flex flex-col gap-1">
-            <span className="text-muted-foreground flex items-center gap-2.5 px-3 py-2 text-sm">
+          <div key={href} className="flex flex-col">
+            <Link
+              href={href}
+              aria-expanded={isActive(pathname, href)}
+              className={cn(linkClass(false), isActive(pathname, href) && "text-foreground font-medium")}
+            >
               <Icon className="size-4" /> {label}
-            </span>
-            {sub.map((s) => (
-              <Link
-                key={s.href}
-                href={s.href}
-                aria-current={isSubActive(pathname, s.href) ? "page" : undefined}
-                className={cn(linkClass(isSubActive(pathname, s.href)), "pl-9.5")}
-              >
-                {s.label}
-              </Link>
-            ))}
+            </Link>
+            {/* Opens only inside the section; the line joins the two entries to their parent. */}
+            <div
+              inert={!isActive(pathname, href)}
+              className={cn(
+                "grid transition-[grid-template-rows] duration-200",
+                isActive(pathname, href) ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="border-border ml-5 flex flex-col gap-1 border-l pt-1 pl-2">
+                  {sub.map((s) => (
+                    <Link
+                      key={s.href}
+                      href={s.href}
+                      aria-current={isSubActive(pathname, s.href) ? "page" : undefined}
+                      className={linkClass(isSubActive(pathname, s.href))}
+                    >
+                      {s.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <Link
