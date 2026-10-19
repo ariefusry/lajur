@@ -119,6 +119,7 @@ test("all main pages render", async ({ page }) => {
     ["/board", "Lamaran"],
     ["/applications", "Lamaran"],
     ["/applications/new", "Lamaran baru"],
+    ["/applications/update", "Update dari email"],
     ["/calendar", /\d{4}/],
     ["/resumes", "CV"],
     ["/settings", "Pengaturan"],
