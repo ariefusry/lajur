@@ -206,8 +206,9 @@ export type HistoryWrite =
  * is never moved back (out of Ditolak) because of a fail. Otherwise the card moves on to it first. New steps get
  * increasing times from `now`, so they read in this order even within one transaction.
  *
- * Moving forward to a later in-progress or offer stage means every earlier in-progress stage in the history was
- * passed (an invite to the online test means the administration passed), so those are marked PASSED first. An
+ * Reaching a later stage (moving forward to an in-progress or offer stage, or failing one) means every earlier
+ * in-progress stage in the history was passed (an invite to the online test means the administration passed), so
+ * those are marked PASSED first. An
  * administration stage with no step yet (a card made from this email) gets a PASSED step.
  */
 export function planHistoryWrites(
@@ -226,18 +227,27 @@ export function planHistoryWrites(
   const endStep = app.history.findLast((h) => h.stageId === end?.id);
 
   const writes: HistoryWrite[] = [];
+  // The furthest stage the application reached: a forward move to an in-progress or offer stage, or a stage that
+  // is failed (failing the test means the administration passed).
   const target = stage(move?.stageId ?? "");
   const current = stage(app.currentStageId);
-  if (target && current && target.order > current.order && (target.kind === "IN_PROGRESS" || target.kind === "OFFER")) {
+  const reached = [
+    ...(target && current && target.order > current.order && (target.kind === "IN_PROGRESS" || target.kind === "OFFER")
+      ? [target.order]
+      : []),
+    ...changes.flatMap((c) => (c.kind === "fail" ? [stage(c.stageId)?.order ?? -1] : [])),
+  ];
+  const reach = Math.max(-1, ...reached);
+  if (reach >= 0) {
     const passed = new Set(
       app.history.flatMap((h) => {
         const s = stage(h.stageId);
-        return s && s.kind === "IN_PROGRESS" && s.order < target.order ? [s.id] : [];
+        return s && s.kind === "IN_PROGRESS" && s.order < reach ? [s.id] : [];
       }),
     );
     for (const stageId of passed) writes.push({ op: "markPassed", stageId });
     const admin = ADMIN_STAGE.map((p) =>
-      stages.find((s) => s.kind === "IN_PROGRESS" && s.order < target.order && p.test(fold(s.name))),
+      stages.find((s) => s.kind === "IN_PROGRESS" && s.order < reach && p.test(fold(s.name))),
     ).find(Boolean);
     if (admin && !app.history.some((h) => h.stageId === admin.id)) {
       writes.push({ op: "addPassed", stageId: admin.id, enteredAt: next() });

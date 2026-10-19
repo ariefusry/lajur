@@ -264,6 +264,7 @@ describe("planHistoryWrites", () => {
 
   it("in Administrasi, move to Ditolak + fail: records the failed stage, then moves", () => {
     expect(planHistoryWrites(inAdm, bumn, [move, fail], now)).toEqual([
+      { op: "markPassed", stageId: "Administrasi" },
       { op: "addFailed", stageId: "Tes Online/TPA", enteredAt: at(1) },
       { op: "move", stageId: "Ditolak", enteredAt: at(2) },
     ]);
@@ -275,16 +276,19 @@ describe("planHistoryWrites", () => {
       history: [...inAdm.history, { stageId: "Ditolak", enteredAt: day(5) }],
     };
     expect(planHistoryWrites(inDitolak, bumn, [fail], now)).toEqual([
+      { op: "markPassed", stageId: "Administrasi" },
       { op: "addFailed", stageId: "Tes Online/TPA", enteredAt: new Date(day(5).getTime() - 1) },
     ]);
     // A move to the stage it is already in changes nothing either.
     expect(planHistoryWrites(inDitolak, bumn, [move, fail], now)).toEqual([
+      { op: "markPassed", stageId: "Administrasi" },
       { op: "addFailed", stageId: "Tes Online/TPA", enteredAt: new Date(day(5).getTime() - 1) },
     ]);
   });
 
   it("in Administrasi, fail only (move unticked): moves on to the failed stage and marks it", () => {
     expect(planHistoryWrites(inAdm, bumn, [fail], now)).toEqual([
+      { op: "markPassed", stageId: "Administrasi" },
       { op: "move", stageId: "Tes Online/TPA", enteredAt: at(1) },
       { op: "markFailed", stageId: "Tes Online/TPA" },
     ]);
@@ -305,6 +309,15 @@ describe("planHistoryWrites", () => {
     expect(planHistoryWrites(fresh, bumn, [toTest], now)).toEqual([
       { op: "addPassed", stageId: "Administrasi", enteredAt: at(1) },
       { op: "move", stageId: "Tes Online/TPA", enteredAt: at(2) },
+    ]);
+  });
+
+  it("a rejection that fails the test on a card made from it also passes the administration", () => {
+    const fresh = { currentStageId: "Wishlist", history: [{ stageId: "Wishlist", enteredAt: day(1) }] };
+    expect(planHistoryWrites(fresh, bumn, [move, fail], now)).toEqual([
+      { op: "addPassed", stageId: "Administrasi", enteredAt: at(1) },
+      { op: "addFailed", stageId: "Tes Online/TPA", enteredAt: at(2) },
+      { op: "move", stageId: "Ditolak", enteredAt: at(3) },
     ]);
   });
 
