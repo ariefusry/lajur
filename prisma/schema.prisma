@@ -52,20 +52,21 @@ model VerificationToken {
 // ---------- App ----------
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  emailVerified   DateTime?
+  image           String?
   // profil untuk cek kelayakan
-  gpa           Decimal?  @db.Decimal(3, 2) // skala 4.00
-  birthDate     DateTime? @db.Date
-  major         String?
-  degree        Degree?
-  domicile      String?
+  gpa             Decimal?  @db.Decimal(3, 2) // skala 4.00
+  birthDate       DateTime? @db.Date
+  major           String?
+  degree          Degree?
+  domicile        String?
   // UU PDP: kapan user menyetujui teksnya diproses AI pihak ketiga di luar negeri. Null = fitur AI nonaktif.
-  aiConsentAt   DateTime?
-  createdAt     DateTime  @default(now())
+  aiConsentAt     DateTime?
+  emailAiNoticeAt DateTime?
+  createdAt       DateTime  @default(now())
 
   accounts     Account[]
   sessions     Session[]
@@ -191,6 +192,7 @@ model Event {
   applicationId String
   type          EventType
   startsAt      DateTime
+  opensAt       DateTime?
   locationOrUrl String?
   remindedH3At  DateTime?
   remindedH1At  DateTime?
@@ -256,6 +258,7 @@ enum AiFeature {
   SKILL_GAP
   CV_TWEAKS
   FOLLOW_UP
+  EMAIL_UPDATE
 }
 
 model ExtractionCache {
