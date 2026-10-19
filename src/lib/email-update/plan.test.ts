@@ -7,6 +7,7 @@ import { STAGE_TEMPLATES } from "../stage-templates";
 
 const bumn = STAGE_TEMPLATES.BUMN.stages.map((s, order) => ({ ...s, order, id: s.name }));
 const startup = STAGE_TEMPLATES.STARTUP.stages.map((s, order) => ({ ...s, order, id: s.name }));
+const retail = STAGE_TEMPLATES.RETAIL.stages.map((s, order) => ({ ...s, order, id: s.name }));
 
 const reading = (r: Partial<EmailReading>): EmailReading => ({
   company: null,
@@ -136,6 +137,45 @@ describe("planEmailUpdate", () => {
     expect(planEmailUpdate(rej, { stages: bumn, app: rejected })).toEqual([
       { id: "fail", kind: "fail", stageId: "Administrasi", quote: "tidak lolos" },
     ]);
+  });
+
+  it("rejection at the administration stage fails Administrasi (or Melamar), but never moves a card back", () => {
+    for (const stageName of ["Seleksi Administrasi", "seleksi berkas", "CV Screening"]) {
+      const rej = reading({ kind: "REJECTION", kindQuote: "tidak lolos", stageName });
+      const atTest = {
+        ...atAdm,
+        currentStageId: "Tes Online/TPA",
+        history: [...atAdm.history, { stageId: "Tes Online/TPA", result: null }],
+      };
+      expect(planEmailUpdate(rej, { stages: bumn, app: atTest })).toContainEqual({
+        id: "fail",
+        kind: "fail",
+        stageId: "Administrasi",
+        quote: stageName,
+      });
+      expect(planEmailUpdate(rej, { stages: startup, app: null })).toContainEqual(
+        expect.objectContaining({ kind: "fail", stageId: "Melamar" }),
+      );
+      expect(planEmailUpdate(rej, { stages: retail, app: null })).toContainEqual(
+        expect.objectContaining({ kind: "fail", stageId: "Seleksi Berkas" }),
+      );
+    }
+    const docs = reading({ kind: "DOCUMENT_REQUEST", kindQuote: "kirim berkas", stageName: "Seleksi Berkas" });
+    expect(planEmailUpdate(docs, { stages: bumn, app: { ...atAdm, currentStageId: "Psikotes" } })).toEqual([]);
+  });
+
+  it("rejection without a stage never fails Wishlist: the first stage after applying instead", () => {
+    const rej = reading({ kind: "REJECTION", kindQuote: "tidak lolos" });
+    const atWishlist = { currentStageId: "Wishlist", history: [{ stageId: "Wishlist", result: null }], events: [] };
+    expect(planEmailUpdate(rej, { stages: bumn, app: atWishlist })).toContainEqual({
+      id: "fail",
+      kind: "fail",
+      stageId: "Administrasi",
+      quote: "tidak lolos",
+    });
+    expect(planEmailUpdate(rej, { stages: bumn, app: null })).toContainEqual(
+      expect.objectContaining({ kind: "fail", stageId: "Administrasi" }),
+    );
   });
 
   it("skips an event the application already has", () => {

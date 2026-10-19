@@ -85,6 +85,11 @@ const STAGE_SYNONYMS: { group: StageGroup; email: RegExp; stage: RegExp[] }[] = 
   },
 ];
 
+// Rejections only: a rejection at "Seleksi Administrasi" fails the user's document-check stage, or "Melamar" when
+// there is none. Moves never use this, so a document request does not send a card back.
+const ADMIN_EMAIL = /administr|berkas|screening|seleksi dokumen/;
+const ADMIN_STAGE = [ADMIN_EMAIL, /melamar/];
+
 const EVENT_GROUP: Partial<Record<EventType, StageGroup>> = {
   ONLINE_TEST: "ONLINE_TEST",
   PSYCHOTEST: "PSYCHOTEST",
@@ -140,13 +145,22 @@ export function planEmailUpdate(reading: EmailReading, ctx: PlanContext): Change
 
   if (rejection) {
     const named = stageOfName(reading.stageName, stages);
+    const adminStage =
+      reading.stageName && ADMIN_EMAIL.test(fold(reading.stageName))
+        ? ADMIN_STAGE.map((p) => stages.find((s) => p.test(fold(s.name)))).find(Boolean)
+        : undefined;
     if (named) {
       changes.push({ id: "fail", kind: "fail", stageId: named.id, quote: reading.stageName! });
+    } else if (adminStage) {
+      changes.push({ id: "fail", kind: "fail", stageId: adminStage.id, quote: reading.stageName! });
     } else {
-      const rejected = new Set(stages.filter((s) => s.kind === "REJECTED").map((s) => s.id));
-      const last = app?.history.findLast((h) => !rejected.has(h.stageId));
-      if (last && !last.result) {
-        changes.push({ id: "fail", kind: "fail", stageId: last.stageId, quote: reading.kindQuote });
+      // The last real step: never Wishlist (nothing was sent yet) or a rejection. Without one, the first stage
+      // after applying.
+      const skip = new Set(stages.filter((s) => s.kind === "REJECTED" || s.kind === "WISHLIST").map((s) => s.id));
+      const last = app?.history.findLast((h) => !skip.has(h.stageId));
+      const first = stages.find((s) => s.kind === "IN_PROGRESS");
+      if (last ? !last.result : first) {
+        changes.push({ id: "fail", kind: "fail", stageId: last?.stageId ?? first!.id, quote: reading.kindQuote });
       }
     }
   } else {
