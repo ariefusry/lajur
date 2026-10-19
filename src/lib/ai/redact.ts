@@ -17,9 +17,22 @@ const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 const PHONE = /(?:\+?62|\b0)[\s.-]?8\d{1,3}(?:[\s.-]?\d{2,5}){2,3}\b/g;
 const URL =
   /\b(?:https?:\/\/|www\.)\S+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|id|io|dev|me|net|org|co|app|site|xyz|tech)(?:\/\S*)?/gi;
-// "Label : value" lines carrying login credentials or participant codes; the value is a single token.
-const CREDENTIAL =
-  /(\b(?:user ?name|user id|login id|password|kata sandi|pin|token|kode akses|kode id|kode peserta)[^\S\r\n]*[:=][^\S\r\n]*)(\S+)/gi;
+const CRED_LABEL = String.raw`(?:user ?name|user[- ]?id|login id|password|kata sandi|pin|token|kode akses|kode id|kode peserta|access code|passcode|id peserta|nomor peserta|no\.? peserta)\b`;
+// A token, minus the full stop or comma that ends the sentence around it.
+const VALUE = String.raw`\S*[^\s.,;)]`;
+// "Label … : value" carrying login credentials or participant codes, with a few words allowed before the separator
+// ("Password Anda :", "Kata Sandi (case sensitive) :"). The value is one token, or two after a paired label
+// ("Username/Password : budi01 / Xk9pqL77").
+const CREDENTIAL = new RegExp(
+  String.raw`(\b${CRED_LABEL}[^:=：?\n]{0,30}?[^\S\r\n]*[:=：][^\S\r\n]*)(${VALUE})((?:[^\S\r\n]*(?:\/|\bdan\b)[^\S\r\n]*)(${VALUE}))?`,
+  "gi",
+);
+const PAIRED_LABEL = /\/|\bdan\b/i;
+// A table pasted from Gmail: the label alone on its line, the value alone on the next.
+const CREDENTIAL_BELOW = new RegExp(
+  String.raw`^([^\S\r\n]*${CRED_LABEL}[^\S\r\n]*[:：]?[^\S\r\n]*\r?\n[^\S\r\n]*)(?!${CRED_LABEL})(\S+)(?=[^\S\r\n]*(?:\r?\n|$))`,
+  "gim",
+);
 // NIK (16 digits) and other long ID numbers, allowing separators.
 const LONG_NUMBER = /\b\d(?:[\s.-]?\d){9,}\b/g;
 const ADDRESS_LINE =
@@ -92,14 +105,25 @@ export function redactPII(text: string, known: KnownPii = {}): { text: string; m
   const ADDRESS = wordsRegExp(known.address?.trim() ? [known.address.trim()] : []);
 
   // Credentials first, so a password that looks like a URL or long number still becomes CRED.
+  const cred = swap("CRED");
   let out = text
-    .replace(CREDENTIAL, (_, label: string, value: string) => label + swap("CRED")(value))
+    .replace(CREDENTIAL, (_, label: string, value: string, pair: string | undefined, second: string | undefined) =>
+      pair && PAIRED_LABEL.test(label)
+        ? label + cred(value) + pair.slice(0, -second!.length) + cred(second!)
+        : label + cred(value) + (pair ?? ""),
+    )
+    .replace(CREDENTIAL_BELOW, (_, label: string, value: string) => label + cred(value))
     .replace(EMAIL, swap("EMAIL"))
     .replace(URL, swap("URL"))
     .replace(PHONE, swap("PHONE"))
     .replace(LONG_NUMBER, swap("ID"));
   if (ADDRESS) out = out.replace(ADDRESS, swap("ADDRESS"));
   if (NAME) out = out.replace(NAME, swap("NAME"));
+  // The same credential written again without its label ("Gunakan Qm7rT2xa sekali saja").
+  for (const [placeholder, value] of Object.entries(map)) {
+    if (!placeholder.startsWith("[CRED_") || value.length < 4 || !/[\p{L}\p{N}]/u.test(value)) continue;
+    out = out.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(value)}(?![\\p{L}\\p{N}])`, "gu"), placeholder);
+  }
   return { text: out, map };
 }
 

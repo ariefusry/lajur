@@ -134,6 +134,40 @@ describe("redactPII", () => {
     expect(rehydrate(out, map)).toBe(text);
   });
 
+  it.each([
+    ["Password Anda : Xk9pqL77", ["Xk9pqL77"]],
+    ["Kata Sandi (case sensitive) : Xk9pqL77", ["Xk9pqL77"]],
+    ["Username/Password : budi01 / Xk9pqL77", ["budi01", "Xk9pqL77"]],
+    ["User ID dan Password : budi01 dan Xk9pqL77", ["budi01", "Xk9pqL77"]],
+    ["Username\nbudi01\nPassword\nXk9pqL77", ["budi01", "Xk9pqL77"]],
+    ["Username:\nbudi01\nPassword :\nXk9pqL77", ["budi01", "Xk9pqL77"]],
+    ["Access Code: AB12CD", ["AB12CD"]],
+    ["ID Peserta: APSC0012345", ["APSC0012345"]],
+    ["Nomor Peserta : A1234", ["A1234"]],
+    ["No. Peserta: A1234", ["A1234"]],
+    ["UserID: budi01", ["budi01"]],
+    ["User-ID: budi01", ["budi01"]],
+    ["Password：Xk9pqL77", ["Xk9pqL77"]],
+    ["Password: Qm7rT2xa. Gunakan Qm7rT2xa sekali saja", ["Qm7rT2xa"]],
+  ])("hides the credential in %j and puts it back exactly", (text, secrets) => {
+    const { text: out, map } = redactPII(text);
+    for (const s of secrets) expect(out).not.toContain(s);
+    expect(out).toMatch(/\[CRED_1\]/);
+    if (secrets.length > 1) expect(out).toMatch(/\[CRED_2\]/);
+    expect(rehydrate(out, map)).toBe(text);
+  });
+
+  it("leaves ordinary sentences about passwords and PINs alone", () => {
+    for (const text of [
+      "Lupa password? klik di sini",
+      "Masukkan PIN Anda di halaman login",
+      "Username\nPassword",
+      "Silakan login dengan username dan password berikut:\nLink ujian dikirim terpisah.",
+    ]) {
+      expect(redactPII(text).text).toBe(text);
+    }
+  });
+
   it("leaves no name, contact, code or credential from the email fixtures", () => {
     for (const f of EMAIL_FIXTURES) {
       const { text } = redactPII(f.text, { name: f.userName });
