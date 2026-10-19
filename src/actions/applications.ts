@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 import { applicationSnapshotSchema, type ApplicationSnapshot } from "@/lib/application-snapshot";
 import { changeStage } from "@/lib/stage-change";
+import { planAppliedAtDates } from "@/lib/stage-history";
 import { applicationSchema, cvCheckSchema, draftSchema, type FormState } from "@/lib/validation";
 
 function parse(formData: FormData) {
@@ -52,7 +53,7 @@ export async function createApplication(_: FormState, formData: FormData): Promi
       ...parsed.data,
       userId: user.id,
       jobPostingText: draft?.jobPostingText ?? null,
-      history: { create: { stageId: parsed.data.currentStageId } },
+      history: { create: { stageId: parsed.data.currentStageId, enteredAt: parsed.data.appliedAt ?? undefined } },
       requirements: {
         create: (draft?.requirements ?? []).map((r) => ({
           ...r,
@@ -86,6 +87,17 @@ export async function updateApplication(id: string, _: FormState, formData: Form
       data: { ...fields, ...(cvChanged && { cvTweaks: [], skillGaps: { deleteMany: {} } }) },
     });
     await changeStage(tx, id, user.id, currentStageId);
+    // The history follows "Tanggal melamar": the date it was filed, not the day it was typed in.
+    const history = await tx.stageHistory.findMany({
+      where: { applicationId: id },
+      orderBy: [{ enteredAt: "asc" }, { id: "asc" }],
+      select: { id: true, enteredAt: true, stage: { select: { kind: true } } },
+    });
+    const dates = planAppliedAtDates(
+      history.map((h) => ({ id: h.id, kind: h.stage.kind, enteredAt: h.enteredAt })),
+      fields.appliedAt,
+    );
+    for (const d of dates) await tx.stageHistory.update({ where: { id: d.id }, data: { enteredAt: d.enteredAt } });
   });
   revalidatePath("/board");
   revalidatePath(`/applications/${id}`);

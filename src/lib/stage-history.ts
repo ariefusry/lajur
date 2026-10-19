@@ -1,3 +1,5 @@
+import type { StageKind } from "../generated/prisma/enums.ts";
+
 /** One history step, oldest first. `kept`: it holds notes or a result, so it is never dropped. */
 export type HistoryStep = { id: string; stageId: string; order: number; kept: boolean };
 
@@ -18,4 +20,25 @@ export function planStageChange(history: HistoryStep[], target: { id: string; or
     end--;
   }
   return { drop: history.slice(end).map((s) => s.id), append: history[end - 1]?.stageId !== target.id };
+}
+
+/**
+ * Dates for the steps that "Tanggal melamar" decides: the first step after Wishlist is when the user applied, and a
+ * Wishlist step before it comes just ahead of it (so the order still reads Wishlist, then applying). Later steps
+ * keep their own times. Nothing changes when there is no date, or when it falls after the step that follows, since
+ * that would put the history out of order.
+ */
+export function planAppliedAtDates(
+  history: { id: string; kind: StageKind; enteredAt: Date }[], // oldest first
+  appliedAt: Date | null,
+): { id: string; enteredAt: Date }[] {
+  if (!appliedAt) return [];
+  const first = history.findIndex((h) => h.kind !== "WISHLIST");
+  if (first < 0) return [];
+  const next = history[first + 1];
+  if (next && appliedAt.getTime() > next.enteredAt.getTime()) return [];
+  return [
+    ...history.slice(0, first).map((h) => ({ id: h.id, enteredAt: new Date(appliedAt.getTime() - 1) })),
+    { id: history[first].id, enteredAt: appliedAt },
+  ];
 }

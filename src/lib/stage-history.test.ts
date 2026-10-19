@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planStageChange, type HistoryStep } from "./stage-history";
+import { planAppliedAtDates, planStageChange, type HistoryStep } from "./stage-history";
 
 // Stage order in the BUMN template.
 const ORDER = { W: 0, ADM: 1, TPA: 2, PSI: 3, LGD: 4, HR: 5, MCU: 7, OFFER: 8, REJ: 9 } as const;
@@ -50,5 +50,34 @@ describe("planStageChange", () => {
   it("undoing a move restores the previous history", () => {
     expect(after(steps("W", "ADM", "PSI"), "ADM")).toEqual(["W", "ADM"]);
     expect(after(steps("W"), "ADM")).toEqual(["W", "ADM"]);
+  });
+});
+
+describe("planAppliedAtDates", () => {
+  const day = (d: number) => new Date(Date.UTC(2026, 8, d));
+  const h = (id: string, kind: "WISHLIST" | "IN_PROGRESS" | "REJECTED", d: number) => ({ id, kind, enteredAt: day(d) });
+
+  it("dates the applying step, and a Wishlist step just before it", () => {
+    expect(planAppliedAtDates([h("w", "WISHLIST", 19), h("adm", "IN_PROGRESS", 19)], day(18))).toEqual([
+      { id: "w", enteredAt: new Date(day(18).getTime() - 1) },
+      { id: "adm", enteredAt: day(18) },
+    ]);
+  });
+
+  it("a card that never had Wishlist only dates its first step", () => {
+    expect(planAppliedAtDates([h("adm", "IN_PROGRESS", 19)], day(1))).toEqual([{ id: "adm", enteredAt: day(1) }]);
+  });
+
+  it("leaves later steps alone, and does nothing without a date, without an applying step, or out of order", () => {
+    expect(
+      planAppliedAtDates([h("w", "WISHLIST", 19), h("adm", "IN_PROGRESS", 19), h("t", "IN_PROGRESS", 20)], day(18)).map(
+        (x) => x.id,
+      ),
+    ).toEqual(["w", "adm"]);
+    expect(planAppliedAtDates([h("w", "WISHLIST", 19), h("adm", "IN_PROGRESS", 19)], null)).toEqual([]);
+    expect(planAppliedAtDates([h("w", "WISHLIST", 19)], day(18))).toEqual([]);
+    expect(
+      planAppliedAtDates([h("w", "WISHLIST", 1), h("adm", "IN_PROGRESS", 2), h("t", "IN_PROGRESS", 3)], day(10)),
+    ).toEqual([]);
   });
 });
