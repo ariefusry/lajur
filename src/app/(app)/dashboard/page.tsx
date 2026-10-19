@@ -221,9 +221,9 @@ export default async function DashboardPage() {
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Ringkasan">
         <Stat
-          label="Lamaran minggu ini"
+          label="Lamaran 7 hari terakhir"
           value={thisWeek}
-          note={`minggu lalu: ${lastWeek}`}
+          note={`7 hari sebelumnya: ${lastWeek}`}
           href="/applications?sort=applied"
         />
         <Stat
