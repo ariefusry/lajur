@@ -43,31 +43,55 @@ describe("normalizeEmailText", () => {
 
 describe("verifyReading", () => {
   const ev = (quote: string, closesAt: string) => ({ type: "ONLINE_TEST" as const, opensAt: null, closesAt, quote });
+  const win = "Test Closes: 24 Sep 2026 11:00 WIB";
   it("drops events with an invented quote or an unparseable time", () => {
     const r = verifyReading(
-      {
-        ...base,
-        events: [
-          ev("Test Closes: 24 Sep 2026 11:00 WIB", "2026-09-24T11:00"),
-          ev("dibuat-buat", "2026-09-24"),
-          ev("Online Entry Test", "1 Okt"),
-        ],
-      },
+      { ...base, events: [ev(win, "2026-09-24T11:00"), ev("dibuat-buat 24", "2026-09-24"), ev(win, "1 Okt")] },
       text,
     );
-    expect(r.events).toHaveLength(1);
-    expect(r.events[0].closesAt).toBe("2026-09-24T11:00");
+    expect(r.events.map((e) => e.closesAt)).toEqual(["2026-09-24T11:00"]);
   });
-  it("drops an event whose opensAt is unparseable", () => {
-    const r = verifyReading(
-      { ...base, events: [{ ...ev("Online Entry Test", "2026-09-24"), opensAt: "kemarin" }] },
-      text,
-    );
-    expect(r.events).toHaveLength(0);
+  it("drops a real quote carrying a different date", () => {
+    expect(verifyReading({ ...base, events: [ev(win, "2026-09-25T11:00")] }, text).events).toHaveLength(0);
   });
   it("keeps quotes that differ only in whitespace or line breaks", () => {
-    const r = verifyReading({ ...base, events: [ev("mengundang Online   Entry Test.", "2026-09-24")] }, text);
+    const r = verifyReading({ ...base, events: [ev("Test  Closes:\n24 Sep 2026", "2026-09-24")] }, text);
     expect(r.events).toHaveLength(1);
+  });
+  const win2 = `${text}
+Test Open: 17 Sep 2026 08:00 WIB`;
+  const w = (opensAt: string) => ({ ...ev(win, "2026-09-24T11:00"), opensAt });
+  it("keeps opensAt for a window whose quote has only the close line", () => {
+    expect(verifyReading({ ...base, events: [w("2026-09-17T08:00")] }, win2).events[0].opensAt).toBe(
+      "2026-09-17T08:00",
+    );
+  });
+  it("nulls a reversed opensAt but keeps the event", () => {
+    const r = verifyReading(
+      { ...base, events: [w("2026-09-25T08:00")] },
+      `${win2}
+25 Sep`,
+    );
+    expect(r.events).toHaveLength(1);
+    expect(r.events[0].opensAt).toBeNull();
+  });
+  it("nulls an opensAt whose day is nowhere in the email, or unparseable", () => {
+    expect(verifyReading({ ...base, events: [w("2026-09-17T08:00")] }, text).events[0].opensAt).toBeNull();
+    expect(verifyReading({ ...base, events: [w("kemarin")] }, text).events[0].opensAt).toBeNull();
+  });
+  it("nulls position, stageName and sourceUrl that are not in the email", () => {
+    const r = verifyReading(
+      { ...base, position: "Dev", stageName: "Online Assessment", sourceUrl: "https://x.id" },
+      text,
+    );
+    expect([r.position, r.stageName, r.sourceUrl]).toEqual([null, null, null]);
+  });
+  it("keeps position, stageName and a placeholder link that are in the email", () => {
+    const t2 = `${text}
+Posisi: Data Analyst
+Link: [URL_1]`;
+    const r = verifyReading({ ...base, position: "Data Analyst", sourceUrl: "[URL_1]" }, t2);
+    expect([r.position, r.stageName, r.sourceUrl]).toEqual(["Data Analyst", "Online Entry Test", "[URL_1]"]);
   });
   it("nulls company and falls back to OTHER when the quote is missing", () => {
     const r = verifyReading({ ...base, companyQuote: "PT Lain", kindQuote: "tidak ada" }, text);
