@@ -399,7 +399,8 @@ export default async function ApplicationDetailPage({
                       </div>
                       <AddToCalendar
                         title={`${EVENT_TYPE_LABELS[e.type]} · ${app.company}`}
-                        start={e.startsAt}
+                        start={e.opensAt ?? e.startsAt}
+                        end={e.opensAt ? e.startsAt : undefined}
                         details={app.position}
                         location={e.locationOrUrl}
                       />
@@ -422,6 +423,7 @@ export default async function ApplicationDetailPage({
                             defaults={{
                               type: e.type,
                               startsAt: toDateTimeInput(e.startsAt),
+                              opensAt: toDateTimeInput(e.opensAt),
                               locationOrUrl: e.locationOrUrl ?? "",
                             }}
                           />
@@ -515,7 +517,13 @@ function NextStep({
   jadwalHref,
 }: {
   app: NextStepApp;
-  upcoming: { id: string; type: keyof typeof EVENT_TYPE_LABELS; startsAt: Date; locationOrUrl: string | null }[];
+  upcoming: {
+    id: string;
+    type: keyof typeof EVENT_TYPE_LABELS;
+    startsAt: Date;
+    opensAt: Date | null;
+    locationOrUrl: string | null;
+  }[];
   now: Date;
   jadwalHref: string;
 }) {
@@ -537,7 +545,8 @@ function NextStep({
           </div>
           <AddToCalendar
             title={`${EVENT_TYPE_LABELS[next.type]} · ${app.company}`}
-            start={next.startsAt}
+            start={next.opensAt ?? next.startsAt}
+            end={next.opensAt ? next.startsAt : undefined}
             details={app.position}
             location={next.locationOrUrl}
           />

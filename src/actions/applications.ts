@@ -140,9 +140,10 @@ export async function deleteApplication(
       ...app,
       cvTweaks: readCvTweaks(app.cvTweaks),
       history: app.history.map(({ stageId, enteredAt, result, notes }) => ({ stageId, enteredAt, result, notes })),
-      events: app.events.map(({ type, startsAt, locationOrUrl, remindedH3At, remindedH1At }) => ({
+      events: app.events.map(({ type, startsAt, opensAt, locationOrUrl, remindedH3At, remindedH1At }) => ({
         type,
         startsAt,
+        opensAt,
         locationOrUrl,
         remindedH3At,
         remindedH1At,

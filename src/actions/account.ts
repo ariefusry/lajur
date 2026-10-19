@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { toCsv } from "@/lib/csv";
-import { formatDate, formatDateTime, toDateInput } from "@/lib/dates";
+import { formatDate, formatEventWhen, toDateInput } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { isDemoEmail } from "@/lib/demo";
 import { deleteObject } from "@/lib/storage";
@@ -63,7 +63,7 @@ export async function exportApplicationsCsv(): Promise<{ filename: string; csv: 
           (h) => `${h.stage.name} (${formatDate(h.enteredAt)}${h.result ? `, ${STAGE_RESULT_LABELS[h.result]}` : ""})`,
         )
         .join(" → "),
-      a.events.map((e) => `${EVENT_TYPE_LABELS[e.type]}: ${formatDateTime(e.startsAt)}`).join("; "),
+      a.events.map((e) => `${EVENT_TYPE_LABELS[e.type]}: ${formatEventWhen(e)}`).join("; "),
       a.notes,
       toDateInput(a.createdAt),
     ]),

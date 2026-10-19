@@ -37,6 +37,7 @@ export const applicationSnapshotSchema = z.object({
     z.object({
       type: z.enum(EventType),
       startsAt: z.date(),
+      opensAt: z.date().nullable().default(null),
       locationOrUrl: z.string().nullable(),
       remindedH3At: z.date().nullable(),
       remindedH1At: z.date().nullable(),

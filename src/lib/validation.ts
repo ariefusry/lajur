@@ -99,14 +99,23 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   OTHER: "Lainnya",
 };
 
-export const eventSchema = z.object({
-  type: z.enum(EventType, "Pilih jenis jadwal"),
-  startsAt: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Isi tanggal dan jam")
-    .transform(fromDateTimeInput),
-  locationOrUrl: optionalText(500),
-});
+export const eventSchema = z
+  .object({
+    type: z.enum(EventType, "Pilih jenis jadwal"),
+    startsAt: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Isi tanggal dan jam")
+      .transform(fromDateTimeInput),
+    opensAt: z
+      .union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Isi tanggal dan jam")])
+      .optional()
+      .transform((v) => (v ? fromDateTimeInput(v) : null)),
+    locationOrUrl: optionalText(500),
+  })
+  .refine((e) => !e.opensAt || e.opensAt < e.startsAt, {
+    message: "Waktu mulai harus sebelum batas akhir",
+    path: ["opensAt"],
+  });
 
 export const STAGE_RESULT_LABELS: Record<StageResult, string> = {
   PENDING: "Menunggu",
