@@ -290,6 +290,24 @@ describe("planHistoryWrites", () => {
     ]);
   });
 
+  it("moving forward marks the earlier in-progress stages passed, never Wishlist, never on a rejection", () => {
+    const toTest = { id: "move", kind: "move", stageId: "Tes Online/TPA", quote: "" } as const;
+    expect(planHistoryWrites(inAdm, bumn, [toTest], now)).toEqual([
+      { op: "markPassed", stageId: "Administrasi" },
+      { op: "move", stageId: "Tes Online/TPA", enteredAt: at(1) },
+    ]);
+    expect(planHistoryWrites(inAdm, bumn, [move], now).some((w) => w.op === "markPassed")).toBe(false);
+  });
+
+  it("a card made from the invite has no administration step yet: adds it as passed", () => {
+    const toTest = { id: "move", kind: "move", stageId: "Tes Online/TPA", quote: "" } as const;
+    const fresh = { currentStageId: "Wishlist", history: [{ stageId: "Wishlist", enteredAt: day(1) }] };
+    expect(planHistoryWrites(fresh, bumn, [toTest], now)).toEqual([
+      { op: "addPassed", stageId: "Administrasi", enteredAt: at(1) },
+      { op: "move", stageId: "Tes Online/TPA", enteredAt: at(2) },
+    ]);
+  });
+
   it("marks a stage that already has a step, and writes nothing without move or fail", () => {
     const admFail = { ...fail, stageId: "Administrasi" };
     expect(planHistoryWrites(inAdm, bumn, [move, admFail], now)).toEqual([

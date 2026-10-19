@@ -196,17 +196,23 @@ export function planEmailUpdate(reading: EmailReading, ctx: PlanContext): Change
 export type HistoryWrite =
   | { op: "move"; stageId: string; enteredAt: Date } // changeStage
   | { op: "addFailed"; stageId: string; enteredAt: Date } // a new FAILED step
-  | { op: "markFailed"; stageId: string }; // that stage's latest step becomes FAILED
+  | { op: "markFailed"; stageId: string } // that stage's latest step becomes FAILED
+  | { op: "markPassed"; stageId: string } // that stage's steps without a result become PASSED
+  | { op: "addPassed"; stageId: string; enteredAt: Date }; // a new PASSED step for the skipped administration
 
 /**
  * The stage-history writes for the checked move and fail changes, in order. A failed stage that has no step yet is
  * recorded in place, just before the stage the card ends in, when that one comes later or is a rejection: the card
  * is never moved back (out of Ditolak) because of a fail. Otherwise the card moves on to it first. New steps get
  * increasing times from `now`, so they read in this order even within one transaction.
+ *
+ * Moving forward to a later in-progress or offer stage means every earlier in-progress stage in the history was
+ * passed (an invite to the online test means the administration passed), so those are marked PASSED first. An
+ * administration stage with no step yet (a card made from this email) gets a PASSED step.
  */
 export function planHistoryWrites(
   app: { currentStageId: string; history: { stageId: string; enteredAt: Date }[] },
-  stages: { id: string; order: number; kind: StageKind }[],
+  stages: { id: string; name: string; order: number; kind: StageKind }[],
   changes: Change[],
   now: Date,
 ): HistoryWrite[] {
@@ -220,6 +226,23 @@ export function planHistoryWrites(
   const endStep = app.history.findLast((h) => h.stageId === end?.id);
 
   const writes: HistoryWrite[] = [];
+  const target = stage(move?.stageId ?? "");
+  const current = stage(app.currentStageId);
+  if (target && current && target.order > current.order && (target.kind === "IN_PROGRESS" || target.kind === "OFFER")) {
+    const passed = new Set(
+      app.history.flatMap((h) => {
+        const s = stage(h.stageId);
+        return s && s.kind === "IN_PROGRESS" && s.order < target.order ? [s.id] : [];
+      }),
+    );
+    for (const stageId of passed) writes.push({ op: "markPassed", stageId });
+    const admin = ADMIN_STAGE.map((p) =>
+      stages.find((s) => s.kind === "IN_PROGRESS" && s.order < target.order && p.test(fold(s.name))),
+    ).find(Boolean);
+    if (admin && !app.history.some((h) => h.stageId === admin.id)) {
+      writes.push({ op: "addPassed", stageId: admin.id, enteredAt: next() });
+    }
+  }
   for (const c of changes) {
     if (c.kind !== "fail") continue;
     const failed = stage(c.stageId);

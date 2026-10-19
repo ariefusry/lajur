@@ -75,7 +75,7 @@ export async function applyEmailUpdate(
     : null;
   if (newApplication && !startStage) return { ok: false, message: "Atur tahap seleksi di Pengaturan dulu." };
 
-  const stages = await db.stage.findMany({ where: { userId: user.id }, select: { id: true, order: true, kind: true } });
+  const stages = await db.stage.findMany({ where: { userId: user.id }, select: { id: true, name: true, order: true, kind: true } });
 
   let id: string;
   try {
@@ -110,9 +110,19 @@ export async function applyEmailUpdate(
       for (const w of planHistoryWrites(app, stages, changes, now)) {
         if (w.op === "move") {
           await changeStage(tx, appId, user.id, w.stageId, w.enteredAt);
-        } else if (w.op === "addFailed") {
+        } else if (w.op === "markPassed") {
+          await tx.stageHistory.updateMany({
+            where: { applicationId: appId, stageId: w.stageId, result: null },
+            data: { result: "PASSED" },
+          });
+        } else if (w.op === "addFailed" || w.op === "addPassed") {
           await tx.stageHistory.create({
-            data: { applicationId: appId, stageId: w.stageId, enteredAt: w.enteredAt, result: "FAILED" },
+            data: {
+              applicationId: appId,
+              stageId: w.stageId,
+              enteredAt: w.enteredAt,
+              result: w.op === "addFailed" ? "FAILED" : "PASSED",
+            },
           });
         } else {
           const step = await lastStep(w.stageId);
