@@ -129,6 +129,11 @@ export const stageHistorySchema = z.object({
     .default("")
     .transform((v) => v || null),
   notes: optionalText(10_000),
+  // The day (YYYY-MM-DD) the application entered this stage; left out or empty keeps it.
+  enteredAt: z
+    .string()
+    .default("")
+    .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "Tanggal tidak valid"),
 });
 
 export const REQUIREMENT_TYPE_LABELS: Record<RequirementType, string> = {

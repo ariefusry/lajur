@@ -390,7 +390,7 @@ export default async function ApplicationDetailPage({
                       <StageHistoryForm
                         id={h.id}
                         action={updateStageHistory.bind(null, h.id)}
-                        defaults={{ result: h.result ?? "", notes: h.notes ?? "" }}
+                        defaults={{ result: h.result ?? "", notes: h.notes ?? "", enteredAt: toDateInput(h.enteredAt) }}
                       />
                     </div>
                   </details>

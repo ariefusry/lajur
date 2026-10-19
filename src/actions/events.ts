@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
+import { toDateInput } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { changeStage } from "@/lib/stage-change";
+import { planStepDate } from "@/lib/stage-history";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 import { eventSchema, stageHistorySchema, type FormState } from "@/lib/validation";
 
@@ -63,11 +65,25 @@ export async function updateStageHistory(id: string, _: FormState, formData: For
   if (isReadOnly(user)) return { message: DEMO_READ_ONLY_MESSAGE };
   const parsed = stageHistorySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors };
-  const { count } = await db.stageHistory.updateMany({
+  const { enteredAt: day, ...data } = parsed.data;
+  const own = await db.stageHistory.findFirst({
     where: { id, application: { userId: user.id } },
-    data: parsed.data,
+    select: { applicationId: true, enteredAt: true },
   });
-  if (!count) return { message: "Riwayat tidak ditemukan." };
+  if (!own) return { message: "Riwayat tidak ditemukan." };
+  // A new day for the step; the same day leaves its time alone.
+  let enteredAt: Date | undefined;
+  if (day && day !== toDateInput(own.enteredAt)) {
+    const steps = await db.stageHistory.findMany({
+      where: { applicationId: own.applicationId },
+      orderBy: [{ enteredAt: "asc" }, { id: "asc" }],
+      select: { id: true, enteredAt: true },
+    });
+    const planned = planStepDate(steps, id, day);
+    if (!planned.ok) return { errors: { enteredAt: [planned.message] } };
+    enteredAt = planned.enteredAt;
+  }
+  await db.stageHistory.update({ where: { id }, data: { ...data, ...(enteredAt && { enteredAt }) } });
   // Failing the stage the card sits in ends the application: move it to the rejection stage.
   let rejected = false;
   if (parsed.data.result === "FAILED") {

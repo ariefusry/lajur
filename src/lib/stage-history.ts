@@ -1,4 +1,5 @@
 import type { StageKind } from "../generated/prisma/enums.ts";
+import { toDateInput, toDateTimeInput } from "./dates.ts";
 
 /** One history step, oldest first. `kept`: it holds notes or a result, so it is never dropped. */
 export type HistoryStep = { id: string; stageId: string; order: number; kept: boolean };
@@ -41,4 +42,38 @@ export function planAppliedAtDates(
     ...history.slice(0, first).map((h) => ({ id: h.id, enteredAt: new Date(appliedAt.getTime() - 1) })),
     { id: history[first].id, enteredAt: appliedAt },
   ];
+}
+
+/**
+ * Moves one history step to another day (YYYY-MM-DD, Jakarta), keeping its time of day. It has to stay between the
+ * steps around it: on the same day as a neighbour it goes just after the one before, or just before the one after,
+ * so the order the history reads in never changes. Not in the future.
+ */
+export function planStepDate(
+  history: { id: string; enteredAt: Date }[], // oldest first
+  id: string,
+  day: string,
+  now = new Date(),
+): { ok: true; enteredAt: Date } | { ok: false; message: string } {
+  const i = history.findIndex((h) => h.id === id);
+  if (i < 0) return { ok: false, message: "Riwayat tidak ditemukan." };
+  if (day > toDateInput(now)) return { ok: false, message: "Tanggalnya tidak boleh di masa depan." };
+  const [prev, next] = [history[i - 1], history[i + 1]];
+  let at = new Date(`${day}T${toDateTimeInput(history[i].enteredAt).slice(11)}:00+07:00`);
+  if (prev && at <= prev.enteredAt) {
+    if (toDateInput(prev.enteredAt) !== day) {
+      return { ok: false, message: `Tidak boleh sebelum tahap sebelumnya (${toDateInput(prev.enteredAt)}).` };
+    }
+    at = new Date(prev.enteredAt.getTime() + 1);
+  }
+  if (next && at >= next.enteredAt) {
+    if (toDateInput(next.enteredAt) !== day) {
+      return { ok: false, message: `Tidak boleh sesudah tahap berikutnya (${toDateInput(next.enteredAt)}).` };
+    }
+    at = new Date(next.enteredAt.getTime() - 1);
+  }
+  if ((prev && at <= prev.enteredAt) || (next && at >= next.enteredAt)) {
+    return { ok: false, message: "Tanggalnya bertabrakan dengan tahap di sekitarnya." };
+  }
+  return { ok: true, enteredAt: at };
 }
