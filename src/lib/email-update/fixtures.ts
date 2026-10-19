@@ -1,16 +1,26 @@
+import type { PlanSummary } from "./plan.ts";
+
 export type EmailFixture = {
   name: string;
   text: string;
   userName: string;
   /** Personal data and credentials that must never reach the AI. */
   secrets: string[];
-  expect?: Record<string, unknown>;
+  /** The plan a correct reading gives for an application in Administrasi, with the BUMN stages. */
+  expect: PlanSummary;
 };
 
 // Made-up personal data; the shapes mirror real recruitment emails.
 export const EMAIL_FIXTURES: EmailFixture[] = [
   {
     name: "Apple Developer Academy - test invite with window",
+    expect: {
+      kind: "TEST_INVITE",
+      move: "Tes Online/TPA",
+      events: [{ type: "ONLINE_TEST", startsAt: "2026-09-24T04:00:00.000Z", opensAt: "2026-09-17T01:00:00.000Z" }],
+      fail: null,
+      notes: true,
+    },
     userName: "Budi Santoso Pratama",
     secrets: ["Budi"],
     text: `Hi Budi,
@@ -43,6 +53,13 @@ Test Rules and Instructions
   },
   {
     name: "Peepl - assessment window with credentials",
+    expect: {
+      kind: "TEST_INVITE",
+      move: "Tes Online/TPA",
+      events: [{ type: "ONLINE_TEST", startsAt: "2026-10-01T02:00:00.000Z", opensAt: "2026-09-29T07:00:00.000Z" }],
+      fail: null,
+      notes: true,
+    },
     userName: "Budi Santoso Pratama",
     secrets: ["Budi Santoso", "APSC0012345", "Qm7rT2xa"],
     text: ` Hi Budi Santoso,
@@ -64,6 +81,13 @@ Peepl`,
   },
   {
     name: "ISS Indonesia - document request",
+    expect: {
+      kind: "DOCUMENT_REQUEST",
+      move: null,
+      events: [{ type: "DEADLINE", startsAt: "2026-09-24T16:59:00.000Z", opensAt: null }],
+      fail: null,
+      notes: true,
+    },
     userName: "Budi Santoso Pratama",
     secrets: ["isstalentmanagement@id.issworld.com"],
     text: `Talent Management – ISS Indonesia <isstalentmanagement@id.issworld.com>
@@ -98,6 +122,7 @@ ISS Indonesia`,
   },
   {
     name: "Astra portal - application received",
+    expect: { kind: "APPLICATION_RECEIVED", move: null, events: [], fail: null, notes: false },
     userName: "Budi Santoso Pratama",
     secrets: [],
     text: `Function
@@ -118,6 +143,7 @@ https://career.astra.co.id/lowongan/lowongan-detail-page/13642/Mobile+Developer+
   },
   {
     name: "BNI - rejection after online assessment",
+    expect: { kind: "REJECTION", move: "Ditolak", events: [], fail: "Tes Online/TPA", notes: false },
     userName: "Budi Santoso Pratama",
     secrets: ["Budi Santoso Pratama", "ODPIT/07092026/CHTELKOMIT/0999"],
     text: `BNI Talent Search <talentsearch@bni.co.id>
