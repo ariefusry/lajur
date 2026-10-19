@@ -33,7 +33,7 @@ export default async function BoardPage() {
           where: { startsAt: { gte: today } },
           orderBy: { startsAt: "asc" },
           take: 1,
-          select: { type: true, startsAt: true },
+          select: { type: true, startsAt: true, opensAt: true },
         },
       },
     }),

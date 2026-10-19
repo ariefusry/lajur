@@ -29,7 +29,7 @@ import { moveApplication } from "@/actions/applications";
 import { EligibilityBadge } from "@/components/eligibility-badge";
 import { Badge } from "@/components/ui/badge";
 import type { EligibilityStatus, EventType, JobSource, StageKind } from "@/generated/prisma/enums";
-import { daysUntil, formatDate, formatShortDateTime } from "@/lib/dates";
+import { daysUntil, formatDate, formatEventWhenShort } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS, JOB_SOURCE_LABELS } from "@/lib/validation";
 
@@ -43,7 +43,7 @@ type Card = {
   currentStageId: string;
   eligibility: EligibilityStatus | null;
   /** Soonest test/interview/etc. that hasn't happened yet. */
-  nextEvent: { type: EventType; startsAt: Date } | null;
+  nextEvent: { type: EventType; startsAt: Date; opensAt: Date | null } | null;
   /** No news for 30+ days while in a selection stage (derived on the server). */
   ghosted: boolean;
 };
@@ -301,7 +301,7 @@ function CardBody({ card }: { card: Card }) {
   const due = card.nextEvent
     ? {
         at: card.nextEvent.startsAt,
-        text: `${EVENT_TYPE_LABELS[card.nextEvent.type]} · ${formatShortDateTime(card.nextEvent.startsAt)}`,
+        text: `${EVENT_TYPE_LABELS[card.nextEvent.type]} · ${formatEventWhenShort(card.nextEvent)}`,
       }
     : card.deadline && { at: card.deadline, text: formatDate(card.deadline) };
   const days = due ? daysUntil(due.at) : null;
