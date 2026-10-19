@@ -12,7 +12,11 @@ export const metadata = { title: "Lamaran baru · Lajur" };
 export default async function NewApplicationPage({ searchParams }: { searchParams: Promise<{ stage?: string }> }) {
   const user = await requireUser();
   const [stages, resumes, profile, aiConsent] = await Promise.all([
-    db.stage.findMany({ where: { userId: user.id }, orderBy: { order: "asc" }, select: { id: true, name: true } }),
+    db.stage.findMany({
+      where: { userId: user.id },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true, kind: true },
+    }),
     db.resume.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -48,7 +52,10 @@ export default async function NewApplicationPage({ searchParams }: { searchParam
           company: "",
           position: "",
           source: "",
-          currentStageId: stages.some((s) => s.id === stage) ? stage! : stages[0].id,
+          // "+ Tambah" on a board column passes its stage; otherwise new applications start in Wishlist.
+          currentStageId: stages.some((s) => s.id === stage)
+            ? stage!
+            : (stages.find((s) => s.kind === "WISHLIST") ?? stages[0]).id,
           resumeId: resumes[0]?.id ?? "",
           url: "",
           location: "",
