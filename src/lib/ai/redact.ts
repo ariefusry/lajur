@@ -3,7 +3,7 @@
  * leave, with address lines dropped and contact details, ID numbers and the owner's name/address swapped for
  * placeholders.
  */
-import { escapeRegExp } from "@/lib/text";
+import { escapeRegExp } from "../text.ts";
 
 export const MAX_REDACTED_CHARS = 6000;
 
@@ -19,7 +19,7 @@ const URL =
   /\b(?:https?:\/\/|www\.)\S+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|id|io|dev|me|net|org|co|app|site|xyz|tech)(?:\/\S*)?/gi;
 // "Label : value" lines carrying login credentials or participant codes; the value is a single token.
 const CREDENTIAL =
-  /(\b(?:user ?name|user id|login id|password|kata sandi|pin|token|kode akses|kode id|kode peserta)[ \t]*[:=][ \t]*)(\S+)/gi;
+  /(\b(?:user ?name|user id|login id|password|kata sandi|pin|token|kode akses|kode id|kode peserta)[^\S\r\n]*[:=][^\S\r\n]*)(\S+)/gi;
 // NIK (16 digits) and other long ID numbers, allowing separators.
 const LONG_NUMBER = /\b\d(?:[\s.-]?\d){9,}\b/g;
 const ADDRESS_LINE =

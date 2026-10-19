@@ -127,6 +127,13 @@ describe("redactPII", () => {
     expect(rehydrate(out, map)).toBe(text);
   });
 
+  it("hides credentials when the separator holds non-breaking spaces", () => {
+    const text = "Username  : APSC0099999\nPassword : Qm7rT2xa";
+    const { text: out, map } = redactPII(text);
+    expect(out).not.toMatch(/APSC0099999|Qm7rT2xa/);
+    expect(rehydrate(out, map)).toBe(text);
+  });
+
   it("leaves no name, contact, code or credential from the email fixtures", () => {
     for (const f of EMAIL_FIXTURES) {
       const { text } = redactPII(f.text, { name: f.userName });
