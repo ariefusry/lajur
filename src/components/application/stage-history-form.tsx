@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { STAGE_RESULT_LABELS, type FormState } from "@/lib/validation";
 import { Select } from "@/components/ui/select";
 import { optionsFrom } from "@/lib/utils";
+import { submitKeepingValues } from "@/lib/form";
 
 export function StageHistoryForm({
   id,
@@ -24,7 +25,7 @@ export function StageHistoryForm({
   }, [state]);
 
   return (
-    <form action={formAction} className="space-y-2">
+    <form onSubmit={submitKeepingValues(formAction)} className="space-y-2">
       <Select
         name="result"
         defaultValue={defaults.result}

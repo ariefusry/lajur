@@ -11,6 +11,7 @@ import type { JobSource } from "@/generated/prisma/enums";
 import { JOB_SOURCE_LABELS, type FormState } from "@/lib/validation";
 import { Select } from "@/components/ui/select";
 import { optionsFrom } from "@/lib/utils";
+import { submitKeepingValues } from "@/lib/form";
 
 export type ApplicationDefaults = {
   company: string;
@@ -88,7 +89,7 @@ export function ApplicationForm({
   const span = "sm:col-span-2";
 
   return (
-    <form id={id} action={formAction} className="grid max-w-3xl gap-4 sm:grid-cols-2">
+    <form id={id} onSubmit={submitKeepingValues(formAction)} className="grid max-w-3xl gap-4 sm:grid-cols-2">
       {field("company", "Perusahaan *", <Input {...a11y("company")} defaultValue={defaults.company} required />)}
       {field("position", "Posisi *", <Input {...a11y("position")} defaultValue={defaults.position} required />)}
       {field(

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { EVENT_TYPE_LABELS, type FormState } from "@/lib/validation";
 import { Select } from "@/components/ui/select";
 import { optionsFrom } from "@/lib/utils";
+import { submitKeepingValues } from "@/lib/form";
 
 export function EventForm({
   action,
@@ -38,7 +39,7 @@ export function EventForm({
     <div className="@container">
       <form
         ref={formRef}
-        action={formAction}
+        onSubmit={submitKeepingValues(formAction)}
         className="grid gap-3 @2xl:grid-cols-[10rem_14rem_1fr_auto] @2xl:items-end"
       >
         <div className="space-y-1.5">

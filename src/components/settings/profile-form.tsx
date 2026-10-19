@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { submitKeepingValues } from "@/lib/form";
 
 type Defaults = { gpa: string; birthDate: string; major: string; degree: string; domicile: string };
 
@@ -28,7 +29,7 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
   );
 
   return (
-    <form action={action} className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={submitKeepingValues(action)} className="grid gap-4 sm:grid-cols-2">
       {row(
         "gpa",
         "IPK (skala 4.00)",
