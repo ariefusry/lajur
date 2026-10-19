@@ -44,7 +44,7 @@ export function reminderEmail(
   followUps: FollowUpItem[] = [],
 ) {
   const eventLine = (i: ReminderItem) =>
-    `${i.kind === "H1" ? "BESOK" : "H-3"} · ${EVENT_TYPE_LABELS[i.type]} · ${i.company} (${i.position}) · ${formatDateTime(i.startsAt)}` +
+    `${i.kind === "H1" ? "BESOK" : `H-${daysUntil(i.startsAt)}`} · ${EVENT_TYPE_LABELS[i.type]} · ${i.company} (${i.position}) · ${formatDateTime(i.startsAt)}` +
     (i.locationOrUrl ? ` · ${i.locationOrUrl}` : "");
   const followUpLine = (f: FollowUpItem) =>
     `${f.company} (${f.position}) · jadwal follow-up ${formatDate(f.nextActionAt)}`;

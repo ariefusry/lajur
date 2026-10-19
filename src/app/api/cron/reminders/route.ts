@@ -33,7 +33,11 @@ export async function GET(request: Request) {
 
   const [events, followUpApps] = await Promise.all([
     db.event.findMany({
-      where: { startsAt: { gt: now, lte: new Date(now.getTime() + 4 * DAY_MS) } },
+      where: {
+        startsAt: { gt: now, lte: new Date(now.getTime() + 4 * DAY_MS) },
+        // Not for applications that are already rejected or withdrawn.
+        application: { currentStage: { kind: { in: ["WISHLIST", "IN_PROGRESS", "OFFER"] } } },
+      },
       include: { application: { select: { id: true, company: true, position: true, user: userSelect } } },
     }),
     // Follow-ups dated today or earlier (Jakarta) on applications that are still open.

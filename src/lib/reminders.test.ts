@@ -97,3 +97,20 @@ describe("dueFollowUp", () => {
     expect(dueFollowUp({ nextActionAt: null, followUpRemindedAt: null }, now)).toBe(false);
   });
 });
+
+describe("reminderEmail labels", () => {
+  it("says H-2 for a reminder sent two days ahead, not H-3", () => {
+    const startsAt = new Date(Date.now() + 2 * 24 * 3600 * 1000);
+    const item = {
+      kind: "H3" as const,
+      type: "PSYCHOTEST" as const,
+      company: "PT A",
+      position: "Staf",
+      startsAt,
+      locationOrUrl: null,
+      applicationId: "a1",
+    };
+    const { text } = reminderEmail(null, [item], "http://localhost:3000");
+    expect(text).toContain("H-2 · Psikotes");
+  });
+});
