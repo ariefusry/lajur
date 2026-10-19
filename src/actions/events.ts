@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { changeStage } from "@/lib/stage-change";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 import { eventSchema, stageHistorySchema, type FormState } from "@/lib/validation";
 
@@ -67,6 +68,24 @@ export async function updateStageHistory(id: string, _: FormState, formData: For
     data: parsed.data,
   });
   if (!count) return { message: "Riwayat tidak ditemukan." };
+  // Failing the stage the card sits in ends the application: move it to the rejection stage.
+  let rejected = false;
+  if (parsed.data.result === "FAILED") {
+    const step = await db.stageHistory.findFirst({
+      where: { id },
+      select: { applicationId: true, stageId: true, application: { select: { currentStageId: true } } },
+    });
+    const rejection =
+      step?.stageId === step?.application.currentStageId
+        ? await db.stage.findFirst({ where: { userId: user.id, kind: "REJECTED" }, orderBy: { order: "asc" } })
+        : null;
+    if (step && rejection && rejection.id !== step.stageId) {
+      await db.$transaction((tx) => changeStage(tx, step.applicationId, user.id, rejection.id));
+      rejected = true;
+      revalidatePath("/board");
+      revalidatePath("/dashboard");
+    }
+  }
   revalidatePath("/applications/[id]", "page");
-  return { ok: true, message: "Catatan disimpan." };
+  return { ok: true, message: rejected ? "Catatan disimpan. Lamaran dipindah ke Ditolak." : "Catatan disimpan." };
 }
