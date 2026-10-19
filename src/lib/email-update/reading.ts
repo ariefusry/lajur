@@ -118,6 +118,8 @@ export function verifyReading(r: EmailReading, text: string): EmailReading {
   // A portal's "application received" table has no sentence to quote; the company, position or link written in it
   // is the evidence, and this kind moves no stage.
   const received = r.kind === "APPLICATION_RECEIVED" && (companyOk || !!position || !!sourceUrl);
+  // Models also call such a table OTHER; a company with a position or link and no schedule is still one.
+  const table = r.kind === "OTHER" && events.length === 0 && companyOk && (!!position || !!sourceUrl);
   return {
     ...r,
     company: companyOk ? r.company : null,
@@ -125,7 +127,7 @@ export function verifyReading(r: EmailReading, text: string): EmailReading {
     position,
     stageName: found(r.stageName) ? r.stageName : null,
     sourceUrl,
-    kind: found(r.kindQuote) || received ? r.kind : "OTHER",
+    kind: table ? "APPLICATION_RECEIVED" : found(r.kindQuote) || received ? r.kind : "OTHER",
     kindQuote: found(r.kindQuote) ? r.kindQuote : "",
     events,
   };

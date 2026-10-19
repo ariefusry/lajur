@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { redactPII } from "../ai/redact";
 import { EMAIL_FIXTURES } from "./fixtures";
 import {
   EMAIL_SYSTEM,
@@ -185,6 +186,28 @@ describe("verifyReading on live answer shapes", () => {
     ]);
     const made = { ...astra, company: "PT Lain", position: "Lain" };
     expect(verifyReading(made, fixture("Astra")).kind).toBe("OTHER");
+  });
+
+  it("reads the portal table as APPLICATION_RECEIVED when the model called it OTHER", () => {
+    const astra = {
+      ...base,
+      company: "PT Global Service Indonesia",
+      companyQuote: "PT Global Service Indonesia",
+      position: "Mobile Developer - GSI",
+      kind: "OTHER" as const,
+      kindQuote: "",
+      stageName: null,
+      sourceUrl: "[URL_1]",
+    };
+    const astraText = redactPII(fixture("Astra")).text;
+    expect(verifyReading(astra, astraText)).toMatchObject({
+      kind: "APPLICATION_RECEIVED",
+      company: "PT Global Service Indonesia",
+      position: "Mobile Developer - GSI",
+      sourceUrl: "[URL_1]",
+    });
+    // A company alone is not that table.
+    expect(verifyReading({ ...astra, position: null, sourceUrl: null }, astraText).kind).toBe("OTHER");
   });
 });
 
