@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { rehydrate, type PiiMap } from "../ai/redact.ts";
 import { fold } from "../text.ts";
 
 // Same budget as job postings: with the prompt and the answer this stays inside Groq's free 8K tokens/minute.
@@ -104,5 +105,21 @@ export function verifyReading(r: EmailReading, text: string): EmailReading {
     sourceUrl: found(r.sourceUrl) ? r.sourceUrl : null,
     kind: found(r.kindQuote) ? r.kind : "OTHER",
     events,
+  };
+}
+
+/** The user's real text back in every field shown on the review screen (dates and the kind stay as they are). */
+export function rehydrateReading(r: EmailReading, map: PiiMap): EmailReading {
+  const back = (s: string | null) => (s === null ? null : rehydrate(s, map));
+  return {
+    ...r,
+    company: back(r.company),
+    companyQuote: back(r.companyQuote),
+    position: back(r.position),
+    kindQuote: rehydrate(r.kindQuote, map),
+    stageName: back(r.stageName),
+    events: r.events.map((e) => ({ ...e, quote: rehydrate(e.quote, map) })),
+    notes: r.notes.map((n) => rehydrate(n, map)),
+    sourceUrl: back(r.sourceUrl),
   };
 }

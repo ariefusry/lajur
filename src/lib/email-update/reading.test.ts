@@ -5,6 +5,7 @@ import {
   MAX_EMAIL_TEXT,
   normalizeEmailText,
   parseWib,
+  rehydrateReading,
   verifyReading,
   type EmailReading,
 } from "./reading";
@@ -113,5 +114,31 @@ describe("EMAIL_SYSTEM", () => {
   });
   it("fixtures are usable as input", () => {
     expect(EMAIL_FIXTURES.length).toBeGreaterThan(0);
+  });
+});
+
+describe("rehydrateReading", () => {
+  it("puts the originals back in every text field, leaving dates alone", () => {
+    const map = { "[URL_1]": "https://tes.id/a", "[CRED_1]": "budi01", "[NAME_1]": "Budi" };
+    const r = rehydrateReading(
+      {
+        ...base,
+        kindQuote: "Halo [NAME_1], undangan tes",
+        events: [{ type: "ONLINE_TEST", opensAt: null, closesAt: "2026-09-24", quote: "[NAME_1] 24 September 2026" }],
+        notes: ["Link: [URL_1]", "Username: [CRED_1]", "Password: [CRED_9]"],
+        sourceUrl: "[URL_1]",
+      },
+      map,
+    );
+    expect(r.kindQuote).toBe("Halo Budi, undangan tes");
+    expect(r.events[0]).toEqual({
+      type: "ONLINE_TEST",
+      opensAt: null,
+      closesAt: "2026-09-24",
+      quote: "Budi 24 September 2026",
+    });
+    expect(r.notes).toEqual(["Link: https://tes.id/a", "Username: budi01", "Password: [CRED_9]"]);
+    expect(r.sourceUrl).toBe("https://tes.id/a");
+    expect(r.position).toBeNull();
   });
 });
