@@ -2,6 +2,7 @@ import { ArrowRight, BarChart3, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { Card, Stat, pct } from "@/components/dashboard/cards";
+import { ListDialog } from "@/components/dashboard/list-dialog";
 import { Button } from "@/components/ui/button";
 import { ShinyButton } from "@/components/ui/shiny-button";
 import { requireUser } from "@/lib/auth";
@@ -28,6 +29,8 @@ const DAY_MS = 86_400_000;
 const isOpen = (kind: string | undefined) => kind === "WISHLIST" || kind === "IN_PROGRESS" || kind === "OFFER";
 const WEEKS = 12;
 const ACTIVITY_ROWS = 5;
+const UPCOMING_ROWS = 5;
+const FOLLOW_UP_ROWS = 5;
 const AHEAD_DAYS = 7;
 
 /** "3 dari 40", plus why there's no percentage yet when the sample is small. */
@@ -214,6 +217,63 @@ export default async function DashboardPage() {
   ];
   const maxPipeline = Math.max(1, ...pipeline.map((p) => p.count));
 
+  const followUpRows = followUps.map((a) => (
+    <li key={a.id}>
+      <Link
+        href={`/applications/${a.id}`}
+        className="hover:bg-foreground/5 flex items-center gap-3 px-5 py-3 transition-colors"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{a.company}</p>
+          <p className="text-muted-foreground truncate text-xs">
+            {stageById.get(a.currentStageId)?.name} · {a.position}
+          </p>
+        </div>
+        <span
+          className={cn(
+            "text-xs font-medium whitespace-nowrap tabular-nums",
+            a.urgent ? "text-destructive" : "text-amber-700 dark:text-amber-300",
+          )}
+        >
+          {a.note}
+        </span>
+      </Link>
+    </li>
+  ));
+  const upcomingRows = upcoming.map((u) => {
+    const days = daysUntil(u.at);
+    return (
+      <li key={u.key} className="flex items-center pr-3">
+        <Link
+          href={`/applications/${u.appId}`}
+          className="hover:bg-foreground/5 flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 transition-colors"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{u.title}</p>
+            <p className="text-muted-foreground truncate text-xs">
+              {u.what} · {u.withTime ? formatEventWhen({ startsAt: u.at, opensAt: u.opensAt }) : formatDate(u.at)}
+            </p>
+          </div>
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+              days <= 2 ? "bg-destructive/10 text-destructive" : "bg-foreground/5 text-muted-foreground",
+            )}
+          >
+            {days <= 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`}
+          </span>
+        </Link>
+        <AddToCalendar
+          title={`${u.what} · ${u.title}`}
+          start={u.opensAt ?? u.at}
+          end={u.opensAt ? u.at : undefined}
+          allDay={!u.withTime}
+          location={u.location}
+        />
+      </li>
+    );
+  });
+
   return (
     <div className="max-w-7xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -266,9 +326,20 @@ export default async function DashboardPage() {
             title={`${AHEAD_DAYS} hari ke depan`}
             description="Tes, interview, MCU, dan deadline yang hampir tutup."
             action={
-              <Link href="/calendar" className="text-primary text-sm font-medium hover:underline">
-                Kalender
-              </Link>
+              <div className="flex items-center gap-3">
+                {upcoming.length > UPCOMING_ROWS && (
+                  <ListDialog
+                    title={`${AHEAD_DAYS} hari ke depan`}
+                    description="Semua jadwal dan deadline yang akan datang."
+                    count={upcoming.length}
+                  >
+                    {upcomingRows}
+                  </ListDialog>
+                )}
+                <Link href="/calendar" className="text-primary text-sm font-medium hover:underline">
+                  Kalender
+                </Link>
+              </div>
             }
           >
             {upcoming.length === 0 ? (
@@ -276,42 +347,7 @@ export default async function DashboardPage() {
                 Tidak ada jadwal atau deadline dalam {AHEAD_DAYS} hari ke depan.
               </p>
             ) : (
-              <ul className="-mx-5 -mb-5 divide-y border-t">
-                {upcoming.map((u) => {
-                  const days = daysUntil(u.at);
-                  return (
-                    <li key={u.key} className="flex items-center pr-3">
-                      <Link
-                        href={`/applications/${u.appId}`}
-                        className="hover:bg-foreground/5 flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{u.title}</p>
-                          <p className="text-muted-foreground truncate text-xs">
-                            {u.what} ·{" "}
-                            {u.withTime ? formatEventWhen({ startsAt: u.at, opensAt: u.opensAt }) : formatDate(u.at)}
-                          </p>
-                        </div>
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-                            days <= 2 ? "bg-destructive/10 text-destructive" : "bg-foreground/5 text-muted-foreground",
-                          )}
-                        >
-                          {days <= 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`}
-                        </span>
-                      </Link>
-                      <AddToCalendar
-                        title={`${u.what} · ${u.title}`}
-                        start={u.opensAt ?? u.at}
-                        end={u.opensAt ? u.at : undefined}
-                        allDay={!u.withTime}
-                        location={u.location}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
+              <ul className="-mx-5 -mb-5 divide-y border-t">{upcomingRows.slice(0, UPCOMING_ROWS)}</ul>
             )}
           </Card>
 
@@ -356,43 +392,27 @@ export default async function DashboardPage() {
             description={`Follow-up yang jatuh tempo, dan lamaran ${QUIET_DAYS}–${GHOSTED_DAYS - 1} hari tanpa kabar (jadi ghosted di ${GHOSTED_DAYS} hari).`}
             action={
               followUps.length > 0 && (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
-                  {followUps.length}
-                </span>
+                <div className="flex items-center gap-2">
+                  {followUps.length > FOLLOW_UP_ROWS && (
+                    <ListDialog
+                      title="Perlu follow-up"
+                      description="Semua lamaran yang perlu di-follow-up atau sudah lama tanpa kabar."
+                      count={followUps.length}
+                    >
+                      {followUpRows}
+                    </ListDialog>
+                  )}
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
+                    {followUps.length}
+                  </span>
+                </div>
               )
             }
           >
             {followUps.length === 0 ? (
               <p className="text-muted-foreground text-sm">Tidak ada yang perlu di-follow-up hari ini.</p>
             ) : (
-              <ul className="-mx-5 divide-y border-y">
-                {followUps.slice(0, 5).map((a) => (
-                  <li key={a.id}>
-                    <Link
-                      href={`/applications/${a.id}`}
-                      className="hover:bg-foreground/5 flex items-center gap-3 px-5 py-3 transition-colors"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{a.company}</p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {stageById.get(a.currentStageId)?.name} · {a.position}
-                        </p>
-                      </div>
-                      <span
-                        className={cn(
-                          "text-xs font-medium whitespace-nowrap tabular-nums",
-                          a.urgent ? "text-destructive" : "text-amber-700 dark:text-amber-300",
-                        )}
-                      >
-                        {a.note}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-                {followUps.length > 5 && (
-                  <li className="text-muted-foreground px-5 py-3 text-xs">+{followUps.length - 5} lamaran lain</li>
-                )}
-              </ul>
+              <ul className="-mx-5 divide-y border-y">{followUpRows.slice(0, FOLLOW_UP_ROWS)}</ul>
             )}
             {d.totals.ghosted > 0 && (
               <Link
