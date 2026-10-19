@@ -377,6 +377,12 @@
     transform: scaleX(0);
   }
 }
+/* Opacity only: tw-animate's fade-in also sets a transform, which throws off dnd-kit's drag position. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

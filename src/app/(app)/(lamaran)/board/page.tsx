@@ -1,7 +1,4 @@
-import Link from "next/link";
 import { Board } from "@/components/board/board";
-import { Button } from "@/components/ui/button";
-import { ViewSwitch } from "@/components/view-switch";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor } from "@/lib/dashboard";
 import { db } from "@/lib/db";
@@ -44,16 +41,7 @@ export default async function BoardPage() {
   }));
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Lamaran</h1>
-        <div className="flex items-center gap-2">
-          <ViewSwitch active="board" />
-          <Button asChild>
-            <Link href="/applications/new">Tambah lamaran</Link>
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-4 motion-safe:animate-[fade-in_300ms_ease-out]">
       {applications.length === 0 && (
         <p className="text-muted-foreground text-sm">
           Belum ada lamaran. Klik “Tambah lamaran”, lalu geser kartunya antar kolom saat tahapnya berubah.

@@ -4,7 +4,6 @@ import { EligibilityBadge } from "@/components/eligibility-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ViewSwitch } from "@/components/view-switch";
 import type { Prisma } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, GHOSTED_DAYS } from "@/lib/dashboard";
@@ -91,17 +90,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
   const filtered = Boolean(query || stage);
 
   return (
-    <div className="max-w-7xl space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Lamaran</h1>
-        <div className="flex items-center gap-2">
-          <ViewSwitch active="list" />
-          <Button asChild>
-            <Link href="/applications/new">Tambah lamaran</Link>
-          </Button>
-        </div>
-      </div>
-
+    <div className="max-w-7xl space-y-4 motion-safe:animate-[fade-in_300ms_ease-out]">
       {/* Plain GET form: filters live in the URL, so they survive reloads and can be bookmarked. */}
       <form className="flex flex-wrap items-end gap-2" role="search">
         <label className="relative basis-full sm:min-w-48 sm:flex-1 sm:basis-auto">
