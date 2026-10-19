@@ -1,4 +1,4 @@
-import { DeleteResumeButton, ViewResumeButton } from "@/components/resumes/resume-actions";
+import { DeleteResumeButton, ResumeName, ViewResumeButton } from "@/components/resumes/resume-actions";
 import { ResumeUpload } from "@/components/resumes/resume-upload";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -39,7 +39,7 @@ export default async function ResumesPage() {
             {resumes.map((r) => (
               <li key={r.id} className="glass flex flex-wrap items-center gap-3 rounded-2xl border p-4">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{r.versionName}</p>
+                  <ResumeName id={r.id} name={r.versionName} />
                   <p className="text-muted-foreground text-xs">
                     {formatDate(r.createdAt)} · dipakai di {r._count.applications} lamaran
                     {r.extractedText === null && " · teks tidak terbaca"}
