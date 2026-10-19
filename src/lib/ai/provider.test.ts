@@ -146,6 +146,22 @@ describe("generateStructured", () => {
     ]);
   });
 
+  it("handles Groq's 400 json_validate_failed as invalid output and retries once, without its failed generation", async () => {
+    const { generateStructured } = await load();
+    const refused = http(400, {
+      message: "Failed to validate JSON",
+      responseBody: JSON.stringify({
+        error: { code: "json_validate_failed", failed_generation: '{"ok": "RAHASIA-GEN"}' },
+      }),
+    });
+    generateText.mockRejectedValueOnce(refused).mockResolvedValueOnce(answer({ ok: true }));
+    await expect(generateStructured(args)).resolves.toMatchObject({ provider: "groq" });
+    expect(calls()).toEqual([`groq:${GROQ}:low`, `groq:${GROQ}:medium`]);
+    expect(generateText.mock.calls[1][0].prompt).not.toContain("RAHASIA-GEN");
+    for (const spy of [console.info, console.warn, console.error] as unknown as { mock: { calls: unknown[][] } }[])
+      expect(JSON.stringify(spy.mock.calls)).not.toContain("RAHASIA-GEN");
+  });
+
   it("everything fails (invalid twice, then 5xx and timeout) → AiUnavailableError, no usage recorded", async () => {
     const { generateStructured, AiUnavailableError } = await load();
     const timeout = Object.assign(new Error("t"), { name: "TimeoutError" });
