@@ -6,7 +6,8 @@ import { expect, test, type Page } from "@playwright/test";
 const COMPANY = `PT Uji E2E ${Date.now()}`;
 
 async function dragCard(page: Page, company: string, toColumn: string) {
-  const card = page.locator("section", { has: page.getByText(company) }).getByText(company);
+  // "main": the "Dipindah ke …" toast (also a <section>) repeats the company name.
+  const card = page.locator("main section", { has: page.getByText(company) }).getByText(company);
   const target = page.getByRole("region", { name: toColumn });
   const from = (await card.boundingBox())!;
   const to = (await target.boundingBox())!;

@@ -30,7 +30,12 @@ export default function RootLayout({
       <body className="antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
-          <Toaster richColors position="bottom-right" />
+          {/* On phones, clear the app's bottom tab bar. */}
+          <Toaster
+            richColors
+            position="bottom-right"
+            mobileOffset={{ bottom: "calc(4.25rem + env(safe-area-inset-bottom))" }}
+          />
         </ThemeProvider>
       </body>
     </html>

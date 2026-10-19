@@ -13,17 +13,17 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { CalendarClock } from "lucide-react";
+import { ArrowRightLeft, CalendarClock } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition, type RefObject } from "react";
 import { toast } from "sonner";
 import { moveApplication } from "@/actions/applications";
 import { EligibilityBadge } from "@/components/eligibility-badge";
 import { Badge } from "@/components/ui/badge";
-import type { EligibilityStatus, JobSource, StageKind } from "@/generated/prisma/enums";
-import { daysUntil, formatDate } from "@/lib/dates";
+import type { EligibilityStatus, EventType, JobSource, StageKind } from "@/generated/prisma/enums";
+import { daysUntil, formatDate, formatShortDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import { JOB_SOURCE_LABELS } from "@/lib/validation";
+import { EVENT_TYPE_LABELS, JOB_SOURCE_LABELS } from "@/lib/validation";
 
 type Stage = { id: string; name: string; kind: StageKind };
 type Card = {
@@ -34,6 +34,8 @@ type Card = {
   deadline: Date | null;
   currentStageId: string;
   eligibility: EligibilityStatus | null;
+  /** Soonest test/interview/etc. that hasn't happened yet. */
+  nextEvent: { type: EventType; startsAt: Date } | null;
   /** No news for 30+ days while in a selection stage (derived on the server). */
   ghosted: boolean;
 };
@@ -83,25 +85,38 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
     setActiveId(String(active.id));
   }
 
+  /**
+   * Optimistic move, shared by drag and the "Pindah ke" menu. `restore` is set when undoing: the card goes back
+   * exactly as it was. Moving back is safe server-side: moveApplication drops the history step it just added.
+   */
+  function move(card: Card, toStage: string, restore?: Card) {
+    if (card.currentStageId === toStage) return;
+    // A move is news, so the card is no longer ghosted.
+    const moved = restore ?? { ...card, currentStageId: toStage, ghosted: false };
+    const put = (next: Card) => setCards((cs) => cs.map((c) => (c.id === card.id ? next : c)));
+    put(moved);
+    startTransition(async () => {
+      const res: { ok: boolean; message?: string } = await moveApplication(card.id, toStage).catch(() => ({
+        ok: false,
+      }));
+      if (!res.ok) {
+        put(card);
+        toast.error(res.message ?? "Gagal memindahkan lamaran. Coba lagi.");
+        return;
+      }
+      if (restore) return;
+      toast(`Dipindah ke ${stages.find((s) => s.id === toStage)?.name}`, {
+        description: card.company,
+        action: { label: "Urungkan", onClick: () => move(moved, card.currentStageId, card) },
+      });
+    });
+  }
+
   function onDragEnd({ active, over }: DragEndEvent) {
     setActiveId(null);
     setTimeout(() => (justDragged.current = false), 0);
-    if (!over) return;
-    const id = String(active.id);
-    const toStage = String(over.id);
-    const card = cards.find((c) => c.id === id);
-    if (!card || card.currentStageId === toStage) return;
-
-    const before = cards;
-    // A move is news, so the card is no longer ghosted.
-    setCards((cs) => cs.map((c) => (c.id === id ? { ...c, currentStageId: toStage, ghosted: false } : c)));
-    startTransition(async () => {
-      const res: { ok: boolean; message?: string } = await moveApplication(id, toStage).catch(() => ({ ok: false }));
-      if (!res.ok) {
-        setCards(before);
-        toast.error(res.message ?? "Gagal memindahkan lamaran. Coba lagi.");
-      }
-    });
+    const card = cards.find((c) => c.id === String(active.id));
+    if (over && card) move(card, String(over.id));
   }
 
   const activeCard = activeId ? cards.find((c) => c.id === activeId) : undefined;
@@ -143,8 +158,10 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
           <Column
             key={stage.id}
             stage={stage}
+            stages={stages}
             cards={cards.filter((c) => c.currentStageId === stage.id)}
             justDragged={justDragged}
+            onMove={move}
           />
         ))}
       </div>
@@ -161,7 +178,9 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
   );
 }
 
-function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; justDragged: RefObject<boolean> }) {
+type MoveProps = { stages: Stage[]; justDragged: RefObject<boolean>; onMove: (card: Card, toStage: string) => void };
+
+function Column({ stage, cards, ...props }: MoveProps & { stage: Stage; cards: Card[] }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   return (
     <section
@@ -179,7 +198,7 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
         </span>
       </h2>
       {cards.map((card) => (
-        <ApplicationCard key={card.id} card={card} justDragged={justDragged} />
+        <ApplicationCard key={card.id} card={card} {...props} />
       ))}
       {cards.length === 0 && (
         <p className="text-muted-foreground rounded-xl border border-dashed px-3 py-6 text-center text-sm">
@@ -196,7 +215,7 @@ function Column({ stage, cards, justDragged }: { stage: Stage; cards: Card[]; ju
   );
 }
 
-function ApplicationCard({ card, justDragged }: { card: Card; justDragged: RefObject<boolean> }) {
+function ApplicationCard({ card, stages, justDragged, onMove }: MoveProps & { card: Card }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: card.id });
 
   return (
@@ -208,20 +227,49 @@ function ApplicationCard({ card, justDragged }: { card: Card; justDragged: RefOb
         if (justDragged.current) e.preventDefault();
       }}
       className={cn(
-        "glass cursor-grab rounded-xl border p-3.5 text-sm transition-shadow select-none [-webkit-touch-callout:none] hover:shadow-md",
+        "glass group relative cursor-grab rounded-xl border p-3.5 text-sm transition-shadow select-none [-webkit-touch-callout:none] hover:shadow-md",
         // The original stays in place as a faint placeholder while its lifted copy moves.
         isDragging && "opacity-40 shadow-none",
       )}
     >
-      <Link href={`/applications/${card.id}`} className="block" draggable={false}>
+      <Link href={`/applications/${card.id}`} className="block pr-7" draggable={false}>
         <CardBody card={card} />
       </Link>
+      {/* Two taps instead of a long drag across columns (mostly for phones). A native select opens the OS picker. */}
+      <label
+        className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground has-focus-visible:ring-ring/50 absolute top-2 right-2 flex size-7 cursor-pointer items-center justify-center rounded-md transition-opacity has-focus-visible:ring-2 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:has-focus-visible:opacity-100"
+        // Keep presses here from starting a drag.
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <ArrowRightLeft className="size-4" />
+        <span className="sr-only">Pindah ke tahap</span>
+        <select
+          value={card.currentStageId}
+          onChange={(e) => onMove(card, e.target.value)}
+          className="absolute inset-0 cursor-pointer opacity-0"
+        >
+          {stages.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
   );
 }
 
 function CardBody({ card }: { card: Card }) {
-  const days = card.deadline ? daysUntil(card.deadline) : null;
+  // Once a test or interview is scheduled, it matters more than the application deadline.
+  const due = card.nextEvent
+    ? {
+        at: card.nextEvent.startsAt,
+        text: `${EVENT_TYPE_LABELS[card.nextEvent.type]} · ${formatShortDateTime(card.nextEvent.startsAt)}`,
+      }
+    : card.deadline && { at: card.deadline, text: formatDate(card.deadline) };
+  const days = due ? daysUntil(due.at) : null;
   return (
     <div className="space-y-1">
       <p className="leading-snug font-semibold">{card.company}</p>
@@ -238,7 +286,7 @@ function CardBody({ card }: { card: Card }) {
             Ghosted
           </Badge>
         )}
-        {card.deadline && days !== null && (
+        {due && days !== null && (
           <span
             className={cn(
               "inline-flex items-center gap-1 text-xs",
@@ -247,7 +295,7 @@ function CardBody({ card }: { card: Card }) {
             title={days < 0 ? "Deadline sudah lewat" : `${days} hari lagi`}
           >
             <CalendarClock className="size-3" />
-            {formatDate(card.deadline)}
+            {due.text}
           </span>
         )}
       </div>

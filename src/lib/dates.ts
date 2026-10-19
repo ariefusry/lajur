@@ -53,3 +53,15 @@ export function formatDateTime(date: Date): string {
     }).format(date) + " WIB"
   );
 }
+
+/** "Kam, 23 Okt, 09.00": short enough for a board card. */
+export function formatShortDateTime(date: Date): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: TZ,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
