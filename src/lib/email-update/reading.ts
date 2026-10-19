@@ -84,7 +84,7 @@ const hasNumber = (s: string, n: number) => new RegExp(`(?<!\\d)0?${n}(?!\\d)`).
  * case forgiven); an event stays only if its quote carries the closing day (a window quoted by its opening line
  * gets the next line of the email added to its quote); opensAt stays only if it is before closesAt and its day
  * appears in the email; company, position, stage and link are nulled unless written in the email; the kind falls
- * back to OTHER without evidence.
+ * back to OTHER (and kindQuote to "") without evidence.
  */
 export function verifyReading(r: EmailReading, text: string): EmailReading {
   const haystack = fold(text);
@@ -109,8 +109,10 @@ export function verifyReading(r: EmailReading, text: string): EmailReading {
   const events = kept.filter(
     (e) => e.opensAt || !kept.some((w) => w.opensAt && w.type === e.type && w.closesAt === e.closesAt),
   );
-  // Either is enough: models often name the company but leave companyQuote null.
-  const companyOk = found(r.companyQuote) || found(r.company);
+  // Written in the email, or inside a real quote: models often name the company but leave companyQuote null, or
+  // shorten it ("BNI" quoted as "Tim Talent Acquisition BNI").
+  const companyOk =
+    found(r.company) || (found(r.companyQuote) && !!r.company && fold(r.companyQuote!).includes(fold(r.company)));
   const position = found(r.position) ? r.position : null;
   const sourceUrl = found(r.sourceUrl) ? r.sourceUrl : null;
   // A portal's "application received" table has no sentence to quote; the company, position or link written in it
@@ -124,6 +126,7 @@ export function verifyReading(r: EmailReading, text: string): EmailReading {
     stageName: found(r.stageName) ? r.stageName : null,
     sourceUrl,
     kind: found(r.kindQuote) || received ? r.kind : "OTHER",
+    kindQuote: found(r.kindQuote) ? r.kindQuote : "",
     events,
   };
 }

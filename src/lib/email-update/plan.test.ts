@@ -154,6 +154,16 @@ describe("planEmailUpdate", () => {
     ]);
   });
 
+  it("quotes the stage name as the move's evidence when the name chose the stage", () => {
+    const r = reading({ kind: "TEST_INVITE", kindQuote: "kami mengundang Anda", stageName: "Psikotes Online" });
+    expect(planEmailUpdate(r, { stages: bumn, app: atAdm })[0]).toEqual({
+      id: "move",
+      kind: "move",
+      stageId: "Psikotes",
+      quote: "Psikotes Online",
+    });
+  });
+
   it("does not move to the current stage", () => {
     const app = { ...atAdm, currentStageId: "Tes Online/TPA" };
     expect(planEmailUpdate(peepl, { stages: bumn, app }).map((c) => c.kind)).toEqual(["event", "notes"]);

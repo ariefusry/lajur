@@ -130,11 +130,12 @@ export function planEmailUpdate(reading: EmailReading, ctx: PlanContext): Change
   const rejection = reading.kind === "REJECTION";
   const changes: Change[] = [];
 
-  const target = rejection
-    ? stageOfKind(reading, stages)
-    : (stageOfName(reading.stageName, stages) ?? stageOfKind(reading, stages));
+  const byName = rejection ? undefined : stageOfName(reading.stageName, stages);
+  const target = byName ?? stageOfKind(reading, stages);
   if (target && target.id !== app?.currentStageId) {
-    changes.push({ id: "move", kind: "move", stageId: target.id, quote: reading.kindQuote });
+    // The stage name is the evidence when it chose the stage; verifyReading checked both against the email.
+    const quote = byName ? reading.stageName! : reading.kindQuote;
+    changes.push({ id: "move", kind: "move", stageId: target.id, quote });
   }
 
   if (rejection) {

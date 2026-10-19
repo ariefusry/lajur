@@ -100,6 +100,17 @@ Link: [URL_1]`;
     expect(r.companyQuote).toBeNull();
     expect(r.kind).toBe("OTHER");
   });
+  it("nulls an invented company even when its quote is real, and keeps one its quote contains", () => {
+    const r = verifyReading({ ...base, company: "Globex", companyQuote: "PT Acme Indonesia" }, text);
+    expect(r.company).toBeNull();
+    expect(r.companyQuote).toBe("PT Acme Indonesia");
+    const shortened = { ...base, company: "Acme Indonesia", companyQuote: "PT Acme Indonesia mengundang" };
+    expect(verifyReading(shortened, text).company).toBe("Acme Indonesia");
+  });
+  it("empties a kind quote that is not in the email", () => {
+    expect(verifyReading({ ...base, kindQuote: "kami mengundang Anda" }, text).kindQuote).toBe("");
+    expect(verifyReading(base, text).kindQuote).toBe("Online Entry Test");
+  });
   it("keeps verified company and kind", () => {
     const r = verifyReading(base, text);
     expect(r.company).toBe("Acme");
