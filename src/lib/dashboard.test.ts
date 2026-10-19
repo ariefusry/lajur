@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { appFactsFor, computeDashboard, rate, weeklyCounts, type DashApp, type DashStage } from "./dashboard";
+import {
+  appFactsFor,
+  computeDashboard,
+  formatWeekRange,
+  rate,
+  weeklyCounts,
+  type DashApp,
+  type DashStage,
+} from "./dashboard";
 import { DEMO_APPS, demoTimeline } from "./demo-data";
 import { STAGE_TEMPLATES } from "./stage-templates";
 
@@ -144,6 +152,15 @@ describe("rate", () => {
     expect(rate(4, 5)).toBeCloseTo(0.8);
     expect(rate(1, 4)).toBeNull();
     expect(rate(0, 0)).toBeNull();
+  });
+});
+
+describe("formatWeekRange", () => {
+  const now = new Date("2026-10-19T03:00:00Z"); // Mon 19 Oct, Jakarta
+  it("names the 7 days each column covers", () => {
+    expect(formatWeekRange(11, 12, now)).toBe("13–19 Okt");
+    expect(formatWeekRange(10, 12, now)).toBe("6–12 Okt");
+    expect(formatWeekRange(9, 12, now)).toBe("29 Sep – 5 Okt");
   });
 });
 

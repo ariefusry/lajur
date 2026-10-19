@@ -12,6 +12,7 @@ import {
   MIN_SAMPLE,
   QUIET_DAYS,
   rate,
+  formatWeekRange,
   weeklyCounts,
 } from "@/lib/dashboard";
 import { db } from "@/lib/db";
@@ -26,6 +27,7 @@ const DAY_MS = 86_400_000;
 /** Follow-ups only make sense while the application is still open. */
 const isOpen = (kind: string | undefined) => kind === "WISHLIST" || kind === "IN_PROGRESS" || kind === "OFFER";
 const WEEKS = 12;
+const ACTIVITY_ROWS = 5;
 const AHEAD_DAYS = 7;
 
 /** "3 dari 40", plus why there's no percentage yet when the sample is small. */
@@ -87,7 +89,7 @@ export default async function DashboardPage() {
     db.stageHistory.findMany({
       where: { application: { userId: user.id } },
       orderBy: { enteredAt: "desc" },
-      take: 8,
+      take: 40,
       select: {
         id: true,
         enteredAt: true,
@@ -125,6 +127,11 @@ export default async function DashboardPage() {
   const thisWeek = appliedDates.filter((t) => t.getTime() > daysBack(7)).length;
   const lastWeek = appliedDates.filter((t) => t.getTime() > daysBack(14) && t.getTime() <= daysBack(7)).length;
   const weekly = weeklyCounts(appliedDates, now, WEEKS);
+  // The latest change of each application, not every step of one that was just typed in.
+  const seen = new Set<string>();
+  const latest = activity
+    .filter((h) => !seen.has(h.application.id) && !!seen.add(h.application.id))
+    .slice(0, ACTIVITY_ROWS);
   const maxWeekly = Math.max(1, ...weekly);
 
   const o = d.outcomes;
@@ -394,20 +401,38 @@ export default async function DashboardPage() {
 
         <div className="flex flex-col gap-4">
           <Card title="Lamaran per minggu" description={`${WEEKS} minggu terakhir, menurut tanggal melamar.`}>
-            <div
-              className="flex h-24 items-end gap-1"
-              role="img"
-              aria-label={`Lamaran per minggu: ${weekly.join(", ")}`}
-            >
+            <ul className="flex h-24 items-end gap-1" aria-label="Lamaran per minggu">
               {weekly.map((n, i) => (
-                <span
+                // The whole column is the target, so an empty week can be hovered or focused too.
+                <li
                   key={i}
-                  className={cn("min-h-1 flex-1 rounded-t-sm", n ? "bg-primary" : "bg-muted")}
-                  style={{ height: `${(n / maxWeekly) * 100}%` }}
-                  title={`${i === WEEKS - 1 ? "Minggu ini" : `${WEEKS - 1 - i} minggu lalu`}: ${n} lamaran`}
-                />
+                  tabIndex={0}
+                  className="group relative flex h-full flex-1 items-end outline-none"
+                  aria-label={`${formatWeekRange(i, WEEKS, now)}: ${n} lamaran`}
+                >
+                  <span
+                    className={cn(
+                      "group-hover:bg-primary/80 group-focus-visible:ring-ring min-h-1 w-full rounded-t-sm group-focus-visible:ring-2",
+                      n ? "bg-primary" : "bg-muted",
+                    )}
+                    style={{ height: `${(n / maxWeekly) * 100}%` }}
+                  />
+                  <span
+                    role="tooltip"
+                    className={cn(
+                      "bg-foreground text-background pointer-events-none absolute bottom-full z-10 mb-1.5 rounded-md px-2 py-1 text-xs whitespace-nowrap opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100",
+                      // The edge columns open inward, so the tip stays inside the card.
+                      i < 2 ? "left-0" : i >= WEEKS - 2 ? "right-0" : "left-1/2 -translate-x-1/2",
+                    )}
+                  >
+                    <span className="block font-medium">
+                      {n} lamaran{i === WEEKS - 1 ? " · minggu ini" : ""}
+                    </span>
+                    <span className="opacity-70">{formatWeekRange(i, WEEKS, now)}</span>
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
             <div className="text-muted-foreground -mt-2 flex justify-between text-xs">
               <span>{WEEKS} minggu lalu</span>
               <span>Minggu ini</span>
@@ -416,7 +441,7 @@ export default async function DashboardPage() {
 
           <Card title="Aktivitas terbaru" description="Perubahan tahap terakhir.">
             <ul className="-mx-5 -mb-5 divide-y border-t">
-              {activity.map((h) => (
+              {latest.map((h) => (
                 <li key={h.id}>
                   <Link
                     href={`/applications/${h.application.id}`}

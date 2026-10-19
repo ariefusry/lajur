@@ -182,6 +182,19 @@ export function computeDashboard(stages: DashStage[], apps: DashApp[], now = new
   };
 }
 
+/** "13–19 Okt" or "28 Sep – 4 Okt": the 7 days that column `index` of weeklyCounts covers, in Jakarta time. */
+export function formatWeekRange(index: number, weeks: number, now: Date) {
+  const end = new Date(now.getTime() - (weeks - 1 - index) * 7 * DAY_MS);
+  const start = new Date(end.getTime() - 6 * DAY_MS);
+  const part = (d: Date, type: "day" | "month") =>
+    new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", [type]: type === "day" ? "numeric" : "short" }).format(
+      d,
+    );
+  return part(start, "month") === part(end, "month")
+    ? `${part(start, "day")}–${part(end, "day")} ${part(end, "month")}`
+    : `${part(start, "day")} ${part(start, "month")} – ${part(end, "day")} ${part(end, "month")}`;
+}
+
 /** Applications per week for the last `weeks` weeks, oldest first (index weeks-1 = the 7 days up to `now`). */
 export function weeklyCounts(dates: Date[], now: Date, weeks = 12) {
   const counts = Array<number>(weeks).fill(0);
