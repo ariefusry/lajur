@@ -1,4 +1,5 @@
 import { ArrowLeft, CalendarClock, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -37,6 +38,16 @@ const TABS = [
   { key: "data", label: "Ubah data" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
+
+// "eFishery · Lajur": tells apart several applications open in tabs.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const user = await requireUser();
+  const app = await db.application.findFirst({
+    where: { id: (await params).id, userId: user.id },
+    select: { company: true },
+  });
+  return { title: `${app?.company ?? "Lamaran"} · Lajur` };
+}
 
 /**
  * One application, in the order people ask about it: where is it (header + stage progress), what's next
