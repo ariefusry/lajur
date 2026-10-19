@@ -38,9 +38,22 @@ export async function setAiConsent(agree: boolean): Promise<{ consentedAt: strin
     data: { aiConsentAt: parsed.data ? new Date() : null },
     select: { aiConsentAt: true },
   });
+  // New users agree to the email wording in the same step; withdrawing and re-agreeing keeps the first notice time.
+  if (parsed.data) {
+    await db.user.updateMany({ where: { id: user.id, emailAiNoticeAt: null }, data: { emailAiNoticeAt: new Date() } });
+  }
   revalidatePath("/settings");
   revalidatePath("/applications/new");
   return { consentedAt: aiConsentAt?.toISOString() ?? null };
+}
+
+/** Marks the one-time notice about pasted emails as read. */
+export async function acknowledgeEmailNotice(): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireUser();
+  if (isReadOnly(user)) return { ok: false, message: DEMO_READ_ONLY_MESSAGE };
+  await db.user.update({ where: { id: user.id }, data: { emailAiNoticeAt: new Date() } });
+  revalidatePath("/settings");
+  return { ok: true };
 }
 
 export async function addStage(formData: FormData) {

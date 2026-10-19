@@ -80,12 +80,13 @@ async function callModel<T>(ref: ModelRef, args: Args<T>, prompt: string, retry:
     });
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) throw new InvalidOutputError("Jawaban bukan JSON yang valid.");
-    // Cloudflare's JSON mode can refuse a schema it couldn't satisfy; treated like any other invalid answer.
-    if (
-      APICallError.isInstance(error) &&
-      /JSON Mode couldn't be met/i.test(`${error.message} ${error.responseBody ?? ""}`)
-    ) {
-      throw new InvalidOutputError("JSON Mode couldn't be met");
+    // Cloudflare's JSON mode and Groq's strict json_schema (400 json_validate_failed) can refuse an answer that
+    // doesn't fit the schema; treated like any other invalid answer. The body's failed_generation is not kept.
+    if (APICallError.isInstance(error)) {
+      const refused = /JSON Mode couldn't be met|json_validate_failed/i.exec(
+        `${error.message} ${error.responseBody ?? ""}`,
+      );
+      if (refused) throw new InvalidOutputError(refused[0]);
     }
     throw error;
   }

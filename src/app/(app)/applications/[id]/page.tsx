@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, GHOSTED_DAYS } from "@/lib/dashboard";
-import { daysUntil, formatDate, formatDateTime, toDateInput, toDateTimeInput } from "@/lib/dates";
+import { daysUntil, formatDate, formatEventWhen, toDateInput, toDateTimeInput } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { isReadOnly } from "@/lib/demo";
 import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
@@ -393,13 +393,14 @@ export default async function ApplicationDetailPage({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">{EVENT_TYPE_LABELS[e.type]}</p>
                         <p className="text-muted-foreground text-xs">
-                          {formatDateTime(e.startsAt)}
+                          {formatEventWhen(e)}
                           {e.locationOrUrl && ` · ${e.locationOrUrl}`}
                         </p>
                       </div>
                       <AddToCalendar
                         title={`${EVENT_TYPE_LABELS[e.type]} · ${app.company}`}
-                        start={e.startsAt}
+                        start={e.opensAt ?? e.startsAt}
+                        end={e.opensAt ? e.startsAt : undefined}
                         details={app.position}
                         location={e.locationOrUrl}
                       />
@@ -422,6 +423,7 @@ export default async function ApplicationDetailPage({
                             defaults={{
                               type: e.type,
                               startsAt: toDateTimeInput(e.startsAt),
+                              opensAt: toDateTimeInput(e.opensAt),
                               locationOrUrl: e.locationOrUrl ?? "",
                             }}
                           />
@@ -515,7 +517,13 @@ function NextStep({
   jadwalHref,
 }: {
   app: NextStepApp;
-  upcoming: { id: string; type: keyof typeof EVENT_TYPE_LABELS; startsAt: Date; locationOrUrl: string | null }[];
+  upcoming: {
+    id: string;
+    type: keyof typeof EVENT_TYPE_LABELS;
+    startsAt: Date;
+    opensAt: Date | null;
+    locationOrUrl: string | null;
+  }[];
   now: Date;
   jadwalHref: string;
 }) {
@@ -531,13 +539,14 @@ function NextStep({
           <div className="min-w-0 flex-1">
             <p className="font-medium">{EVENT_TYPE_LABELS[next.type]}</p>
             <p className="text-muted-foreground text-sm">
-              {formatDateTime(next.startsAt)}
+              {formatEventWhen(next)}
               {next.locationOrUrl && ` · ${next.locationOrUrl}`}
             </p>
           </div>
           <AddToCalendar
             title={`${EVENT_TYPE_LABELS[next.type]} · ${app.company}`}
-            start={next.startsAt}
+            start={next.opensAt ?? next.startsAt}
+            end={next.opensAt ? next.startsAt : undefined}
             details={app.position}
             location={next.locationOrUrl}
           />

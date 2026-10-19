@@ -7,7 +7,17 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/board", label: "Lamaran", icon: KanbanSquare, also: "/applications" },
+  {
+    href: "/board",
+    label: "Lamaran",
+    icon: KanbanSquare,
+    also: "/applications",
+    // Desktop sub-menu; the phone tab bar keeps the single "Lamaran" tab.
+    sub: [
+      { href: "/board", label: "Lihat lamaran" },
+      { href: "/applications/update", label: "Update dari email" },
+    ],
+  },
   { href: "/applications/new", label: "Lamaran baru", icon: Plus },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/calendar", label: "Kalender", icon: CalendarDays },
@@ -27,24 +37,49 @@ const isActive = (pathname: string, href: string) => {
   );
 };
 
+// "Update dari email" lives under /applications but has its own sub-menu entry.
+const isSubActive = (pathname: string, href: string) =>
+  href === "/applications/update" ? pathname === href : pathname !== "/applications/update" && isActive(pathname, href);
+
+const linkClass = (active: boolean) =>
+  cn(
+    "text-muted-foreground hover:bg-foreground/5 hover:text-foreground flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+    active && "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary font-medium",
+  );
+
 /** Desktop sidebar navigation. */
 export function NavLinks() {
   const pathname = usePathname();
   return (
     <nav className="flex flex-col gap-1" aria-label="Navigasi utama">
-      {LINKS.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          aria-current={isActive(pathname, href) ? "page" : undefined}
-          className={cn(
-            "text-muted-foreground hover:bg-foreground/5 hover:text-foreground flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-            isActive(pathname, href) && "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary font-medium",
-          )}
-        >
-          <Icon className="size-4" /> {label}
-        </Link>
-      ))}
+      {LINKS.map(({ href, label, icon: Icon, sub }) =>
+        sub ? (
+          <div key={href} className="flex flex-col gap-1">
+            <span className="text-muted-foreground flex items-center gap-2.5 px-3 py-2 text-sm">
+              <Icon className="size-4" /> {label}
+            </span>
+            {sub.map((s) => (
+              <Link
+                key={s.href}
+                href={s.href}
+                aria-current={isSubActive(pathname, s.href) ? "page" : undefined}
+                className={cn(linkClass(isSubActive(pathname, s.href)), "pl-9.5")}
+              >
+                {s.label}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Link
+            key={href}
+            href={href}
+            aria-current={isActive(pathname, href) ? "page" : undefined}
+            className={linkClass(isActive(pathname, href))}
+          >
+            <Icon className="size-4" /> {label}
+          </Link>
+        ),
+      )}
     </nav>
   );
 }

@@ -24,4 +24,13 @@ describe("googleCalendarUrl", () => {
     expect(p.dates).toBe("20261031/20261101");
     expect(p).not.toHaveProperty("location");
   });
+
+  it("uses the window for Google Calendar", () => {
+    const url = googleCalendarUrl({
+      title: "T",
+      start: new Date("2026-09-29T07:00:00Z"),
+      end: new Date("2026-10-01T02:00:00Z"),
+    });
+    expect(params(url).dates).toBe("20260929T070000Z/20261001T020000Z");
+  });
 });

@@ -17,6 +17,7 @@
     "check:llm-provider": "bash scripts/check-llm-provider.sh",
     "postinstall": "prisma generate",
     "storage:smoke": "node --conditions=react-server --env-file=.env.local scripts/storage-smoke.mts",
+    "ai:email": "node --no-warnings --env-file=.env.local scripts/email-fixtures.mts",
     "ai:fixtures": "node --no-warnings --env-file=.env.local scripts/extract-fixtures.mts",
     "ai:smoke": "node --no-warnings --env-file=.env.local scripts/llm-smoke.mts"
   },

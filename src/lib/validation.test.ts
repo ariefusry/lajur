@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toDateInput } from "./dates";
-import { applicationSchema, profileSchema } from "./validation";
+import { z } from "zod";
+import { applicationSchema, eventSchema, profileSchema } from "./validation";
 
 const base = { company: "PT Bank Mandiri", position: "ODP IT", source: "BUMN_PORTAL", currentStageId: "s1" };
 
@@ -39,5 +40,19 @@ describe("profileSchema", () => {
   it("accepts comma decimal GPA and rejects > 4", () => {
     expect(profileSchema.parse({ gpa: "3,45" }).gpa).toBe("3.45");
     expect(profileSchema.safeParse({ gpa: "4.5" }).success).toBe(false);
+  });
+});
+
+describe("eventSchema", () => {
+  it("accepts an optional open time before the close time, rejects one after", () => {
+    const base = { type: "ONLINE_TEST", startsAt: "2026-10-01T09:00" };
+    expect(eventSchema.parse({ ...base, opensAt: "" }).opensAt).toBeNull();
+    expect(eventSchema.parse(base).opensAt).toBeNull();
+    expect(eventSchema.parse({ ...base, opensAt: "2026-09-29T14:00" }).opensAt).toEqual(
+      new Date("2026-09-29T07:00:00Z"),
+    );
+    const bad = eventSchema.safeParse({ ...base, opensAt: "2026-10-02T09:00" });
+    expect(bad.success).toBe(false);
+    expect(z.flattenError(bad.error!).fieldErrors.opensAt?.[0]).toBe("Waktu mulai harus sebelum batas akhir");
   });
 });

@@ -8,18 +8,21 @@ const day = (d: Date) => toDateInput(d).replaceAll("-", ""); // Jakarta calendar
 
 /**
  * "Add to Google Calendar" link (prefilled event form, nothing is sent until the user saves it there).
- * Timed events last one hour; all-day events (deadlines) cover the Jakarta date of `start`.
+ * Timed events last one hour (or until `end`, which wins over `allDay`); all-day events (deadlines) cover the Jakarta date of `start`.
  */
 export function googleCalendarUrl(e: {
   title: string;
   start: Date;
+  end?: Date;
   allDay?: boolean;
   details?: string;
   location?: string | null;
 }) {
-  const dates = e.allDay
-    ? `${day(e.start)}/${day(new Date(e.start.getTime() + DAY_MS))}`
-    : `${stamp(e.start)}/${stamp(new Date(e.start.getTime() + HOUR_MS))}`;
+  const dates = e.end
+    ? `${stamp(e.start)}/${stamp(e.end)}`
+    : e.allDay
+      ? `${day(e.start)}/${day(new Date(e.start.getTime() + DAY_MS))}`
+      : `${stamp(e.start)}/${stamp(new Date(e.start.getTime() + HOUR_MS))}`;
   const q = new URLSearchParams({ action: "TEMPLATE", text: e.title, dates, ctz: "Asia/Jakarta" });
   if (e.details) q.set("details", e.details);
   if (e.location) q.set("location", e.location);

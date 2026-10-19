@@ -12,12 +12,12 @@ import { submitKeepingValues } from "@/lib/form";
 
 export function EventForm({
   action,
-  defaults = { type: "", startsAt: "", locationOrUrl: "" },
+  defaults = { type: "", startsAt: "", opensAt: "", locationOrUrl: "" },
   submitLabel,
   idPrefix,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
-  defaults?: { type: string; startsAt: string; locationOrUrl: string };
+  defaults?: { type: string; startsAt: string; opensAt: string; locationOrUrl: string };
   submitLabel: string;
   idPrefix: string;
 }) {
@@ -40,7 +40,7 @@ export function EventForm({
       <form
         ref={formRef}
         onSubmit={submitKeepingValues(formAction)}
-        className="grid gap-3 @2xl:grid-cols-[10rem_14rem_1fr_auto] @2xl:items-end"
+        className="grid gap-3 @2xl:grid-cols-[10rem_14rem_14rem_1fr_auto] @2xl:items-end"
       >
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-type`}>Jenis</Label>
@@ -55,7 +55,12 @@ export function EventForm({
           {err("type") && <p className="text-destructive text-xs">{err("type")}</p>}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor={`${idPrefix}-startsAt`}>Tanggal & jam (WIB)</Label>
+          <Label htmlFor={`${idPrefix}-opensAt`}>Mulai bisa dikerjakan (opsional)</Label>
+          <Input id={`${idPrefix}-opensAt`} name="opensAt" type="datetime-local" defaultValue={defaults.opensAt} />
+          {err("opensAt") && <p className="text-destructive text-xs">{err("opensAt")}</p>}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-startsAt`}>Tanggal & jam (WIB) / batas akhir</Label>
           <Input
             id={`${idPrefix}-startsAt`}
             name="startsAt"
@@ -77,7 +82,7 @@ export function EventForm({
         <Button type="submit" disabled={pending}>
           {pending ? "Menyimpan…" : submitLabel}
         </Button>
-        {state.message && !state.ok && <p className="text-destructive text-sm @2xl:col-span-4">{state.message}</p>}
+        {state.message && !state.ok && <p className="text-destructive text-sm @2xl:col-span-5">{state.message}</p>}
       </form>
     </div>
   );

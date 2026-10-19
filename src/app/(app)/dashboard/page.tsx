@@ -16,7 +16,7 @@ import {
 } from "@/lib/dashboard";
 import { db } from "@/lib/db";
 import { isFollowUpDue } from "@/lib/follow-up";
-import { daysUntil, formatDate, formatDateTime, fromDateInput, toDateInput } from "@/lib/dates";
+import { daysUntil, formatDate, formatEventWhen, fromDateInput, toDateInput } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS } from "@/lib/validation";
 
@@ -70,6 +70,7 @@ export default async function DashboardPage() {
         id: true,
         type: true,
         startsAt: true,
+        opensAt: true,
         locationOrUrl: true,
         application: { select: { id: true, company: true } },
       },
@@ -136,6 +137,7 @@ export default async function DashboardPage() {
       title: e.application.company,
       what: EVENT_TYPE_LABELS[e.type],
       at: e.startsAt,
+      opensAt: e.opensAt,
       withTime: true,
       location: e.locationOrUrl,
     })),
@@ -145,6 +147,7 @@ export default async function DashboardPage() {
       title: a.company,
       what: "Deadline pendaftaran",
       at: a.deadline!,
+      opensAt: null,
       withTime: false,
       location: null,
     })),
@@ -159,6 +162,7 @@ export default async function DashboardPage() {
         title: a.company,
         what: "Follow-up",
         at: a.nextActionAt!,
+        opensAt: null,
         withTime: false,
         location: null,
       })),
@@ -274,7 +278,8 @@ export default async function DashboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{u.title}</p>
                         <p className="text-muted-foreground truncate text-xs">
-                          {u.what} · {u.withTime ? formatDateTime(u.at) : formatDate(u.at)}
+                          {u.what} ·{" "}
+                          {u.withTime ? formatEventWhen({ startsAt: u.at, opensAt: u.opensAt }) : formatDate(u.at)}
                         </p>
                       </div>
                       <span
@@ -288,7 +293,8 @@ export default async function DashboardPage() {
                     </Link>
                     <AddToCalendar
                       title={`${u.what} · ${u.title}`}
-                      start={u.at}
+                      start={u.opensAt ?? u.at}
+                      end={u.opensAt ? u.at : undefined}
                       allDay={!u.withTime}
                       location={u.location}
                     />

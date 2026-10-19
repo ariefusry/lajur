@@ -4,7 +4,7 @@ import { AddToCalendar } from "@/components/add-to-calendar";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatDateTime, fromDateInput, toDateInput } from "@/lib/dates";
+import { formatEventWhen, fromDateInput, toDateInput } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS } from "@/lib/validation";
 
@@ -29,6 +29,7 @@ type Item = {
   isDeadline: boolean;
   location?: string | null;
   allDay?: boolean;
+  opensAt?: Date | null;
 };
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
@@ -62,6 +63,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     ...events.map((e) => ({
       key: e.id,
       at: e.startsAt,
+      opensAt: e.opensAt,
       label: EVENT_TYPE_LABELS[e.type],
       company: e.application.company,
       applicationId: e.application.id,
@@ -184,11 +186,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   >
                     {it.label}
                   </span>
-                  <span className="text-muted-foreground text-xs sm:order-3 sm:text-sm">{formatDateTime(it.at)}</span>
+                  <span className="text-muted-foreground text-xs sm:order-3 sm:text-sm">
+                    {formatEventWhen({ startsAt: it.at, opensAt: it.opensAt ?? null })}
+                  </span>
                 </Link>
                 <AddToCalendar
                   title={`${it.label} · ${it.company}`}
-                  start={it.at}
+                  start={it.opensAt ?? it.at}
+                  end={it.opensAt ? it.at : undefined}
                   allDay={it.allDay}
                   location={it.location}
                 />
