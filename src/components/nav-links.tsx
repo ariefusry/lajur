@@ -67,6 +67,7 @@ export function TabBar() {
       )}
       <nav
         aria-label="Navigasi utama"
+        data-tab-bar
         className="bg-background/80 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
       >
         <ul className="mx-auto grid max-w-md grid-cols-5">

@@ -15,7 +15,15 @@ import {
 } from "@dnd-kit/core";
 import { ArrowRightLeft, CalendarClock } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore, useTransition, type RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+  type RefObject,
+} from "react";
 import { toast } from "sonner";
 import { moveApplication } from "@/actions/applications";
 import { EligibilityBadge } from "@/components/eligibility-badge";
@@ -121,8 +129,35 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
 
   const activeCard = activeId ? cards.find((c) => c.id === activeId) : undefined;
 
-  // Fade the right edge while more columns are scrolled out of view.
   const scroller = useRef<HTMLDivElement>(null);
+
+  // Trello-style: the board is exactly one screen tall, so columns run to the bottom edge, the horizontal
+  // scrollbar stays in view, and a long column scrolls inside itself instead of stretching the page.
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    const main = el?.closest("main");
+    if (!el || !main) return;
+    const fit = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const pad = parseFloat(getComputedStyle(main).paddingBottom);
+      // Phones: down to just above the tab bar. main's tall bottom padding (room for the floating + button on
+      // pages that scroll) isn't needed here, so the margin takes it back.
+      const bar = document.querySelector("[data-tab-bar]")?.getBoundingClientRect();
+      const below = bar?.height ? window.innerHeight - bar.top + 12 : pad;
+      el.style.marginBottom = `${below - pad}px`;
+      // 320px floor: on a short landscape phone the page scrolls instead of the board shrinking to a sliver.
+      el.style.height = `${Math.max(320, window.innerHeight - top - below)}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    const ro = new ResizeObserver(fit); // the header above can wrap (demo banner, narrow screens)
+    ro.observe(main);
+    return () => {
+      window.removeEventListener("resize", fit);
+      ro.disconnect();
+    };
+  }, []);
+  // Fade the right edge while more columns are scrolled out of view.
   const [moreRight, setMoreRight] = useState(false);
   useEffect(() => {
     const el = scroller.current;
@@ -197,14 +232,14 @@ function Column({ stage, cards, ...props }: MoveProps & { stage: Stage; cards: C
           {cards.length}
         </span>
       </h2>
-      {cards.map((card) => (
-        <ApplicationCard key={card.id} card={card} {...props} />
-      ))}
-      {cards.length === 0 && (
-        <p className="text-muted-foreground rounded-xl border border-dashed px-3 py-6 text-center text-sm">
-          Belum ada lamaran. Tarik kartu ke sini.
-        </p>
-      )}
+      {/* Only the cards scroll; the title and "+ Tambah" stay put. -mx/px keeps card shadows from being clipped. */}
+      {/* pb-16 on phones: the last card can scroll clear of the floating + button. */}
+      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-1 pt-0.5 pb-16 md:pb-0.5">
+        {cards.map((card) => (
+          <ApplicationCard key={card.id} card={card} {...props} />
+        ))}
+        {cards.length === 0 && <p className="text-muted-foreground px-1.5 text-xs">Belum ada lamaran</p>}
+      </div>
       <Link
         href={`/applications/new?stage=${stage.id}`}
         className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground rounded-lg px-2 py-2 text-sm transition-colors"
