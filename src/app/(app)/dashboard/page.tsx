@@ -258,7 +258,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* What needs attention: dates coming up, and applications going quiet before they turn ghosted. */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         <Card
           title={`${AHEAD_DAYS} hari ke depan`}
           description="Tes, interview, MCU, dan deadline yang hampir tutup."
@@ -367,13 +367,14 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card
           title="Pipeline"
           description="Posisi semua lamaran saat ini. Klik untuk melihat daftarnya."
           className="lg:col-span-2"
         >
-          <ul className="space-y-1">
+          {/* Both columns end together: the rows share whatever height the taller right column adds. */}
+          <ul className="flex flex-1 flex-col justify-between gap-1">
             {pipeline.map((p) => (
               <li key={p.key}>
                 <Link
@@ -439,7 +440,7 @@ export default async function DashboardPage() {
             </div>
           </Card>
 
-          <Card title="Aktivitas terbaru" description="Perubahan tahap terakhir.">
+          <Card title="Aktivitas terbaru" description="Perubahan tahap terakhir." className="flex-1">
             <ul className="-mx-5 -mb-5 divide-y border-t">
               {latest.map((h) => (
                 <li key={h.id}>
