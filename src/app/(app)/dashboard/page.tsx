@@ -257,151 +257,159 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {/* What needs attention: dates coming up, and applications going quiet before they turn ghosted. */}
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <Card
-          title={`${AHEAD_DAYS} hari ke depan`}
-          description="Tes, interview, MCU, dan deadline yang hampir tutup."
-          action={
-            <Link href="/calendar" className="text-primary text-sm font-medium hover:underline">
-              Kalender
-            </Link>
-          }
-        >
-          {upcoming.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              Tidak ada jadwal atau deadline dalam {AHEAD_DAYS} hari ke depan.
-            </p>
-          ) : (
-            <ul className="-mx-5 -mb-5 divide-y border-t">
-              {upcoming.map((u) => {
-                const days = daysUntil(u.at);
-                return (
-                  <li key={u.key} className="flex items-center pr-3">
-                    <Link
-                      href={`/applications/${u.appId}`}
-                      className="hover:bg-foreground/5 flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 transition-colors"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{u.title}</p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {u.what} ·{" "}
-                          {u.withTime ? formatEventWhen({ startsAt: u.at, opensAt: u.opensAt }) : formatDate(u.at)}
-                        </p>
-                      </div>
+      {/* Two columns that end together: the pipeline takes the height the right column adds. On a phone they are
+          one list in the order that matters (what is coming, who to chase, then the overview). */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
+        <div className="contents lg:flex lg:flex-col lg:gap-4">
+          <Card
+            className="order-1 lg:order-none"
+            title={`${AHEAD_DAYS} hari ke depan`}
+            description="Tes, interview, MCU, dan deadline yang hampir tutup."
+            action={
+              <Link href="/calendar" className="text-primary text-sm font-medium hover:underline">
+                Kalender
+              </Link>
+            }
+          >
+            {upcoming.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Tidak ada jadwal atau deadline dalam {AHEAD_DAYS} hari ke depan.
+              </p>
+            ) : (
+              <ul className="-mx-5 -mb-5 divide-y border-t">
+                {upcoming.map((u) => {
+                  const days = daysUntil(u.at);
+                  return (
+                    <li key={u.key} className="flex items-center pr-3">
+                      <Link
+                        href={`/applications/${u.appId}`}
+                        className="hover:bg-foreground/5 flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{u.title}</p>
+                          <p className="text-muted-foreground truncate text-xs">
+                            {u.what} ·{" "}
+                            {u.withTime ? formatEventWhen({ startsAt: u.at, opensAt: u.opensAt }) : formatDate(u.at)}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+                            days <= 2 ? "bg-destructive/10 text-destructive" : "bg-foreground/5 text-muted-foreground",
+                          )}
+                        >
+                          {days <= 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`}
+                        </span>
+                      </Link>
+                      <AddToCalendar
+                        title={`${u.what} · ${u.title}`}
+                        start={u.opensAt ?? u.at}
+                        end={u.opensAt ? u.at : undefined}
+                        allDay={!u.withTime}
+                        location={u.location}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
+          <Card
+            title="Pipeline"
+            description="Posisi semua lamaran saat ini. Klik untuk melihat daftarnya."
+            className="order-3 lg:order-none lg:flex-1"
+          >
+            {/* Both columns end together: the rows share whatever height the taller right column adds. */}
+            <ul className="flex flex-1 flex-col justify-between gap-1">
+              {pipeline.map((p) => (
+                <li key={p.key}>
+                  <Link
+                    href={p.href}
+                    className="hover:bg-foreground/5 -mx-2 grid grid-cols-[minmax(6rem,9rem)_1fr_2rem] items-center gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors"
+                  >
+                    <span className="truncate">{p.label}</span>
+                    <span className="bg-muted h-2.5 rounded-full" aria-hidden>
                       <span
                         className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-                          days <= 2 ? "bg-destructive/10 text-destructive" : "bg-foreground/5 text-muted-foreground",
+                          "block h-full origin-left rounded-full motion-safe:animate-[bar-grow_700ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
+                          p.color,
                         )}
-                      >
-                        {days <= 0 ? "Hari ini" : days === 1 ? "Besok" : `${days} hari lagi`}
-                      </span>
-                    </Link>
-                    <AddToCalendar
-                      title={`${u.what} · ${u.title}`}
-                      start={u.opensAt ?? u.at}
-                      end={u.opensAt ? u.at : undefined}
-                      allDay={!u.withTime}
-                      location={u.location}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Card>
-
-        <Card
-          title="Perlu follow-up"
-          description={`Follow-up yang jatuh tempo, dan lamaran ${QUIET_DAYS}–${GHOSTED_DAYS - 1} hari tanpa kabar (jadi ghosted di ${GHOSTED_DAYS} hari).`}
-          action={
-            followUps.length > 0 && (
-              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
-                {followUps.length}
-              </span>
-            )
-          }
-        >
-          {followUps.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Tidak ada yang perlu di-follow-up hari ini.</p>
-          ) : (
-            <ul className="-mx-5 divide-y border-y">
-              {followUps.slice(0, 5).map((a) => (
-                <li key={a.id}>
-                  <Link
-                    href={`/applications/${a.id}`}
-                    className="hover:bg-foreground/5 flex items-center gap-3 px-5 py-3 transition-colors"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{a.company}</p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {stageById.get(a.currentStageId)?.name} · {a.position}
-                      </p>
-                    </div>
+                        style={{ width: `${(p.count / maxPipeline) * 100}%` }}
+                      />
+                    </span>
                     <span
-                      className={cn(
-                        "text-xs font-medium whitespace-nowrap tabular-nums",
-                        a.urgent ? "text-destructive" : "text-amber-700 dark:text-amber-300",
-                      )}
+                      className={cn("text-right font-medium tabular-nums", p.count === 0 && "text-muted-foreground")}
                     >
-                      {a.note}
+                      {p.count}
                     </span>
                   </Link>
                 </li>
               ))}
-              {followUps.length > 5 && (
-                <li className="text-muted-foreground px-5 py-3 text-xs">+{followUps.length - 5} lamaran lain</li>
-              )}
             </ul>
-          )}
-          {d.totals.ghosted > 0 && (
-            <Link
-              href="/applications?stage=ghosted"
-              className="text-muted-foreground hover:text-foreground mt-auto inline-flex items-center gap-1 text-xs"
-            >
-              {d.totals.ghosted} lamaran sudah ghosted (tanpa kabar {GHOSTED_DAYS}+ hari)
-              <ArrowRight className="size-3" />
-            </Link>
-          )}
-        </Card>
-      </div>
+          </Card>
+        </div>
+        <div className="contents lg:flex lg:flex-col lg:gap-4">
+          <Card
+            className="order-2 lg:order-none"
+            title="Perlu follow-up"
+            description={`Follow-up yang jatuh tempo, dan lamaran ${QUIET_DAYS}–${GHOSTED_DAYS - 1} hari tanpa kabar (jadi ghosted di ${GHOSTED_DAYS} hari).`}
+            action={
+              followUps.length > 0 && (
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 tabular-nums dark:text-amber-300">
+                  {followUps.length}
+                </span>
+              )
+            }
+          >
+            {followUps.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Tidak ada yang perlu di-follow-up hari ini.</p>
+            ) : (
+              <ul className="-mx-5 divide-y border-y">
+                {followUps.slice(0, 5).map((a) => (
+                  <li key={a.id}>
+                    <Link
+                      href={`/applications/${a.id}`}
+                      className="hover:bg-foreground/5 flex items-center gap-3 px-5 py-3 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{a.company}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {stageById.get(a.currentStageId)?.name} · {a.position}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "text-xs font-medium whitespace-nowrap tabular-nums",
+                          a.urgent ? "text-destructive" : "text-amber-700 dark:text-amber-300",
+                        )}
+                      >
+                        {a.note}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+                {followUps.length > 5 && (
+                  <li className="text-muted-foreground px-5 py-3 text-xs">+{followUps.length - 5} lamaran lain</li>
+                )}
+              </ul>
+            )}
+            {d.totals.ghosted > 0 && (
+              <Link
+                href="/applications?stage=ghosted"
+                className="text-muted-foreground hover:text-foreground mt-auto inline-flex items-center gap-1 text-xs"
+              >
+                {d.totals.ghosted} lamaran sudah ghosted (tanpa kabar {GHOSTED_DAYS}+ hari)
+                <ArrowRight className="size-3" />
+              </Link>
+            )}
+          </Card>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card
-          title="Pipeline"
-          description="Posisi semua lamaran saat ini. Klik untuk melihat daftarnya."
-          className="lg:col-span-2"
-        >
-          {/* Both columns end together: the rows share whatever height the taller right column adds. */}
-          <ul className="flex flex-1 flex-col justify-between gap-1">
-            {pipeline.map((p) => (
-              <li key={p.key}>
-                <Link
-                  href={p.href}
-                  className="hover:bg-foreground/5 -mx-2 grid grid-cols-[minmax(6rem,9rem)_1fr_2rem] items-center gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors"
-                >
-                  <span className="truncate">{p.label}</span>
-                  <span className="bg-muted h-2.5 rounded-full" aria-hidden>
-                    <span
-                      className={cn(
-                        "block h-full origin-left rounded-full motion-safe:animate-[bar-grow_700ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
-                        p.color,
-                      )}
-                      style={{ width: `${(p.count / maxPipeline) * 100}%` }}
-                    />
-                  </span>
-                  <span className={cn("text-right font-medium tabular-nums", p.count === 0 && "text-muted-foreground")}>
-                    {p.count}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <div className="flex flex-col gap-4">
-          <Card title="Lamaran per minggu" description={`${WEEKS} minggu terakhir, menurut tanggal melamar.`}>
+          <Card
+            className="order-4 lg:order-none"
+            title="Lamaran per minggu"
+            description={`${WEEKS} minggu terakhir, menurut tanggal melamar.`}
+          >
             <ul className="flex h-24 items-end gap-1" aria-label="Lamaran per minggu">
               {weekly.map((n, i) => (
                 // The whole column is the target, so an empty week can be hovered or focused too.
@@ -440,7 +448,11 @@ export default async function DashboardPage() {
             </div>
           </Card>
 
-          <Card title="Aktivitas terbaru" description="Perubahan tahap terakhir." className="flex-1">
+          <Card
+            title="Aktivitas terbaru"
+            description="Perubahan tahap terakhir."
+            className="order-5 flex-1 lg:order-none"
+          >
             <ul className="-mx-5 -mb-5 divide-y border-t">
               {latest.map((h) => (
                 <li key={h.id}>
