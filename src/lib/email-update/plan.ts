@@ -1,5 +1,6 @@
 // No "@/" imports: scripts/ load this through plain Node, and a client component re-plans with it.
 import type { EventType, StageKind, StageResult } from "../../generated/prisma/enums.ts";
+import { formatDate } from "../dates.ts";
 import { fold } from "../text.ts";
 import { parseWib, type EmailReading } from "./reading.ts";
 
@@ -197,4 +198,10 @@ export function summarizePlan(reading: EmailReading, changes: Change[], stages: 
     fail: name(changes.find((c) => c.kind === "fail")?.stageId),
     notes: changes.some((c) => c.kind === "notes"),
   };
+}
+
+/** New notes go below the existing ones, under today's date. */
+export function appendNotes(existing: string | null, text: string, today: Date): string {
+  const entry = `${formatDate(today)}\n${text}`;
+  return existing?.trim() ? `${existing.trimEnd()}\n\n${entry}` : entry;
 }

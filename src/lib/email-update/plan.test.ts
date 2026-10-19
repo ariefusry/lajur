@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EMAIL_FIXTURES } from "./fixtures";
-import { matchApplications, normalizeCompany, planEmailUpdate, summarizePlan } from "./plan";
+import { appendNotes, matchApplications, normalizeCompany, planEmailUpdate, summarizePlan } from "./plan";
+import { formatDate } from "../dates";
 import type { EmailReading } from "./reading";
 import { STAGE_TEMPLATES } from "../stage-templates";
 
@@ -202,6 +203,22 @@ describe("fixture expectations", () => {
     );
     expect(summarizePlan(peepl, planEmailUpdate(peepl, { stages: bumn, app: atAdm }), bumn)).toEqual(
       EMAIL_FIXTURES.find((f) => f.name.startsWith("Peepl"))!.expect,
+    );
+  });
+});
+
+describe("appendNotes", () => {
+  const today = new Date("2026-10-19T03:00:00Z");
+  const date = formatDate(today);
+
+  it("starts empty notes with the date", () => {
+    expect(appendNotes(null, "- Login: abc", today)).toBe(`${date}\n- Login: abc`);
+    expect(appendNotes("  ", "- Login: abc", today)).toBe(`${date}\n- Login: abc`);
+  });
+
+  it("appends below existing notes, never replacing them", () => {
+    expect(appendNotes("Pertanyaan: kenapa BUMN?", "- Bawa KTP", today)).toBe(
+      `Pertanyaan: kenapa BUMN?\n\n${date}\n- Bawa KTP`,
     );
   });
 });
