@@ -8,6 +8,8 @@ export type EmailFixture = {
   secrets: string[];
   /** The plan a correct reading gives for an application in Administrasi, with the BUMN stages. */
   expect: PlanSummary;
+  /** The day (WIB) the email's header says it was sent, when it has one. */
+  sentDate?: string;
 };
 
 // Made-up personal data; the shapes mirror real recruitment emails.
@@ -23,7 +25,13 @@ export const EMAIL_FIXTURES: EmailFixture[] = [
     },
     userName: "Budi Santoso Pratama",
     secrets: ["Budi"],
-    text: `Hi Budi,
+    sentDate: "2026-09-16",
+    text: `From: Apple Developer Academy <academy@example.com>
+To: Budi Santoso <budi@example.com>
+Date: Wed, Sep 16, 2026 at 5:12 PM
+Subject: Online Entry Test Invitation
+
+Hi Budi,
 Congratulations! You are one step closer to becoming a learner of Apple Developer Academy Indonesia – Cohort 2027.
 We are pleased to invite you to take the Online Entry Test, a critical part of the selection process. The test will take approximately 120 minutes, so please allocate sufficient time in a quiet and comfortable environment.
 You may take the test only once, using a PC or laptop equipped with a working microphone and webcam. Before starting, please click the button below to ensure your device is compatible:
@@ -88,6 +96,7 @@ Peepl`,
       fail: null,
       notes: true,
     },
+    sentDate: "2026-09-18",
     userName: "Budi Santoso Pratama",
     secrets: ["isstalentmanagement@id.issworld.com"],
     text: `Talent Management – ISS Indonesia <isstalentmanagement@id.issworld.com>
@@ -144,6 +153,7 @@ https://career.astra.co.id/lowongan/lowongan-detail-page/13642/Mobile+Developer+
   {
     name: "BNI - rejection after online assessment",
     expect: { kind: "REJECTION", move: "Ditolak", events: [], fail: "Tes Online/TPA", notes: false },
+    sentDate: "2026-09-15",
     userName: "Budi Santoso Pratama",
     secrets: ["Budi Santoso Pratama", "ODPIT/07092026/CHTELKOMIT/0999"],
     text: `BNI Talent Search <talentsearch@bni.co.id>

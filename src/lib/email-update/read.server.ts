@@ -1,7 +1,14 @@
 import "server-only";
 import { generateStructured } from "@/lib/ai/provider";
 import { redactPII } from "@/lib/ai/redact";
-import { EMAIL_SYSTEM, EmailReading, normalizeEmailText, rehydrateReading, verifyReading } from "./reading";
+import {
+  EMAIL_SYSTEM,
+  EmailReading,
+  emailPrompt,
+  normalizeEmailText,
+  rehydrateReading,
+  verifyReading,
+} from "./reading";
 
 /**
  * Normalize → redact → LLM (only the redacted text) → drop what the redacted text doesn't back up → put the
@@ -12,7 +19,7 @@ export async function readEmail(text: string, user: { id: string; name: string |
   const { object } = await generateStructured({
     schema: EmailReading,
     system: EMAIL_SYSTEM,
-    prompt: redacted.text,
+    prompt: emailPrompt(redacted.text),
     feature: "EMAIL_UPDATE",
     userId: user.id,
   });

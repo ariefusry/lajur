@@ -21,6 +21,8 @@ const base: EmailReading = {
   events: [],
   notes: [],
   sourceUrl: null,
+  sentAt: null,
+  sentQuote: null,
 };
 const text = "Halo [NAME_1],\nPT Acme Indonesia mengundang\nOnline Entry Test.\nTest Closes: 24 Sep 2026 11:00 WIB";
 
@@ -120,6 +122,34 @@ Link: [URL_1]`;
 });
 
 // Answer shapes seen in live runs (pnpm ai:email) against the fixtures.
+describe("verifyReading sent date", () => {
+  const now = new Date("2026-10-20T03:00:00Z");
+  const withHeader = "Date: Fri, Sep 18, 2026 at 3:22 PM\n" + text;
+  const sent = (sentAt: string, sentQuote: string) => ({ ...base, sentAt, sentQuote });
+
+  it("keeps a date backed by a header line, with or without a year", () => {
+    const r = verifyReading(sent("2026-09-18T15:22", "Date: Fri, Sep 18, 2026 at 3:22 PM"), withHeader, now);
+    expect(r.sentAt).toBe("2026-09-18T15:22");
+    const noYear = "Fri, Sep 18, 3:22 PM\n" + text;
+    expect(verifyReading(sent("2026-09-18", "Fri, Sep 18, 3:22 PM"), noYear, now).sentAt).toBe("2026-09-18");
+  });
+
+  it("drops an invented quote, a different day, a different year, the future and an unparseable date", () => {
+    expect(verifyReading(sent("2026-09-18", "Date: tidak ada 18"), text, now).sentAt).toBeNull();
+    expect(verifyReading(sent("2026-09-19", "Date: Fri, Sep 18, 2026 at 3:22 PM"), withHeader, now).sentAt).toBeNull();
+    expect(verifyReading(sent("2025-09-18", "Date: Fri, Sep 18, 2026 at 3:22 PM"), withHeader, now).sentAt).toBeNull();
+    const future = "Date: Dec 18, 2026\n" + text;
+    expect(verifyReading(sent("2026-12-18", "Date: Dec 18, 2026"), future, now).sentAt).toBeNull();
+    expect(verifyReading(sent("18 Sep", "Date: Fri, Sep 18, 2026 at 3:22 PM"), withHeader, now).sentAt).toBeNull();
+    expect(
+      verifyReading(sent("2026-09-18", "Date: Fri, Sep 18, 2026 at 3:22 PM"), withHeader, now).sentQuote,
+    ).not.toBeNull();
+    expect(
+      verifyReading(sent("2026-09-19", "Date: Fri, Sep 18, 2026 at 3:22 PM"), withHeader, now).sentQuote,
+    ).toBeNull();
+  });
+});
+
 describe("verifyReading on live answer shapes", () => {
   const fixture = (start: string) => normalizeEmailText(EMAIL_FIXTURES.find((f) => f.name.startsWith(start))!.text);
 

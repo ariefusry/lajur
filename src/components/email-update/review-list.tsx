@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { EventType, JobSource, StageKind, StageResult } from "@/generated/prisma/enums";
 import { planEmailUpdate, type Change } from "@/lib/email-update/plan";
-import type { EmailReading } from "@/lib/email-update/reading";
+import { parseWib, type EmailReading } from "@/lib/email-update/reading";
 import { optionsFrom } from "@/lib/utils";
 import { JOB_SOURCE_LABELS } from "@/lib/validation";
 
@@ -64,6 +64,8 @@ export function ReviewList({ result, onCancel }: { result: EmailUpdateResult; on
     source: "",
     url: reading.sourceUrl ?? "",
   });
+  // The day the email was sent (read from its header, or typed): the history is dated then. Empty = today.
+  const [sentDate, setSentDate] = useState(reading.sentAt?.slice(0, 10) ?? "");
   const [pending, startTransition] = useTransition();
 
   const app = candidates.find((a) => a.id === appId);
@@ -92,8 +94,11 @@ export function ReviewList({ result, onCancel }: { result: EmailUpdateResult; on
               position: newApp.position.trim(),
               source: newApp.source as JobSource,
               url: newApp.url.trim() || null,
+              // A confirmation email is when the application was filed.
+              appliedAt: reading.kind === "APPLICATION_RECEIVED" ? sentDate : "",
             },
         changes: selected,
+        sentAt: (sentDate && parseWib(sentDate)?.toISOString()) || null,
       });
       if (!res.ok) {
         toast.error(res.message);
@@ -140,6 +145,15 @@ export function ReviewList({ result, onCancel }: { result: EmailUpdateResult; on
             ]}
           />
         </div>
+      </div>
+
+      <div className="space-y-1.5 sm:w-64">
+        <Label htmlFor="sent-date">Tanggal email diterima</Label>
+        <Input id="sent-date" type="date" value={sentDate} onChange={(e) => setSentDate(e.target.value)} />
+        <p className="text-muted-foreground text-xs">
+          {reading.sentQuote ? `Dibaca dari: “${reading.sentQuote}”. ` : "Tidak ada tanggal di email. "}
+          Riwayat tahap dicatat pada tanggal ini{sentDate ? "" : " (kosong = hari ini)"}.
+        </p>
       </div>
 
       <ul className="bg-card divide-y rounded-xl border">

@@ -34,7 +34,7 @@ const inputSchema = z
   .object({
     applicationId: key.nullable(),
     newApplication: applicationSchema
-      .pick({ company: true, position: true, source: true })
+      .pick({ company: true, position: true, source: true, appliedAt: true })
       .extend({
         url: z
           .url({ protocol: /^https?$/ })
@@ -43,6 +43,8 @@ const inputSchema = z
       })
       .nullable(),
     changes: z.array(changeSchema).max(20),
+    // When the email was sent: the history is dated then instead of today. Ignored when it is in the future.
+    sentAt: instant.nullable().optional(),
   })
   .refine((i) => (i.applicationId === null) !== (i.newApplication === null));
 
@@ -56,7 +58,7 @@ export async function applyEmailUpdate(
   if (isReadOnly(user)) return { ok: false, message: DEMO_READ_ONLY_MESSAGE };
   const parsed = inputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Data perubahan tidak valid." };
-  const { applicationId, newApplication, changes } = parsed.data;
+  const { applicationId, newApplication, changes, sentAt } = parsed.data;
 
   const stageIds = [...new Set(changes.flatMap((c) => (c.kind === "move" || c.kind === "fail" ? [c.stageId] : [])))];
   if ((await db.stage.count({ where: { id: { in: stageIds }, userId: user.id } })) !== stageIds.length) {
@@ -75,12 +77,17 @@ export async function applyEmailUpdate(
     : null;
   if (newApplication && !startStage) return { ok: false, message: "Atur tahap seleksi di Pengaturan dulu." };
 
-  const stages = await db.stage.findMany({ where: { userId: user.id }, select: { id: true, name: true, order: true, kind: true } });
+  const stages = await db.stage.findMany({
+    where: { userId: user.id },
+    select: { id: true, name: true, order: true, kind: true },
+  });
 
   let id: string;
   try {
     id = await db.$transaction(async (tx) => {
       const now = new Date();
+      // The history is dated when the email was sent. Not in the future, and not before the card's own last step.
+      const sent = sentAt && Date.parse(sentAt) < now.getTime() ? new Date(sentAt) : now;
       const app = applicationId
         ? await tx.application.findFirstOrThrow({
             where: { id: applicationId, userId: user.id },
@@ -95,11 +102,13 @@ export async function applyEmailUpdate(
               ...newApplication!,
               userId: user.id,
               currentStageId: startStage!.id,
-              history: { create: { stageId: startStage!.id, enteredAt: now } },
+              history: { create: { stageId: startStage!.id, enteredAt: sent } },
             },
             select: { id: true, currentStageId: true, history: { select: { stageId: true, enteredAt: true } } },
           });
       const appId = app.id;
+      const lastEntered = app.history.at(-1)?.enteredAt;
+      const base = applicationId && lastEntered && sent < lastEntered ? now : sent;
       const lastStep = (stageId?: string) =>
         tx.stageHistory.findFirst({
           where: { applicationId: appId, ...(stageId && { stageId }) },
@@ -107,7 +116,7 @@ export async function applyEmailUpdate(
           select: { id: true, notes: true },
         });
 
-      for (const w of planHistoryWrites(app, stages, changes, now)) {
+      for (const w of planHistoryWrites(app, stages, changes, base)) {
         if (w.op === "move") {
           await changeStage(tx, appId, user.id, w.stageId, w.enteredAt);
         } else if (w.op === "markPassed") {
@@ -147,7 +156,7 @@ export async function applyEmailUpdate(
         if (step) {
           await tx.stageHistory.update({
             where: { id: step.id },
-            data: { notes: appendNotes(step.notes, c.text, new Date()) },
+            data: { notes: appendNotes(step.notes, c.text, base) },
           });
         }
       }

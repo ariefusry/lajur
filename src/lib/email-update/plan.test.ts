@@ -26,6 +26,8 @@ const reading = (r: Partial<EmailReading>): EmailReading => ({
   events: [],
   notes: [],
   sourceUrl: null,
+  sentAt: null,
+  sentQuote: null,
   ...r,
 });
 

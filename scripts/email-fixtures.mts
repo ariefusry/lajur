@@ -7,6 +7,7 @@ import { EMAIL_FIXTURES } from "../src/lib/email-update/fixtures.ts";
 import { matchApplications, planEmailUpdate, summarizePlan } from "../src/lib/email-update/plan.ts";
 import {
   EMAIL_SYSTEM,
+  emailPrompt,
   EmailReading,
   normalizeEmailText,
   rehydrateReading,
@@ -52,8 +53,8 @@ async function run(ref: ModelRef, f: (typeof EMAIL_FIXTURES)[number]) {
   const started = Date.now();
   try {
     // Like provider.ts: one retry with the retry settings when the answer fails the schema.
-    let r = await callOnce(ref, EmailReading, EMAIL_SYSTEM, redacted.text);
-    if (!r.data) r = await callOnce(ref, EmailReading, EMAIL_SYSTEM, redacted.text, true);
+    let r = await callOnce(ref, EmailReading, EMAIL_SYSTEM, emailPrompt(redacted.text));
+    if (!r.data) r = await callOnce(ref, EmailReading, EMAIL_SYSTEM, emailPrompt(redacted.text), true);
     if (!r.data) throw Object.assign(new Error(r.schemaError ?? "invalid"), { name: "InvalidOutput" });
     const reading = rehydrateReading(verifyReading(r.data, redacted.text), redacted.map);
     if (verbose) console.log(JSON.stringify({ ...base, raw: r.data, verified: reading }, null, 2));
@@ -66,6 +67,7 @@ async function run(ref: ModelRef, f: (typeof EMAIL_FIXTURES)[number]) {
       events: JSON.stringify(got.events) === JSON.stringify(e.events),
       fail: got.fail === e.fail,
       notes: got.notes === e.notes,
+      sent: (reading.sentAt?.slice(0, 10) ?? undefined) === f.sentDate,
     };
     return {
       ...base,

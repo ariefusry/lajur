@@ -30,6 +30,9 @@ export const EmailReading = z.object({
       quote: z.string(), // exact substring of the email
     }),
   ),
+  // When the email was sent or received, as written in its header ("YYYY-MM-DD" or "YYYY-MM-DDTHH:mm", WIB).
+  sentAt: z.string().nullable(),
+  sentQuote: z.string().nullable(), // the header line it comes from
   notes: z.array(z.string()), // short points; may contain placeholders such as [CRED_1]
   sourceUrl: z.string().nullable(),
 });
@@ -48,8 +51,16 @@ Aturan:
 - Semua waktu dalam WIB (Asia/Jakarta). Format "YYYY-MM-DD" atau "YYYY-MM-DDTHH:mm" (24 jam). Kalau email hanya menyebut tanggal, isi tanggalnya saja tanpa jam. Kalau tahun tidak disebut, jangan buat event itu.
 - Rentang waktu ("dibuka ... ditutup ...", "open ... close ...") ditulis sebagai opensAt (buka) dan closesAt (tutup). Untuk satu waktu saja, opensAt null dan closesAt berisi waktunya.
 - Jangan pernah memakai tanggal kirim email atau baris header email (contoh "Fri, Sep 18, 3:22 PM") sebagai jadwal.
+- sentAt: kapan email ini dikirim atau diterima, HANYA kalau tertulis di header atau di atas email (baris seperti "Date:", "Sent:", "Dikirim:", "Tanggal:", "On Fri, Sep 18, 2026 at 3:22 PM ... wrote:", atau "Fri, Sep 18, 3:22 PM"). Format "YYYY-MM-DD" atau "YYYY-MM-DDTHH:mm" (WIB). Kalau tahun tidak tertulis, pakai tahun terbaru yang tidak melewati "Hari ini" di awal pesan. sentQuote WAJIB berisi baris header itu, disalin persis. Tanggal di isi email (jadwal tes, batas waktu, tanggal lamaran) BUKAN tanggal kirim. Kalau tidak ada tanggal kirim, isi sentAt dan sentQuote dengan null.
 - Salin placeholder seperti [CRED_1] atau [URL_1] persis apa adanya, jangan diganti atau ditebak.
 - notes: poin singkat berisi instruksi penting, yaitu durasi, syarat perangkat, berkas yang diminta beserta format nama file, dan info login. Tulis link, username, dan password sebagai baris terpisah: "Link: [URL_1]", "Username: [CRED_1]", "Password: [CRED_2]".`;
+
+/** The message sent to the model: today (WIB), so a header without a year ("Fri, Sep 18") resolves to the latest such date. */
+export function emailPrompt(redactedText: string, now = new Date()) {
+  return `Hari ini: ${new Date(now.getTime() + 7 * 36e5).toISOString().slice(0, 10)}
+
+${redactedText}`;
+}
 
 /** Trim + tidy whitespace; the normalized text is what gets redacted, sent, and quote-checked. */
 export function normalizeEmailText(text: string) {
@@ -84,9 +95,9 @@ const hasNumber = (s: string, n: number) => new RegExp(`(?<!\\d)0?${n}(?!\\d)`).
  * case forgiven); an event stays only if its quote carries the closing day (a window quoted by its opening line
  * gets the next line of the email added to its quote); opensAt stays only if it is before closesAt and its day
  * appears in the email; company, position, stage and link are nulled unless written in the email; the kind falls
- * back to OTHER (and kindQuote to "") without evidence.
+ * back to OTHER (and kindQuote to "") without evidence; the sent date needs its header line.
  */
-export function verifyReading(r: EmailReading, text: string): EmailReading {
+export function verifyReading(r: EmailReading, text: string, now = new Date()): EmailReading {
   const haystack = fold(text);
   const found = (q: string | null) => !!q && fold(q).length > 0 && haystack.includes(fold(q));
   const lines = text.split("\n");
@@ -120,8 +131,21 @@ export function verifyReading(r: EmailReading, text: string): EmailReading {
   const received = r.kind === "APPLICATION_RECEIVED" && (companyOk || !!position || !!sourceUrl);
   // Models also call such a table OTHER; a company with a position or link and no schedule is still one.
   const table = r.kind === "OTHER" && events.length === 0 && companyOk && (!!position || !!sourceUrl);
+  // The sent date stays only if its header line is in the email, carries the day (and the year, when it has one),
+  // and is a real date that is not in the future or years old.
+  const sent = r.sentAt ? parseWib(r.sentAt) : null;
+  const year = r.sentQuote?.match(/(?<!\d)20\d\d(?!\d)/)?.[0];
+  const sentOk =
+    !!sent &&
+    found(r.sentQuote) &&
+    hasNumber(r.sentQuote!, +r.sentAt!.slice(8, 10)) &&
+    (!year || year === r.sentAt!.slice(0, 4)) &&
+    sent.getTime() <= now.getTime() + 864e5 &&
+    sent.getTime() >= now.getTime() - 3 * 365 * 864e5;
   return {
     ...r,
+    sentAt: sentOk ? r.sentAt : null,
+    sentQuote: sentOk ? r.sentQuote : null,
     company: companyOk ? r.company : null,
     companyQuote: found(r.companyQuote) ? r.companyQuote : null,
     position,
@@ -142,6 +166,7 @@ export function rehydrateReading(r: EmailReading, map: PiiMap): EmailReading {
     companyQuote: back(r.companyQuote),
     position: back(r.position),
     kindQuote: rehydrate(r.kindQuote, map),
+    sentQuote: back(r.sentQuote),
     stageName: back(r.stageName),
     events: r.events.map((e) => ({ ...e, quote: rehydrate(e.quote, map) })),
     notes: r.notes.map((n) => rehydrate(n, map)),
