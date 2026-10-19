@@ -100,6 +100,12 @@ export default async function ApplicationDetailPage({
 
   // Progress: the open stages in order, marked done / current / ahead; a closing stage (Ditolak) is shown at the end.
   const reached = new Set(app.history.map((h) => h.stageId));
+  // A stage whose latest step failed is shown as failed, not done.
+  const failedStages = new Set(
+    [...new Map(app.history.map((h) => [h.stageId, h.result])).entries()]
+      .filter(([, r]) => r === "FAILED")
+      .map(([id]) => id),
+  );
   const closed = app.currentStage.kind === "REJECTED" || app.currentStage.kind === "WITHDRAWN";
   const steps = stages.filter((s) => s.kind !== "REJECTED" && s.kind !== "WITHDRAWN");
   const currentIndex = steps.findIndex((s) => s.id === app.currentStageId);
@@ -151,7 +157,13 @@ export default async function ApplicationDetailPage({
                 key={s.id}
                 className={cn(
                   "h-1.5 flex-1 rounded-full",
-                  i === currentIndex ? "bg-primary" : reached.has(s.id) ? "bg-primary/40" : "bg-muted",
+                  i === currentIndex
+                    ? "bg-primary"
+                    : failedStages.has(s.id)
+                      ? "bg-destructive/60"
+                      : reached.has(s.id)
+                        ? "bg-primary/40"
+                        : "bg-muted",
                 )}
               />
             ))}
@@ -162,11 +174,18 @@ export default async function ApplicationDetailPage({
         <ol aria-label="Progres tahap" className="-mx-1 hidden items-center gap-1 overflow-x-auto px-1 pb-1 sm:flex">
           {steps.map((s, i) => {
             const current = s.id === app.currentStageId;
-            const done = !current && reached.has(s.id);
+            const failed = !current && failedStages.has(s.id);
+            const done = !current && !failed && reached.has(s.id);
             return (
               <li key={s.id} className="flex shrink-0 items-center gap-1">
                 {i > 0 && (
-                  <span aria-hidden className={cn("h-px w-3", done || current ? "bg-primary/50" : "bg-border")} />
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "h-px w-3",
+                      failed ? "bg-destructive/50" : done || current ? "bg-primary/50" : "bg-border",
+                    )}
+                  />
                 )}
                 <span
                   aria-current={current ? "step" : undefined}
@@ -174,10 +193,12 @@ export default async function ApplicationDetailPage({
                     "rounded-lg border px-2.5 py-1 text-xs whitespace-nowrap",
                     current && "border-primary bg-primary text-primary-foreground font-medium",
                     done && "border-primary/30 text-primary",
-                    !current && !done && "text-muted-foreground",
+                    failed && "border-destructive/30 text-destructive",
+                    !current && !done && !failed && "text-muted-foreground",
                   )}
                 >
                   {done && "✓ "}
+                  {failed && "✗ "}
                   {s.name}
                 </span>
               </li>
