@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { EMAIL_FIXTURES } from "./fixtures";
-import { appendNotes, matchApplications, normalizeCompany, planEmailUpdate, summarizePlan } from "./plan";
+import {
+  appendNotes,
+  matchApplications,
+  normalizeCompany,
+  planEmailUpdate,
+  planHistoryWrites,
+  summarizePlan,
+} from "./plan";
 import { formatDate } from "../dates";
 import type { EmailReading } from "./reading";
 import { STAGE_TEMPLATES } from "../stage-templates";
@@ -238,6 +245,58 @@ describe("planEmailUpdate", () => {
 
   it("plans without an application", () => {
     expect(planEmailUpdate(peepl, { stages: bumn, app: null }).map((c) => c.kind)).toEqual(["move", "event", "notes"]);
+  });
+});
+
+describe("planHistoryWrites", () => {
+  const now = new Date("2026-10-19T03:00:00.000Z");
+  const at = (ms: number) => new Date(now.getTime() + ms);
+  const day = (d: number) => new Date(Date.UTC(2026, 8, d));
+  const move = { id: "move", kind: "move", stageId: "Ditolak", quote: "" } as const;
+  const fail = { id: "fail", kind: "fail", stageId: "Tes Online/TPA", quote: "Online Assessment" } as const;
+  const inAdm = {
+    currentStageId: "Administrasi",
+    history: [
+      { stageId: "Wishlist", enteredAt: day(1) },
+      { stageId: "Administrasi", enteredAt: day(2) },
+    ],
+  };
+
+  it("in Administrasi, move to Ditolak + fail: records the failed stage, then moves", () => {
+    expect(planHistoryWrites(inAdm, bumn, [move, fail], now)).toEqual([
+      { op: "addFailed", stageId: "Tes Online/TPA", enteredAt: at(1) },
+      { op: "move", stageId: "Ditolak", enteredAt: at(2) },
+    ]);
+  });
+
+  it("already in Ditolak, fail only: records the failed stage just before Ditolak, never moving out of it", () => {
+    const inDitolak = {
+      currentStageId: "Ditolak",
+      history: [...inAdm.history, { stageId: "Ditolak", enteredAt: day(5) }],
+    };
+    expect(planHistoryWrites(inDitolak, bumn, [fail], now)).toEqual([
+      { op: "addFailed", stageId: "Tes Online/TPA", enteredAt: new Date(day(5).getTime() - 1) },
+    ]);
+    // A move to the stage it is already in changes nothing either.
+    expect(planHistoryWrites(inDitolak, bumn, [move, fail], now)).toEqual([
+      { op: "addFailed", stageId: "Tes Online/TPA", enteredAt: new Date(day(5).getTime() - 1) },
+    ]);
+  });
+
+  it("in Administrasi, fail only (move unticked): moves on to the failed stage and marks it", () => {
+    expect(planHistoryWrites(inAdm, bumn, [fail], now)).toEqual([
+      { op: "move", stageId: "Tes Online/TPA", enteredAt: at(1) },
+      { op: "markFailed", stageId: "Tes Online/TPA" },
+    ]);
+  });
+
+  it("marks a stage that already has a step, and writes nothing without move or fail", () => {
+    const admFail = { ...fail, stageId: "Administrasi" };
+    expect(planHistoryWrites(inAdm, bumn, [move, admFail], now)).toEqual([
+      { op: "markFailed", stageId: "Administrasi" },
+      { op: "move", stageId: "Ditolak", enteredAt: at(1) },
+    ]);
+    expect(planHistoryWrites(inAdm, bumn, [{ id: "notes", kind: "notes", text: "x" }], now)).toEqual([]);
   });
 });
 

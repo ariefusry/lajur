@@ -8,7 +8,13 @@ import type { Prisma } from "@/generated/prisma/client";
  * and the edit form. The row lock makes two moves at once (two tabs, two devices) run one after the other
  * instead of both reading the same history.
  */
-export async function changeStage(tx: Prisma.TransactionClient, id: string, userId: string, stageId: string) {
+export async function changeStage(
+  tx: Prisma.TransactionClient,
+  id: string,
+  userId: string,
+  stageId: string,
+  enteredAt?: Date, // for the new step; defaults to now
+) {
   const [app] = await tx.$queryRaw<{ currentStageId: string }[]>`
     SELECT "currentStageId" FROM "Application" WHERE id = ${id} AND "userId" = ${userId} FOR UPDATE`;
   const target = await tx.stage.findFirst({ where: { id: stageId, userId }, select: { id: true, order: true } });
@@ -27,6 +33,6 @@ export async function changeStage(tx: Prisma.TransactionClient, id: string, user
   if (drop.length) await tx.stageHistory.deleteMany({ where: { id: { in: drop } } });
   await tx.application.update({
     where: { id },
-    data: { currentStageId: stageId, ...(append && { history: { create: { stageId } } }) },
+    data: { currentStageId: stageId, ...(append && { history: { create: { stageId, enteredAt } } }) },
   });
 }

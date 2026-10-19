@@ -6,7 +6,7 @@ import { EventType } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
-import { appendNotes, type Change } from "@/lib/email-update/plan";
+import { appendNotes, planHistoryWrites, type Change } from "@/lib/email-update/plan";
 import { changeStage } from "@/lib/stage-change";
 import { applicationSchema } from "@/lib/validation";
 
@@ -75,37 +75,49 @@ export async function applyEmailUpdate(
     : null;
   if (newApplication && !startStage) return { ok: false, message: "Atur tahap seleksi di Pengaturan dulu." };
 
+  const stages = await db.stage.findMany({ where: { userId: user.id }, select: { id: true, order: true, kind: true } });
+
   let id: string;
   try {
     id = await db.$transaction(async (tx) => {
-      const appId =
-        applicationId ??
-        (
-          await tx.application.create({
+      const now = new Date();
+      const app = applicationId
+        ? await tx.application.findFirstOrThrow({
+            where: { id: applicationId, userId: user.id },
+            select: {
+              id: true,
+              currentStageId: true,
+              history: { orderBy: [{ enteredAt: "asc" }, { id: "asc" }], select: { stageId: true, enteredAt: true } },
+            },
+          })
+        : await tx.application.create({
             data: {
               ...newApplication!,
               userId: user.id,
               currentStageId: startStage!.id,
-              history: { create: { stageId: startStage!.id } },
+              history: { create: { stageId: startStage!.id, enteredAt: now } },
             },
-            select: { id: true },
-          })
-        ).id;
+            select: { id: true, currentStageId: true, history: { select: { stageId: true, enteredAt: true } } },
+          });
+      const appId = app.id;
       const lastStep = (stageId?: string) =>
         tx.stageHistory.findFirst({
           where: { applicationId: appId, ...(stageId && { stageId }) },
-          orderBy: { enteredAt: "desc" },
+          orderBy: [{ enteredAt: "desc" }, { id: "desc" }],
           select: { id: true, notes: true },
         });
 
-      for (const c of changes) {
-        if (c.kind !== "fail") continue;
-        if (!(await lastStep(c.stageId))) await changeStage(tx, appId, user.id, c.stageId);
-        const step = await lastStep(c.stageId);
-        if (step) await tx.stageHistory.update({ where: { id: step.id }, data: { result: "FAILED" } });
-      }
-      for (const c of changes) {
-        if (c.kind === "move") await changeStage(tx, appId, user.id, c.stageId);
+      for (const w of planHistoryWrites(app, stages, changes, now)) {
+        if (w.op === "move") {
+          await changeStage(tx, appId, user.id, w.stageId, w.enteredAt);
+        } else if (w.op === "addFailed") {
+          await tx.stageHistory.create({
+            data: { applicationId: appId, stageId: w.stageId, enteredAt: w.enteredAt, result: "FAILED" },
+          });
+        } else {
+          const step = await lastStep(w.stageId);
+          if (step) await tx.stageHistory.update({ where: { id: step.id }, data: { result: "FAILED" } });
+        }
       }
       for (const c of changes) {
         if (c.kind !== "event") continue;

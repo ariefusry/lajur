@@ -193,6 +193,50 @@ export function planEmailUpdate(reading: EmailReading, ctx: PlanContext): Change
   return changes;
 }
 
+export type HistoryWrite =
+  | { op: "move"; stageId: string; enteredAt: Date } // changeStage
+  | { op: "addFailed"; stageId: string; enteredAt: Date } // a new FAILED step
+  | { op: "markFailed"; stageId: string }; // that stage's latest step becomes FAILED
+
+/**
+ * The stage-history writes for the checked move and fail changes, in order. A failed stage that has no step yet is
+ * recorded in place, just before the stage the card ends in, when that one comes later or is a rejection: the card
+ * is never moved back (out of Ditolak) because of a fail. Otherwise the card moves on to it first. New steps get
+ * increasing times from `now`, so they read in this order even within one transaction.
+ */
+export function planHistoryWrites(
+  app: { currentStageId: string; history: { stageId: string; enteredAt: Date }[] },
+  stages: { id: string; order: number; kind: StageKind }[],
+  changes: Change[],
+  now: Date,
+): HistoryWrite[] {
+  let time = now.getTime();
+  const next = () => new Date(++time);
+  const stage = (id: string) => stages.find((s) => s.id === id);
+  const move = changes.findLast(
+    (c): c is Extract<Change, { kind: "move" }> => c.kind === "move" && c.stageId !== app.currentStageId,
+  );
+  const end = stage(move?.stageId ?? app.currentStageId);
+  const endStep = app.history.findLast((h) => h.stageId === end?.id);
+
+  const writes: HistoryWrite[] = [];
+  for (const c of changes) {
+    if (c.kind !== "fail") continue;
+    const failed = stage(c.stageId);
+    if (app.history.some((h) => h.stageId === c.stageId)) {
+      writes.push({ op: "markFailed", stageId: c.stageId });
+    } else if (end && failed && (end.kind === "REJECTED" || end.order > failed.order)) {
+      // Before the move's new step, or just before the step the card already ends in.
+      const enteredAt = move || !endStep ? next() : new Date(endStep.enteredAt.getTime() - 1);
+      writes.push({ op: "addFailed", stageId: c.stageId, enteredAt });
+    } else {
+      writes.push({ op: "move", stageId: c.stageId, enteredAt: next() }, { op: "markFailed", stageId: c.stageId });
+    }
+  }
+  if (move) writes.push({ op: "move", stageId: move.stageId, enteredAt: next() });
+  return writes;
+}
+
 export type PlanSummary = {
   kind: EmailReading["kind"];
   move: string | null; // stage name
