@@ -65,3 +65,16 @@ export function formatShortDateTime(date: Date): string {
     minute: "2-digit",
   }).format(date);
 }
+
+type EventWindow = { startsAt: Date; opensAt: Date | null };
+
+/** "open – close" for events with an open time, otherwise just the time. */
+export function formatEventWhen(e: EventWindow): string {
+  return e.opensAt ? `${formatDateTime(e.opensAt)} – ${formatDateTime(e.startsAt)}` : formatDateTime(e.startsAt);
+}
+
+export function formatEventWhenShort(e: EventWindow): string {
+  return e.opensAt
+    ? `${formatShortDateTime(e.opensAt)} – ${formatShortDateTime(e.startsAt)}`
+    : formatShortDateTime(e.startsAt);
+}
