@@ -192,8 +192,8 @@ export default async function ApplicationDetailPage({
                   className={cn(
                     "rounded-lg border px-2.5 py-1 text-xs whitespace-nowrap",
                     current && "border-primary bg-primary text-primary-foreground font-medium",
-                    done && "border-primary/30 text-primary",
-                    failed && "border-destructive/30 text-destructive",
+                    done && "border-primary/30 bg-primary/10 text-primary font-medium",
+                    failed && "border-destructive/40 bg-destructive/10 text-destructive font-medium",
                     !current && !done && !failed && "text-muted-foreground",
                   )}
                 >
