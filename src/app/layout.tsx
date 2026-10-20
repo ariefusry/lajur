@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
@@ -37,6 +38,7 @@ export default function RootLayout({
             mobileOffset={{ bottom: "calc(4.25rem + env(safe-area-inset-bottom))" }}
           />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

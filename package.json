@@ -31,6 +31,7 @@
     "@neon/config": "^1.9.2",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.10.1",
     "ai": "^7.0.142",
     "class-variance-authority": "^0.7.1",
