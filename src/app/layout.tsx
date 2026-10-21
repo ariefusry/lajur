@@ -1,7 +1,8 @@
 import { Analytics } from "@vercel/analytics/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { ServiceWorker } from "@/components/service-worker";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -18,6 +19,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lajur",
   description: "Tracker lamaran kerja untuk pencari kerja di Indonesia",
+  // Installed from Safari's "Add to Home Screen": open full screen with this name.
+  appleWebApp: { capable: true, title: "Lajur", statusBarStyle: "default" },
+};
+
+// Browser/status bar colour of the installed app, matching the page background in each theme.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f6f8" },
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+  ],
 };
 
 export default function RootLayout({
@@ -39,6 +50,7 @@ export default function RootLayout({
           />
         </ThemeProvider>
         <Analytics />
+        <ServiceWorker />
       </body>
     </html>
   );

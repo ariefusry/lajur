@@ -2,6 +2,7 @@ import { addStage } from "@/actions/settings";
 import { Card } from "@/components/dashboard/cards";
 import { AccountData } from "@/components/settings/account-data";
 import { AiConsent } from "@/components/ai-consent";
+import { InstallApp } from "@/components/settings/install-app";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { StageEditor } from "@/components/settings/stage-editor";
 import { TemplatePicker } from "@/components/settings/template-picker";
@@ -57,6 +58,13 @@ export default async function SettingsPage() {
             className="order-1 lg:order-none"
           >
             <AiConsent consentedAt={profile.aiConsentAt?.toISOString() ?? null} readOnly={isReadOnly({ email })} />
+          </Card>
+          <Card
+            title="Pasang aplikasi"
+            description="Buka Lajur dari layar utama HP atau laptop, tanpa bilah browser."
+            className="order-3 lg:order-none"
+          >
+            <InstallApp />
           </Card>
           <Card
             title="Data & akun"
