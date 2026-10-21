@@ -233,7 +233,7 @@ function Column({ stage, cards, ...props }: MoveProps & { stage: Stage; cards: C
           {cards.length}
         </span>
       </h2>
-      {/* Only the cards scroll; the title and "+ Tambah" stay put. -mx/px keeps card shadows from being clipped. */}
+      {/* Only the cards scroll; the title stays put. -mx/px keeps card shadows from being clipped. */}
       {/* pb-16 on phones: the last card can scroll clear of the floating + button. */}
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-1 pt-0.5 pb-16 md:pb-0.5">
         {cards.map((card) => (
@@ -241,12 +241,6 @@ function Column({ stage, cards, ...props }: MoveProps & { stage: Stage; cards: C
         ))}
         {cards.length === 0 && <p className="text-muted-foreground px-1.5 text-xs">Belum ada lamaran</p>}
       </div>
-      <Link
-        href={`/applications/new?stage=${stage.id}`}
-        className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground rounded-lg px-2 py-2 text-sm transition-colors"
-      >
-        + Tambah
-      </Link>
     </section>
   );
 }

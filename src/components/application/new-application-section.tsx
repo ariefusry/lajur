@@ -9,7 +9,7 @@ import { isReadOnly } from "@/lib/demo";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
 
 /** The new-application form with everything it needs; shared by /applications/new and the /mulai wizard. */
-export async function NewApplicationSection({ stage }: { stage?: string }) {
+export async function NewApplicationSection() {
   const user = await requireUser();
   const [stages, resumes, profile, aiConsent, quota] = await Promise.all([
     db.stage.findMany({
@@ -52,10 +52,8 @@ export async function NewApplicationSection({ stage }: { stage?: string }) {
         company: "",
         position: "",
         source: "",
-        // "+ Tambah" on a board column passes its stage; otherwise new applications start in Wishlist.
-        currentStageId: stages.some((s) => s.id === stage)
-          ? stage!
-          : (stages.find((s) => s.kind === "WISHLIST") ?? stages[0]).id,
+        // New applications start in Wishlist.
+        currentStageId: (stages.find((s) => s.kind === "WISHLIST") ?? stages[0]).id,
         resumeId: resumes[0]?.id ?? "",
         url: "",
         location: "",
