@@ -218,7 +218,11 @@ export default async function ApplicationDetailPage({
         </ol>
       </header>
 
-      <ButtonGroup role="navigation" aria-label="Bagian lamaran" className="max-w-full overflow-x-auto p-1">
+      <ButtonGroup
+        role="navigation"
+        aria-label="Bagian lamaran"
+        className="max-w-full [scrollbar-width:none] overflow-x-auto p-1 [&::-webkit-scrollbar]:hidden"
+      >
         {TABS.map((t) => (
           <Link
             key={t.key}
