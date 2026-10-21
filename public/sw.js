@@ -1,6 +1,6 @@
 // Lajur service worker: only an offline fallback page. App pages hold personal data and change all the time,
 // so nothing else is cached; every request still goes to the network.
-const CACHE = "lajur-offline-v1";
+const CACHE = "lajur-offline-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

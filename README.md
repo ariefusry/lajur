@@ -18,6 +18,7 @@ Coba di https://lajur.vercel.app, lalu pilih **Masuk sebagai demo**. Akun demo b
 - Kalender (jadwal berentang tampil sebagai satu bar, warna per jenis: deadline, tes, interview, lainnya), pengingat email H-3 dan H-1 untuk tes dan interview, dan pengingat follow-up.
 - Dashboard untuk hari ini (jadwal 7 hari, lamaran yang perlu di-follow-up, pipeline) dan halaman Analytics (funnel, tahap yang paling sering gagal, respons per sumber lowongan dan per versi CV).
 - Ekspor semua data ke CSV, dan hapus akun beserta isinya.
+- Bisa dipasang di layar utama HP atau laptop (PWA, lewat Pengaturan → Pasang aplikasi), dengan halaman "tidak ada koneksi" saat offline. Tema mengikuti perangkat, atau dipilih terang/gelap.
 
 | Board | Detail lamaran |
 |---|---|
