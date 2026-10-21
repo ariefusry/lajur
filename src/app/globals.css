@@ -307,13 +307,15 @@
     box-shadow: inset 0 -1ex 2rem 4px var(--shiny-cta-highlight);
     opacity: 0;
     transition: opacity var(--transition);
-    animation: calc(var(--duration) * 1.5) shiny-breathe linear infinite;
+    animation: calc(var(--duration) * 1.5) shiny-breathe linear infinite paused;
   }
+  /* Paused until hover/focus: the spinning conic gradient repaints every frame on the main thread, and running
+     all the time it dropped most frames while scrolling the dashboard on a mid-range phone. */
   .shiny-cta,
   .shiny-cta::before,
   .shiny-cta::after {
     animation:
-      var(--animation) var(--duration),
+      var(--animation) var(--duration) paused,
       var(--animation) calc(var(--duration) / 0.4) reverse paused;
     animation-composition: add;
   }
@@ -329,6 +331,7 @@
   }
   .shiny-cta:is(:hover, :focus-visible):not(:disabled) > span::before {
     opacity: 1;
+    animation-play-state: running;
   }
   /* Busy (AI working) or unavailable: keep the shape, drop the motion. */
   .shiny-cta:disabled {
