@@ -36,7 +36,14 @@ test("demo user creates an application, moves it on the board, and sees it on th
   await page.getByLabel("Posisi *").fill("Staf Administrasi");
   await page.getByLabel("Sumber lowongan *").click(); // custom dropdown (page-drawn list)
   await page.getByRole("option", { name: "JobStreet" }).click();
-  await page.getByLabel("Tanggal melamar").fill("2026-10-01");
+  // Page-drawn calendar: open it, pick the month and year, then the day
+  await page.getByLabel("Tanggal melamar").click();
+  await page.getByRole("combobox", { name: /tahun/i }).click();
+  await page.getByRole("option", { name: "2026", exact: true }).click();
+  await page.getByRole("combobox", { name: /bulan/i }).click();
+  await page.getByRole("option", { name: /oktober/i }).click();
+  await page.getByRole("button", { name: /\b1 Oktober 2026$/ }).click();
+  await expect(page.getByLabel("Tanggal melamar")).toHaveText("1 Oktober 2026");
   await page.getByRole("button", { name: "Simpan lamaran" }).click();
   await expect(page).toHaveURL(/\/board$/);
   await expect(page.getByRole("region", { name: "Wishlist" }).getByText(COMPANY)).toBeVisible();
