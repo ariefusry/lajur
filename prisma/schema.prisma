@@ -65,6 +65,7 @@ model User {
   domicile        String?
   // UU PDP: kapan user menyetujui teksnya diproses AI pihak ketiga di luar negeri. Null = fitur AI nonaktif.
   aiConsentAt     DateTime?
+  onboardedAt     DateTime? // finished (or skipped through) the /mulai wizard; null sends the user there
   emailAiNoticeAt DateTime?
   createdAt       DateTime  @default(now())
 

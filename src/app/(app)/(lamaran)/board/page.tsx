@@ -1,4 +1,5 @@
 import { Board } from "@/components/board/board";
+import { BoardTip } from "@/components/onboarding/board-tip";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor } from "@/lib/dashboard";
 import { db } from "@/lib/db";
@@ -10,7 +11,7 @@ export const metadata = { title: "Board · Lajur" };
 export default async function BoardPage() {
   const user = await requireUser();
   const today = new Date();
-  const [stages, applications, profile] = await Promise.all([
+  const [stages, applications, profile, { onboardedAt }] = await Promise.all([
     db.stage.findMany({
       where: { userId: user.id },
       orderBy: { order: "asc" },
@@ -38,7 +39,10 @@ export default async function BoardPage() {
       },
     }),
     getEligibilityProfile(user.id),
+    db.user.findUniqueOrThrow({ where: { id: user.id }, select: { onboardedAt: true } }),
   ]);
+  // Tip for the first two weeks after the wizard (users from before it have onboardedAt = sign-up date).
+  const freshUser = !!onboardedAt && today.getTime() - onboardedAt.getTime() < 14 * 86_400_000;
   const factsOf = appFactsFor(stages, today);
   const cards = applications.map(({ requirements, history, appliedAt, events, ...app }) => ({
     ...app,
@@ -52,6 +56,7 @@ export default async function BoardPage() {
 
   return (
     <div className="space-y-4 motion-safe:animate-[fade-in_300ms_ease-out]">
+      {freshUser && applications.length > 0 && <BoardTip />}
       {applications.length === 0 && (
         <p className="text-muted-foreground text-sm">
           Belum ada lamaran. Klik “Tambah lamaran”, lalu geser kartunya antar kolom saat tahapnya berubah.

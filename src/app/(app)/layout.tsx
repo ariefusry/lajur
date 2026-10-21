@@ -4,7 +4,9 @@ import { Logo } from "@/components/logo";
 import { NavLinks, TabBar } from "@/components/nav-links";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
 import { requireUser, signOut } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { isDemoEmail, isReadOnly } from "@/lib/demo";
 
 async function signOutAction() {
@@ -15,6 +17,11 @@ async function signOutAction() {
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const isDemo = isDemoEmail(user.email);
+  // New users go through the /mulai wizard first (the demo account never does).
+  if (!isDemo) {
+    const { onboardedAt } = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { onboardedAt: true } });
+    if (!onboardedAt) redirect("/mulai");
+  }
 
   return (
     <div className="flex min-h-svh flex-col md:flex-row">

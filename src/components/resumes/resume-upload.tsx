@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MAX_PDF_BYTES } from "@/lib/pdf";
 
-export function ResumeUpload() {
+/** `onUploaded` replaces the refresh (the /mulai wizard moves on instead). */
+export function ResumeUpload({ onUploaded }: { onUploaded?: () => void }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -30,6 +31,7 @@ export function ResumeUpload() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) return toast.error(body.error ?? "Gagal mengunggah CV.");
       toast.success(body.hasText ? "CV diunggah." : "CV diunggah, tapi teksnya tidak terbaca (mungkin hasil scan).");
+      if (onUploaded) return onUploaded();
       formRef.current?.reset();
       setFileName(null);
       router.refresh();

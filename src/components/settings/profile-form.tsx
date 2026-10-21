@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { updateProfile } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,20 @@ type Defaults = { gpa: string; birthDate: string; major: string; degree: string;
 
 const DEGREES = ["SMA", "D1", "D2", "D3", "D4", "S1", "S2", "S3"] as const;
 
-export function ProfileForm({ defaults }: { defaults: Defaults }) {
+/**
+ * `onSaved` is the /mulai wizard's mode: the fields eligibility checks need become required (IPK and major
+ * not for SMA/SMK, which has neither), and saving moves on instead of showing a toast.
+ */
+export function ProfileForm({ defaults, onSaved }: { defaults: Defaults; onSaved?: () => void }) {
   const [state, action, pending] = useActionState(updateProfile, {});
+  const [degree, setDegree] = useState(defaults.degree);
   useEffect(() => {
-    if (state.ok && state.message) toast.success(state.message);
-  }, [state]);
+    if (!state.ok) return;
+    if (onSaved) onSaved();
+    else if (state.message) toast.success(state.message);
+  }, [state, onSaved]);
+  const required = !!onSaved;
+  const studyRequired = required && degree !== "SMA";
 
   const err = (name: keyof Defaults) => state.errors?.[name]?.[0];
   const row = (name: keyof Defaults, label: string, input: React.ReactNode) => (
@@ -39,13 +48,14 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
           inputMode="decimal"
           placeholder="3.45"
           defaultValue={defaults.gpa}
+          required={studyRequired}
           aria-invalid={!!err("gpa") || undefined}
         />,
       )}
       {row(
         "birthDate",
         "Tanggal lahir",
-        <Input id="birthDate" name="birthDate" type="date" defaultValue={defaults.birthDate} />,
+        <Input id="birthDate" name="birthDate" type="date" defaultValue={defaults.birthDate} required={required} />,
       )}
       {row(
         "degree",
@@ -54,10 +64,22 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
           id="degree"
           name="degree"
           defaultValue={defaults.degree}
+          onValueChange={setDegree}
+          required={required}
           options={[{ value: "", label: "Belum diisi" }, ...DEGREES.map((d) => ({ value: d, label: d }))]}
         />,
       )}
-      {row("major", "Jurusan", <Input id="major" name="major" placeholder="Akuntansi" defaultValue={defaults.major} />)}
+      {row(
+        "major",
+        "Jurusan",
+        <Input
+          id="major"
+          name="major"
+          placeholder="Akuntansi"
+          defaultValue={defaults.major}
+          required={studyRequired}
+        />,
+      )}
       {row(
         "domicile",
         "Domisili",
@@ -65,7 +87,7 @@ export function ProfileForm({ defaults }: { defaults: Defaults }) {
       )}
       <div className="sm:col-span-2">
         <Button type="submit" disabled={pending}>
-          {pending ? "Menyimpan…" : "Simpan profil"}
+          {pending ? "Menyimpan…" : onSaved ? "Lanjut" : "Simpan profil"}
         </Button>
       </div>
     </form>
