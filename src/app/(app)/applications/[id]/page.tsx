@@ -231,8 +231,8 @@ export default async function ApplicationDetailPage({
         // Phones: short labels and tighter segments, so all five fit and the pill drags across them like iOS
         // (the row still scrolls as a fallback on very narrow screens).
         fill
-        itemClassName="px-2 text-[13px] sm:px-3 sm:text-sm"
-        className="w-full max-w-full [scrollbar-width:none] overflow-x-auto sm:w-auto [&::-webkit-scrollbar]:hidden"
+        itemClassName="gap-1 px-1.5 text-[13px] sm:gap-1.5 sm:px-3 sm:text-sm"
+        className="w-full max-w-full [scrollbar-width:none] gap-0.5 overflow-x-auto sm:w-auto sm:gap-1 [&::-webkit-scrollbar]:hidden"
       />
 
       {tab === "ringkasan" && (

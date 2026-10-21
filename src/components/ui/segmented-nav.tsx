@@ -14,9 +14,9 @@ type Box = { left: number; width: number };
 /**
  * iOS-style segmented navigation: a raised pill slides to the chosen segment, and can be dragged with a finger
  * (or mouse) from the chosen segment to another. Taps still go through the links, so keyboard and screen
- * readers get plain links. The pill is measured from the segments, so they can differ in width and the tray can
- * scroll sideways (only a press on the chosen segment blocks that scroll, to drag instead; holding the pill near
- * the tray's edge scrolls it along).
+ * readers get plain links. The pill is measured from the segments, so they can differ in width. If they don't fit,
+ * the tray scrolls sideways natively and dragging is off: a press on the pill must not fight the scroll (on iOS it
+ * blocked scrolling altogether).
  * A choice moves the pill right away; `active` takes over again whenever it changes (navigation landed, or the
  * back button), so a stale choice never sticks.
  */
@@ -52,15 +52,8 @@ export function SegmentedNav({
   const links = useRef<(HTMLAnchorElement | null)[]>([]);
   const [box, setBox] = useState<Box | null>(null); // null until measured: the chosen link draws itself raised
   const [dragLeft, setDragLeft] = useState<number | null>(null);
-  // x/scroll: where the press started; clientX: the finger now; edge: the auto-scroll frame, if running.
-  const press = useRef<{
-    x: number;
-    left: number;
-    scroll: number;
-    clientX: number;
-    dragging: boolean;
-    edge?: number;
-  } | null>(null);
+  const [overflow, setOverflow] = useState(false);
+  const press = useRef<{ x: number; left: number; dragging: boolean } | null>(null);
   const swallowClick = useRef(false);
 
   const boxOf = (i: number): Box => {
@@ -71,6 +64,7 @@ export function SegmentedNav({
     const measure = () => {
       const el = links.current[current]!;
       setBox({ left: el.offsetLeft, width: el.offsetWidth });
+      setOverflow(tray.current!.scrollWidth > tray.current!.clientWidth + 1);
     };
     measure();
     // Bring the chosen segment into view when the tray scrolls (e.g. opened straight on the last tab).
@@ -91,32 +85,6 @@ export function SegmentedNav({
   };
   const shown = dragLeft !== null && box ? nearest(dragLeft + box.width / 2) : current;
 
-  // Pill position in the tray's content: start + finger travel + how far the tray scrolled meanwhile.
-  const follow = () => {
-    const p = press.current!;
-    const t = tray.current!;
-    const first = boxOf(0);
-    const last = boxOf(items.length - 1);
-    const left = p.left + (p.clientX - p.x) + (t.scrollLeft - p.scroll);
-    setDragLeft(Math.min(Math.max(left, first.left), last.left + last.width - box!.width));
-  };
-  // While the finger rests near an edge of a scrolling tray, keep scrolling and carry the pill along.
-  const edgeScroll = () => {
-    const p = press.current;
-    const t = tray.current!;
-    if (!p?.dragging) return;
-    const r = t.getBoundingClientRect();
-    const dir = p.clientX > r.right - 32 ? 1 : p.clientX < r.left + 32 ? -1 : 0;
-    const before = t.scrollLeft;
-    if (dir) t.scrollLeft += dir * 6;
-    if (t.scrollLeft === before) {
-      p.edge = undefined;
-      return;
-    }
-    follow();
-    p.edge = requestAnimationFrame(edgeScroll);
-  };
-
   const choose = (index: number) => {
     setPicked(index);
     if (index !== current) router.push(items[index].href, { scroll: scroll ?? true });
@@ -130,31 +98,25 @@ export function SegmentedNav({
       className={cn("relative inline-flex p-1 select-none", className)}
       onPointerDown={(e) => {
         swallowClick.current = false;
-        if (!box || !links.current[current]?.contains(e.target as Node)) return;
-        press.current = {
-          x: e.clientX,
-          left: box.left,
-          scroll: tray.current!.scrollLeft,
-          clientX: e.clientX,
-          dragging: false,
-        };
+        if (!box || overflow || !links.current[current]?.contains(e.target as Node)) return;
+        press.current = { x: e.clientX, left: box.left, dragging: false };
       }}
       onPointerMove={(e) => {
         const p = press.current;
         if (!p || !box) return;
-        p.clientX = e.clientX;
-        if (!p.dragging && Math.abs(e.clientX - p.x) < 6) return;
+        const dx = e.clientX - p.x;
+        if (!p.dragging && Math.abs(dx) < 6) return;
         if (!p.dragging) {
           p.dragging = true;
           e.currentTarget.setPointerCapture(e.pointerId);
         }
-        follow();
-        if (p.edge === undefined) p.edge = requestAnimationFrame(edgeScroll);
+        const first = boxOf(0);
+        const last = boxOf(items.length - 1);
+        setDragLeft(Math.min(Math.max(p.left + dx, first.left), last.left + last.width - box.width));
       }}
       onPointerUp={() => {
         const p = press.current;
         press.current = null;
-        if (p?.edge !== undefined) cancelAnimationFrame(p.edge);
         if (!p?.dragging) return;
         // The release can click the link under the finger; ignore that one (reset on the next press).
         swallowClick.current = true;
@@ -162,7 +124,6 @@ export function SegmentedNav({
         choose(shown);
       }}
       onPointerCancel={() => {
-        if (press.current?.edge !== undefined) cancelAnimationFrame(press.current.edge);
         press.current = null;
         setDragLeft(null);
       }}
@@ -199,7 +160,7 @@ export function SegmentedNav({
             buttonGroupItemClass(!box && i === current),
             "relative shrink-0",
             fill && "flex-1",
-            i === current && "touch-pan-y", // a sideways press here drags the pill, not the tray
+            i === current && !overflow && "touch-pan-y", // a sideways press here drags the pill
             box && i === shown && "text-[color:var(--bjork-text)] hover:bg-transparent",
             itemClassName,
           )}
@@ -214,7 +175,9 @@ export function SegmentedNav({
             label
           )}
           {!!badge && (
-            <span className="bg-primary/15 text-primary rounded-full px-1.5 text-[11px] tabular-nums">{badge}</span>
+            <span className="bg-primary/15 text-primary rounded-full px-1 text-[11px] tabular-nums sm:px-1.5">
+              {badge}
+            </span>
           )}
         </Link>
       ))}
