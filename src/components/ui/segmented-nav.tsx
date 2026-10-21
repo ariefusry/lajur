@@ -124,7 +124,7 @@ export function SegmentedNav({
       ref={tray}
       role="navigation"
       aria-label={label}
-      className={cn("relative flex p-1 select-none", className)}
+      className={cn("relative inline-flex p-1 select-none", className)}
       onPointerDown={(e) => {
         swallowClick.current = false;
         if (!box || !links.current[current]?.contains(e.target as Node)) return;

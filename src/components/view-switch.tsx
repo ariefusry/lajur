@@ -20,7 +20,6 @@ export function ViewSwitch() {
       items={VIEWS}
       active={pathname.startsWith("/board") ? 0 : 1}
       label="Tampilan lamaran"
-      className="inline-flex"
     />
   );
 }

@@ -66,7 +66,6 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           }))}
           active={RANGES.indexOf(range)}
           label="Periode"
-          className="inline-flex"
         />
       </div>
 
