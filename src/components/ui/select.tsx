@@ -26,6 +26,8 @@ type SelectProps = {
   "aria-label"?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
+  /** Replaces the field-style trigger, e.g. with an icon button (the kanban card's "move to stage"). */
+  trigger?: React.ReactElement;
 };
 
 /**
@@ -43,6 +45,7 @@ export function Select({
   required,
   disabled,
   className,
+  trigger,
   ...triggerProps
 }: SelectProps) {
   const [inner, setInner] = useState(defaultValue);
@@ -63,22 +66,28 @@ export function Select({
         }}
         disabled={disabled}
       >
-        <SelectPrimitive.Trigger
-          {...triggerProps}
-          aria-invalid={triggerProps["aria-invalid"] || (missing && required) || undefined}
-          className={cn(
-            selectClass,
-            "data-placeholder:text-muted-foreground flex items-center justify-between gap-2 text-left disabled:opacity-50",
-            className,
-          )}
-        >
-          <span className="min-w-0 truncate">
-            <SelectPrimitive.Value placeholder={placeholder} />
-          </span>
-          <SelectPrimitive.Icon asChild>
-            <ChevronDown className="text-muted-foreground size-4 shrink-0" />
-          </SelectPrimitive.Icon>
-        </SelectPrimitive.Trigger>
+        {trigger ? (
+          <SelectPrimitive.Trigger {...triggerProps} asChild>
+            {trigger}
+          </SelectPrimitive.Trigger>
+        ) : (
+          <SelectPrimitive.Trigger
+            {...triggerProps}
+            aria-invalid={triggerProps["aria-invalid"] || (missing && required) || undefined}
+            className={cn(
+              selectClass,
+              "data-placeholder:text-muted-foreground flex items-center justify-between gap-2 text-left disabled:opacity-50",
+              className,
+            )}
+          >
+            <span className="min-w-0 truncate">
+              <SelectPrimitive.Value placeholder={placeholder} />
+            </span>
+            <SelectPrimitive.Icon asChild>
+              <ChevronDown className="text-muted-foreground size-4 shrink-0" />
+            </SelectPrimitive.Icon>
+          </SelectPrimitive.Trigger>
+        )}
         <SelectPrimitive.Portal>
           <SelectPrimitive.Content
             position="popper"

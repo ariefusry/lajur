@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { moveApplication } from "@/actions/applications";
 import { EligibilityBadge } from "@/components/eligibility-badge";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
 import type { EligibilityStatus, EventType, JobSource, StageKind } from "@/generated/prisma/enums";
 import { daysUntil, formatDate, formatEventWhenShort } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -270,28 +271,29 @@ function ApplicationCard({ card, stages, justDragged, onMove }: MoveProps & { ca
       <Link href={`/applications/${card.id}`} className="block pr-7" draggable={false}>
         <CardBody card={card} />
       </Link>
-      {/* Two taps instead of a long drag across columns (mostly for phones). A native select opens the OS picker. */}
-      <label
-        className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground has-focus-visible:ring-ring/50 absolute top-2 right-2 flex size-7 cursor-pointer items-center justify-center rounded-md transition-opacity has-focus-visible:ring-2 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:has-focus-visible:opacity-100"
-        // Keep presses here from starting a drag.
+      {/* Two taps instead of a long drag across columns (mostly for phones). */}
+      <div
+        className="absolute top-2 right-2"
+        // Keep presses here (and in the portalled list, whose events bubble through React) from starting a drag.
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <ArrowRightLeft className="size-4" />
-        <span className="sr-only">Pindah ke tahap</span>
-        <select
+        <Select
+          aria-label="Pindah ke tahap"
           value={card.currentStageId}
-          onChange={(e) => onMove(card, e.target.value)}
-          className="absolute inset-0 cursor-pointer opacity-0"
-        >
-          {stages.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
+          onValueChange={(stageId) => onMove(card, stageId)}
+          options={stages.map((s) => ({ value: s.id, label: s.name }))}
+          trigger={
+            <button
+              type="button"
+              className="text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:ring-ring/50 data-[state=open]:bg-foreground/5 flex size-7 cursor-pointer items-center justify-center rounded-md transition-opacity outline-none focus-visible:ring-2 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:focus-visible:opacity-100 pointer-fine:data-[state=open]:opacity-100"
+            >
+              <ArrowRightLeft className="size-4" />
+            </button>
+          }
+        />
+      </div>
     </div>
   );
 }
