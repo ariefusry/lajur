@@ -32,10 +32,10 @@ import { EVENT_TYPE_LABELS, JOB_SOURCE_LABELS, REQUIREMENT_TYPE_LABELS, STAGE_RE
 
 const TABS = [
   { key: "ringkasan", label: "Ringkasan" },
-  { key: "riwayat", label: "Riwayat tahap" },
+  { key: "riwayat", label: "Riwayat tahap", short: "Riwayat" },
   { key: "jadwal", label: "Jadwal" },
   { key: "skill", label: "Cek CV" },
-  { key: "data", label: "Ubah data" },
+  { key: "data", label: "Ubah data", short: "Ubah" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -222,12 +222,17 @@ export default async function ApplicationDetailPage({
         items={TABS.map((t) => ({
           href: tabHref(t.key),
           label: t.label,
+          short: "short" in t ? t.short : undefined,
           badge: t.key === "jadwal" ? upcomingEvents.length : undefined,
         }))}
         active={TABS.findIndex((t) => t.key === tab)}
         label="Bagian lamaran"
         scroll={false}
-        className="max-w-full [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+        // Phones: short labels and tighter segments, so all five fit and the pill drags across them like iOS
+        // (the row still scrolls as a fallback on very narrow screens).
+        fill
+        itemClassName="px-2 text-[13px] sm:px-3 sm:text-sm"
+        className="w-full max-w-full [scrollbar-width:none] overflow-x-auto sm:w-auto [&::-webkit-scrollbar]:hidden"
       />
 
       {tab === "ringkasan" && (

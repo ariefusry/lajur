@@ -7,7 +7,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
 import { cn } from "@/lib/utils";
 
-type Item = { href: string; label: string; icon?: LucideIcon; badge?: number };
+/** `short`: label on phones, so a row of tabs fits without scrolling. */
+type Item = { href: string; label: string; short?: string; icon?: LucideIcon; badge?: number };
 type Box = { left: number; width: number };
 
 /**
@@ -26,6 +27,7 @@ export function SegmentedNav({
   fill,
   scroll,
   className,
+  itemClassName,
 }: {
   items: Item[];
   active: number;
@@ -35,6 +37,7 @@ export function SegmentedNav({
   /** Passed to the links (false keeps the scroll position, e.g. for tabs). */
   scroll?: boolean;
   className?: string;
+  itemClassName?: string;
 }) {
   const router = useRouter();
   const [picked, setPicked] = useState<number | null>(null);
@@ -174,7 +177,7 @@ export function SegmentedNav({
           style={{ width: box.width, transform: `translateX(${dragLeft ?? box.left}px)` }}
         />
       )}
-      {items.map(({ href, label, icon: Icon, badge }, i) => (
+      {items.map(({ href, label, short, icon: Icon, badge }, i) => (
         <Link
           key={href}
           ref={(el) => {
@@ -198,9 +201,18 @@ export function SegmentedNav({
             fill && "flex-1",
             i === current && "touch-pan-y", // a sideways press here drags the pill, not the tray
             box && i === shown && "text-[color:var(--bjork-text)] hover:bg-transparent",
+            itemClassName,
           )}
         >
-          {Icon && <Icon aria-hidden />} {label}
+          {Icon && <Icon aria-hidden />}{" "}
+          {short ? (
+            <>
+              <span className="sm:hidden">{short}</span>
+              <span className="hidden sm:inline">{label}</span>
+            </>
+          ) : (
+            label
+          )}
           {!!badge && (
             <span className="bg-primary/15 text-primary rounded-full px-1.5 text-[11px] tabular-nums">{badge}</span>
           )}
