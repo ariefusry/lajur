@@ -87,73 +87,81 @@ export function ApplicationForm({
     "aria-describedby": err(name) ? `${name}-error` : undefined,
   });
 
-  const span = "sm:col-span-2";
+  const span = "@xl:col-span-2";
 
   return (
-    <form id={id} onSubmit={submitKeepingValues(formAction)} className="grid max-w-3xl gap-4 sm:grid-cols-2">
-      {field("company", "Perusahaan *", <Input {...a11y("company")} defaultValue={defaults.company} required />)}
-      {field("position", "Posisi *", <Input {...a11y("position")} defaultValue={defaults.position} required />)}
-      {field(
-        "source",
-        "Sumber lowongan *",
-        <Select
-          {...a11y("source")}
-          defaultValue={defaults.source}
-          placeholder="Pilih sumber"
-          required
-          options={optionsFrom(JOB_SOURCE_LABELS)}
-        />,
-      )}
-      {field(
-        "currentStageId",
-        "Tahap *",
-        <Select
-          {...a11y("currentStageId")}
-          defaultValue={defaults.currentStageId}
-          required
-          options={stages.map((s) => ({ value: s.id, label: s.name }))}
-        />,
-      )}
-      {field(
-        "resumeId",
-        "CV yang dikirim",
-        <Select
-          {...a11y("resumeId")}
-          defaultValue={defaults.resumeId}
-          options={[
-            { value: "", label: resumes.length ? "Belum dipilih" : "Belum ada CV (unggah di menu CV)" },
-            ...resumes.map((r) => ({ value: r.id, label: r.versionName })),
-          ]}
-        />,
-      )}
-      {field("location", "Lokasi / penempatan", <Input {...a11y("location")} defaultValue={defaults.location} />)}
-      {field(
-        "url",
-        "Link lowongan",
-        <Input {...a11y("url")} type="url" placeholder="https://" defaultValue={defaults.url} />,
-      )}
-      {field("deadline", "Deadline pendaftaran", <DatePicker {...a11y("deadline")} defaultValue={defaults.deadline} />)}
-      {field("appliedAt", "Tanggal melamar", <DatePicker {...a11y("appliedAt")} defaultValue={defaults.appliedAt} />)}
-      {field(
-        "expectedSalary",
-        "Gaji yang diharapkan (Rp/bulan)",
-        <Input
-          {...a11y("expectedSalary")}
-          inputMode="numeric"
-          placeholder="8000000"
-          defaultValue={defaults.expectedSalary}
-        />,
-      )}
-      <div className={span}>
-        {field("notes", "Catatan", <Textarea {...a11y("notes")} rows={4} defaultValue={defaults.notes} />)}
-      </div>
-      {children && <div className={span}>{children}</div>}
-      {state.message && !state.ok && <p className={cn("text-destructive text-sm", span)}>{state.message}</p>}
-      <div className={span}>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Menyimpan…" : submitLabel}
-        </Button>
-      </div>
-    </form>
+    // Two columns only when the form itself has room (container query): it also sits in narrow columns, next to
+    // the AI panel on /applications/new and in the /mulai wizard.
+    <div className="@container max-w-3xl">
+      <form id={id} onSubmit={submitKeepingValues(formAction)} className="grid gap-4 @xl:grid-cols-2">
+        {field("company", "Perusahaan *", <Input {...a11y("company")} defaultValue={defaults.company} required />)}
+        {field("position", "Posisi *", <Input {...a11y("position")} defaultValue={defaults.position} required />)}
+        {field(
+          "source",
+          "Sumber lowongan *",
+          <Select
+            {...a11y("source")}
+            defaultValue={defaults.source}
+            placeholder="Pilih sumber"
+            required
+            options={optionsFrom(JOB_SOURCE_LABELS)}
+          />,
+        )}
+        {field(
+          "currentStageId",
+          "Tahap *",
+          <Select
+            {...a11y("currentStageId")}
+            defaultValue={defaults.currentStageId}
+            required
+            options={stages.map((s) => ({ value: s.id, label: s.name }))}
+          />,
+        )}
+        {field(
+          "resumeId",
+          "CV yang dikirim",
+          <Select
+            {...a11y("resumeId")}
+            defaultValue={defaults.resumeId}
+            options={[
+              { value: "", label: resumes.length ? "Belum dipilih" : "Belum ada CV (unggah di menu CV)" },
+              ...resumes.map((r) => ({ value: r.id, label: r.versionName })),
+            ]}
+          />,
+        )}
+        {field("location", "Lokasi / penempatan", <Input {...a11y("location")} defaultValue={defaults.location} />)}
+        {field(
+          "url",
+          "Link lowongan",
+          <Input {...a11y("url")} type="url" placeholder="https://" defaultValue={defaults.url} />,
+        )}
+        {field(
+          "deadline",
+          "Deadline pendaftaran",
+          <DatePicker {...a11y("deadline")} defaultValue={defaults.deadline} />,
+        )}
+        {field("appliedAt", "Tanggal melamar", <DatePicker {...a11y("appliedAt")} defaultValue={defaults.appliedAt} />)}
+        {field(
+          "expectedSalary",
+          "Gaji yang diharapkan (Rp/bulan)",
+          <Input
+            {...a11y("expectedSalary")}
+            inputMode="numeric"
+            placeholder="8000000"
+            defaultValue={defaults.expectedSalary}
+          />,
+        )}
+        <div className={span}>
+          {field("notes", "Catatan", <Textarea {...a11y("notes")} rows={4} defaultValue={defaults.notes} />)}
+        </div>
+        {children && <div className={span}>{children}</div>}
+        {state.message && !state.ok && <p className={cn("text-destructive text-sm", span)}>{state.message}</p>}
+        <div className={span}>
+          <Button type="submit" disabled={pending}>
+            {pending ? "Menyimpan…" : submitLabel}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

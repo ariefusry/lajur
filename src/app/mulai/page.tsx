@@ -9,6 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { toDateInput } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { isDemoEmail } from "@/lib/demo";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Mulai · Lajur" };
 
@@ -51,7 +52,8 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const { title, hint } = STEPS[current - 1];
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-3xl flex-col gap-6 p-4 md:p-8">
+    // Step 5 holds the AI panel and the application form side by side, so it gets a wider page.
+    <div className={cn("mx-auto flex min-h-svh flex-col gap-6 p-4 md:p-8", current === 5 ? "max-w-6xl" : "max-w-3xl")}>
       <header className="flex items-center justify-between gap-4">
         <Logo className="text-xl" markClassName="size-7" />
         <span className="text-muted-foreground text-sm tabular-nums">
