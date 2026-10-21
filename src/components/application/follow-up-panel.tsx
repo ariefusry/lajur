@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateFollowUp } from "@/actions/follow-up";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { FOLLOW_UP_INTERVALS } from "@/lib/follow-up";
 import { cn } from "@/lib/utils";
@@ -89,13 +89,7 @@ export function FollowUpPanel({ id, next, nextLabel, lastLabel, due }: Props) {
         <label htmlFor={`${id}-follow-up-date`} className="sr-only">
           Tanggal follow-up
         </label>
-        <Input
-          id={`${id}-follow-up-date`}
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-auto min-w-0 flex-1"
-        />
+        <DatePicker id={`${id}-follow-up-date`} value={date} onValueChange={setDate} className="min-w-0 flex-1" />
         <Button type="submit" variant="outline" className="h-10 pointer-coarse:h-11" disabled={pending || !date}>
           Atur tanggal
         </Button>

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { applyEmailUpdate } from "@/actions/email-update";
 import { ChangeRow, changeError } from "@/components/email-update/change-row";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -149,7 +150,7 @@ export function ReviewList({ result, onCancel }: { result: EmailUpdateResult; on
 
       <div className="space-y-1.5 sm:w-64">
         <Label htmlFor="sent-date">Tanggal email diterima</Label>
-        <Input id="sent-date" type="date" value={sentDate} onChange={(e) => setSentDate(e.target.value)} />
+        <DatePicker id="sent-date" value={sentDate} onValueChange={setSentDate} />
         <p className="text-muted-foreground text-xs">
           {reading.sentQuote ? `Dibaca dari: “${reading.sentQuote}”. ` : "Tidak ada tanggal di email. "}
           Riwayat tahap dicatat pada tanggal ini{sentDate ? "" : " (kosong = hari ini)"}.

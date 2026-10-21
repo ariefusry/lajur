@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,13 +23,14 @@ export function EventForm({
   idPrefix: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
-  const formRef = useRef<HTMLFormElement>(null);
+  // Remounting clears every field; form.reset() would miss the ones that keep their own state (Select, DatePicker).
+  const [formKey, setFormKey] = useState(0);
   const isCreate = !defaults.startsAt;
 
   useEffect(() => {
     if (state.ok && state.message) {
       toast.success(state.message);
-      if (isCreate) formRef.current?.reset();
+      if (isCreate) setFormKey((k) => k + 1);
     }
   }, [state, isCreate]);
 
@@ -38,9 +40,9 @@ export function EventForm({
     // Container query: the same form sits in a narrow side card and in a wide list row.
     <div className="@container">
       <form
-        ref={formRef}
+        key={formKey}
         onSubmit={submitKeepingValues(formAction)}
-        className="grid gap-3 @2xl:grid-cols-[10rem_14rem_14rem_1fr_auto] @2xl:items-end"
+        className="grid gap-3 @2xl:grid-cols-[9rem_15rem_15rem_1fr_auto] @2xl:items-end"
       >
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-type`}>Jenis</Label>
@@ -56,18 +58,12 @@ export function EventForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-opensAt`}>Mulai bisa dikerjakan (opsional)</Label>
-          <Input id={`${idPrefix}-opensAt`} name="opensAt" type="datetime-local" defaultValue={defaults.opensAt} />
+          <DatePicker id={`${idPrefix}-opensAt`} name="opensAt" withTime defaultValue={defaults.opensAt} />
           {err("opensAt") && <p className="text-destructive text-xs">{err("opensAt")}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`${idPrefix}-startsAt`}>Tanggal & jam (WIB) / batas akhir</Label>
-          <Input
-            id={`${idPrefix}-startsAt`}
-            name="startsAt"
-            type="datetime-local"
-            defaultValue={defaults.startsAt}
-            required
-          />
+          <DatePicker id={`${idPrefix}-startsAt`} name="startsAt" withTime defaultValue={defaults.startsAt} required />
           {err("startsAt") && <p className="text-destructive text-xs">{err("startsAt")}</p>}
         </div>
         <div className="space-y-1.5">

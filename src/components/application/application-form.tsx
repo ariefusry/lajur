@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -131,16 +132,8 @@ export function ApplicationForm({
         "Link lowongan",
         <Input {...a11y("url")} type="url" placeholder="https://" defaultValue={defaults.url} />,
       )}
-      {field(
-        "deadline",
-        "Deadline pendaftaran",
-        <Input {...a11y("deadline")} type="date" defaultValue={defaults.deadline} />,
-      )}
-      {field(
-        "appliedAt",
-        "Tanggal melamar",
-        <Input {...a11y("appliedAt")} type="date" defaultValue={defaults.appliedAt} />,
-      )}
+      {field("deadline", "Deadline pendaftaran", <DatePicker {...a11y("deadline")} defaultValue={defaults.deadline} />)}
+      {field("appliedAt", "Tanggal melamar", <DatePicker {...a11y("appliedAt")} defaultValue={defaults.appliedAt} />)}
       {field(
         "expectedSalary",
         "Gaji yang diharapkan (Rp/bulan)",

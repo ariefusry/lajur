@@ -2,8 +2,8 @@
 
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { STAGE_RESULT_LABELS, type FormState } from "@/lib/validation";
@@ -30,14 +30,7 @@ export function StageHistoryForm({
     <form onSubmit={submitKeepingValues(formAction)} className="space-y-2">
       <div className="space-y-1.5">
         <Label htmlFor={`entered-${id}`}>Tanggal tahap ini</Label>
-        <Input
-          id={`entered-${id}`}
-          name="enteredAt"
-          type="date"
-          defaultValue={defaults.enteredAt}
-          required
-          className="w-44"
-        />
+        <DatePicker id={`entered-${id}`} name="enteredAt" defaultValue={defaults.enteredAt} required className="w-56" />
         {state.errors?.enteredAt && <p className="text-destructive text-xs">{state.errors.enteredAt[0]}</p>}
       </div>
       <Select

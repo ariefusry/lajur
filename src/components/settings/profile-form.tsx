@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { updateProfile } from "@/actions/settings";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +56,13 @@ export function ProfileForm({ defaults, onSaved }: { defaults: Defaults; onSaved
       {row(
         "birthDate",
         "Tanggal lahir",
-        <Input id="birthDate" name="birthDate" type="date" defaultValue={defaults.birthDate} required={required} />,
+        <DatePicker
+          id="birthDate"
+          name="birthDate"
+          defaultValue={defaults.birthDate}
+          required={required}
+          toYear={new Date().getFullYear()}
+        />,
       )}
       {row(
         "degree",

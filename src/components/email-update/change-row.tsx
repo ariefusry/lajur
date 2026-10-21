@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -111,20 +111,20 @@ export function ChangeRow({ change: c, stageOptions, checked, onCheck, onChange 
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`${id}-opens`}>Mulai bisa dikerjakan</Label>
-              <Input
+              <DatePicker
                 id={`${id}-opens`}
-                type="datetime-local"
+                withTime
                 defaultValue={toInput(c.opensAt)}
-                onChange={(e) => onChange({ ...c, opensAt: toIso(e.target.value) || null })}
+                onValueChange={(v) => onChange({ ...c, opensAt: toIso(v) || null })}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`${id}-closes`}>Batas akhir</Label>
-              <Input
+              <DatePicker
                 id={`${id}-closes`}
-                type="datetime-local"
+                withTime
                 defaultValue={toInput(c.startsAt)}
-                onChange={(e) => onChange({ ...c, startsAt: toIso(e.target.value) })}
+                onValueChange={(v) => onChange({ ...c, startsAt: toIso(v) })}
               />
             </div>
           </div>
