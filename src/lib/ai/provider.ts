@@ -170,7 +170,7 @@ export async function generateStructured<T>(args: Args<T>): Promise<AiResult<T>>
 
 /**
  * Poster image → its text, verbatim, for the normal extraction to read (and quote from). Tries each vision model
- * once, in provider order; counts against the daily quota like any other call. Throws AiConsentRequiredError,
+ * once, in provider order. Recorded as READ_POSTER, which the daily quota doesn't count (the extraction does). Throws AiConsentRequiredError,
  * QuotaExceededError or AiUnavailableError.
  */
 export async function transcribeImage(args: {
@@ -213,12 +213,12 @@ export async function transcribeImage(args: {
         abortSignal: AbortSignal.timeout(TIMEOUT_MS),
       });
       const { inputTokens, outputTokens, totalTokens } = result.usage;
-      log("EXTRACT_JOB", ref.label, false, Date.now() - started, "ok", { inputTokens, outputTokens, totalTokens });
-      await recordUsage(args.userId, "EXTRACT_JOB", ref.label);
+      log("READ_POSTER", ref.label, false, Date.now() - started, "ok", { inputTokens, outputTokens, totalTokens });
+      await recordUsage(args.userId, "READ_POSTER", ref.label);
       return stripThinking(result.text);
     } catch (error) {
       const status = errorStatus(error);
-      log("EXTRACT_JOB", ref.label, false, Date.now() - started, status);
+      log("READ_POSTER", ref.label, false, Date.now() - started, status);
       attempts.push({ provider: ref.provider, model: ref.model, status });
       args.onProgress?.({ kind: "attempt_failed", provider: ref.provider, reason: progressReason(status) });
     }

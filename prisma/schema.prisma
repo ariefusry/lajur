@@ -260,6 +260,7 @@ enum AiFeature {
   CV_TWEAKS
   FOLLOW_UP
   EMAIL_UPDATE
+  READ_POSTER // copying a poster's text (vision model); recorded, but not counted against the daily quota
 }
 
 model ExtractionCache {

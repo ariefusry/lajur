@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleCheck, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createApplication } from "@/actions/applications";
 import { ApplicationForm, type ApplicationDefaults, type Evidence } from "@/components/application/application-form";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   aiEnabled: boolean;
   visionEnabled: boolean;
+  quota: { used: number; limit: number };
   aiConsent: boolean;
   stages: { id: string; name: string }[];
   resumes: { id: string; versionName: string }[];
@@ -35,7 +37,16 @@ function postingNotes(job: ExtractResult["job"]) {
   return line ? `Dari lowongan: ${line}` : "";
 }
 
-export function NewApplication({ aiEnabled, visionEnabled, aiConsent, stages, resumes, defaults, profile }: Props) {
+export function NewApplication({
+  aiEnabled,
+  visionEnabled,
+  quota,
+  aiConsent,
+  stages,
+  resumes,
+  defaults,
+  profile,
+}: Props) {
   const [draft, setDraft] = useState<ExtractResult | null>(null);
   const [version, setVersion] = useState(0);
   // With AI on, the long manual form stays folded until it is needed (or the AI filled a draft).
@@ -44,6 +55,7 @@ export function NewApplication({ aiEnabled, visionEnabled, aiConsent, stages, re
   const [pasteOpen, setPasteOpen] = useState(true);
   // Local, so agreeing shows the paste panel right away (see AiConsent).
   const [consented, setConsented] = useState(aiConsent);
+  const router = useRouter();
 
   const job = draft?.job;
   const merged: ApplicationDefaults = job
@@ -96,13 +108,23 @@ export function NewApplication({ aiEnabled, visionEnabled, aiConsent, stages, re
                   </p>
                 </div>
                 {/* Wraps under the text, lined up with it (icon 20 px + gap 12 px). */}
-                <Button type="button" variant="outline" size="sm" className="ml-8" onClick={() => setPasteOpen(true)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="ml-8"
+                  onClick={() => {
+                    setPasteOpen(true);
+                    router.refresh(); // "Cek CV" may have used AI quota since; the panel shows what's left
+                  }}
+                >
                   Tempel lowongan lain
                 </Button>
               </section>
             ) : (
               <JobPastePanel
                 imageEnabled={visionEnabled}
+                quota={quota}
                 onResult={(r) => {
                   setDraft(r);
                   setVersion((v) => v + 1); // remount the uncontrolled form (and the CV check) with the new draft

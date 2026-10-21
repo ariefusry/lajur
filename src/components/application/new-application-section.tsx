@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NewApplication } from "@/components/application/new-application";
 import { hasAiConsent } from "@/lib/ai/consent";
 import { aiEnabled, visionEnabled } from "@/lib/ai/provider";
+import { getQuota } from "@/lib/ai/usage";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isReadOnly } from "@/lib/demo";
@@ -10,7 +11,7 @@ import { getEligibilityProfile } from "@/lib/eligibility/profile";
 /** The new-application form with everything it needs; shared by /applications/new and the /mulai wizard. */
 export async function NewApplicationSection({ stage }: { stage?: string }) {
   const user = await requireUser();
-  const [stages, resumes, profile, aiConsent] = await Promise.all([
+  const [stages, resumes, profile, aiConsent, quota] = await Promise.all([
     db.stage.findMany({
       where: { userId: user.id },
       orderBy: { order: "asc" },
@@ -23,6 +24,7 @@ export async function NewApplicationSection({ stage }: { stage?: string }) {
     }),
     getEligibilityProfile(user.id),
     hasAiConsent(user.id),
+    getQuota(user.id),
   ]);
 
   if (stages.length === 0) {
@@ -42,6 +44,7 @@ export async function NewApplicationSection({ stage }: { stage?: string }) {
       aiEnabled={aiEnabled() && !isReadOnly(user)}
       visionEnabled={visionEnabled()}
       aiConsent={aiConsent}
+      quota={quota}
       stages={stages}
       resumes={resumes}
       profile={{ ...profile, birthDate: profile.birthDate?.toISOString() ?? null }}

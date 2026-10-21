@@ -253,3 +253,28 @@ describe("aiEnabled / model config", () => {
     ).toBe(false);
   });
 });
+
+describe("transcribeImage", () => {
+  const image = { image: Uint8Array.from([0xff, 0xd8, 0xff]), mediaType: "image/jpeg", userId: "u1" };
+  const vision = {
+    GROQ_VISION_MODEL: "qwen/qwen3.8-27b",
+    CLOUDFLARE_VISION_MODEL: "@cf/meta/llama-4-scout-17b-16e-instruct",
+  };
+
+  it("records the call as READ_POSTER, which the daily quota doesn't count", async () => {
+    const { transcribeImage } = await load(vision);
+    generateText.mockResolvedValueOnce({ text: "<think>x</think>WE ARE HIRING", usage });
+    expect(await transcribeImage(image)).toBe("WE ARE HIRING");
+    expect(assertQuota).toHaveBeenCalledWith("u1"); // still needs quota left for the extraction that follows
+    expect(recordUsage).toHaveBeenCalledWith("u1", "READ_POSTER", "groq:qwen/qwen3.8-27b");
+  });
+
+  it("falls back to the next vision model, then gives up", async () => {
+    const { transcribeImage, AiUnavailableError } = await load(vision);
+    generateText.mockRejectedValueOnce(http(503)).mockResolvedValueOnce({ text: "POSTER", usage });
+    expect(await transcribeImage(image)).toBe("POSTER");
+    expect(recordUsage).toHaveBeenCalledWith("u1", "READ_POSTER", "cloudflare:@cf/meta/llama-4-scout-17b-16e-instruct");
+    generateText.mockRejectedValue(http(500));
+    await expect(transcribeImage(image)).rejects.toBeInstanceOf(AiUnavailableError);
+  });
+});

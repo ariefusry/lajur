@@ -15,16 +15,28 @@ function jakartaDay() {
   return new Date(`${toDateInput(new Date())}T00:00:00Z`);
 }
 
-// Check-then-call isn't atomic, so two parallel requests can overshoot by one. Fine for a daily soft cap.
-export async function assertQuota(userId: string) {
+/**
+ * Today's AI uses against the daily limit. Reading a poster (READ_POSTER) is recorded but not counted: its vision
+ * model has its own provider allowance, and the extraction that follows already counts, so a poster costs one.
+ */
+export async function getQuota(userId: string) {
   const [user, used] = await Promise.all([
     db.user.findUnique({ where: { id: userId }, select: { email: true } }),
-    db.aiUsage.aggregate({ where: { userId, day: jakartaDay() }, _sum: { count: true } }),
+    db.aiUsage.aggregate({
+      where: { userId, day: jakartaDay(), feature: { not: "READ_POSTER" } },
+      _sum: { count: true },
+    }),
   ]);
   const limit = Number(
     isDemoEmail(user?.email) ? (process.env.AI_DAILY_LIMIT_DEMO ?? 10) : (process.env.AI_DAILY_LIMIT_PER_USER ?? 30),
   );
-  if ((used._sum.count ?? 0) >= limit) throw new QuotaExceededError();
+  return { used: used._sum.count ?? 0, limit };
+}
+
+// Check-then-call isn't atomic, so two parallel requests can overshoot by one. Fine for a daily soft cap.
+export async function assertQuota(userId: string) {
+  const { used, limit } = await getQuota(userId);
+  if (used >= limit) throw new QuotaExceededError();
 }
 
 export async function recordUsage(userId: string, feature: AiFeature, model: string) {

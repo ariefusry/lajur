@@ -428,7 +428,7 @@ Aturan prompt:
 - `quote` harus berupa substring persis dari teks. Di server, buang item yang `quote`-nya tidak ditemukan di teks asli.
 - Hasilnya hanya mengisi form sebagai draf. User meninjau dan bisa mengedit sebelum menyimpan.
 
-**Gambar poster** (ditambahkan 2026-10-21): body `{ image: "data:image/jpeg;base64,…" }` (diutamakan di atas `text`/`url`). Browser memperkecil gambar ke ≤4 MP JPEG; server memeriksa tipe + magic bytes (JPG/PNG/WebP, ≤3 MB, `lib/ai/poster.ts`). `transcribeImage()` di `provider.ts` menyalin teks poster lewat model vision (`GROQ_VISION_MODEL`, lalu `CLOUDFLARE_VISION_MODEL`), lalu teks itu masuk ke alur di atas seperti teks tempelan (kutipan diverifikasi terhadap transkripsinya). Transkripsi dihitung 1 pemakaian kuota. Tanpa model vision, opsi gambar disembunyikan.
+**Gambar poster** (ditambahkan 2026-10-21): body `{ image: "data:image/jpeg;base64,…" }` (diutamakan di atas `text`/`url`). Browser memperkecil gambar ke ≤4 MP JPEG; server memeriksa tipe + magic bytes (JPG/PNG/WebP, ≤3 MB, `lib/ai/poster.ts`). `transcribeImage()` di `provider.ts` menyalin teks poster lewat model vision (`GROQ_VISION_MODEL`, lalu `CLOUDFLARE_VISION_MODEL`), lalu teks itu masuk ke alur di atas seperti teks tempelan (kutipan diverifikasi terhadap transkripsinya). Transkripsi dicatat di `AiUsage` sebagai `READ_POSTER` tapi tidak dihitung ke kuota (diputuskan 2026-10-22): satu gambar = 1 kuota, yaitu ekstraksinya. Panel "Tambah dengan AI" menampilkan sisa kuota hari ini. Tanpa model vision, opsi gambar disembunyikan.
 
 ### 7.4 Cek kelayakan (deterministik, tanpa AI)
 `lib/eligibility/check.ts`, berupa fungsi murni `checkRequirement(req, profile, today) → { status, reason }`:

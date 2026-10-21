@@ -1,6 +1,7 @@
 "use client";
 
 import { ImagePlus, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ExtractProgress } from "@/components/application/extract-progress";
@@ -11,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ExtractEvent } from "@/lib/ai/extract-events";
 import type { ExtractedJob } from "@/lib/ai/extract-job";
 import { ShinyButton } from "@/components/ui/shiny-button";
+import { cn } from "@/lib/utils";
 
 export type ExtractResult = { job: ExtractedJob; text: string; cached: boolean; sourceUrl?: string };
 type Status = Extract<ExtractEvent, { type: "status" }>["status"];
@@ -50,10 +52,16 @@ async function posterDataUrl(file: File) {
 export function JobPastePanel({
   onResult,
   imageEnabled,
+  quota,
 }: {
   onResult: (r: ExtractResult) => void;
   imageEnabled: boolean;
+  quota: { used: number; limit: number };
 }) {
+  const router = useRouter();
+  // Counted down right away after an AI answer (a cache hit is free); the server's count replaces it on refresh.
+  const [left, setLeft] = useState(Math.max(0, quota.limit - quota.used));
+  useEffect(() => setLeft(Math.max(0, quota.limit - quota.used)), [quota.limit, quota.used]);
   const [text, setText] = useState("");
   const [image, setImage] = useState<{ name: string; dataUrl: string } | null>(null);
   const [url, setUrl] = useState("");
@@ -96,10 +104,15 @@ export function JobPastePanel({
         if (event.type === "status") {
           setStatus(event.status);
         } else if (event.type === "result") {
+          if (!event.cached) {
+            setLeft((n) => Math.max(0, n - 1));
+            router.refresh(); // the server's count, for when the panel opens again
+          }
           onResult({ ...event, sourceUrl: url.trim() || undefined });
           toast.success(event.cached ? "Draf diisi (dari cache)." : "Draf diisi. Tinjau dulu sebelum menyimpan.");
           return;
         } else {
+          if (event.status === 429) setLeft(0);
           toast.error(event.error);
           return;
         }
@@ -121,6 +134,11 @@ export function JobPastePanel({
         </h2>
         <p className="text-muted-foreground text-xs">
           AI mengisi form di bawah sebagai draf, lengkap dengan kutipan buktinya. Kamu tetap bisa mengubah semuanya.
+        </p>
+        <p className={cn("mt-1 text-xs tabular-nums", left === 0 ? "text-destructive" : "text-muted-foreground")}>
+          {left === 0
+            ? "Kuota AI hari ini habis. Terisi lagi pukul 00.00 WIB; sementara isi manual dulu ya."
+            : `Sisa kuota AI hari ini: ${left} dari ${quota.limit}. Satu gambar poster = 1 kuota.`}
         </p>
       </div>
       {image ? (
@@ -203,7 +221,7 @@ export function JobPastePanel({
               : "Beberapa situs (LinkedIn, JobStreet) menolak diambil otomatis. Kalau gagal, salin teksnya saja."}
         </p>
       </div>
-      <ShinyButton onClick={extract} disabled={pending}>
+      <ShinyButton onClick={extract} disabled={pending || left === 0}>
         <Sparkles /> {pending ? "AI sedang membaca…" : "Isi otomatis dengan AI"}
       </ShinyButton>
       {pending && <ExtractProgress status={status} elapsed={elapsed} />}
