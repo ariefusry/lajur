@@ -1,4 +1,5 @@
 import { CalendarClock, Search } from "lucide-react";
+import { RememberApplicationsView } from "@/components/application/back-to-applications";
 import Link from "next/link";
 import { EligibilityBadge } from "@/components/eligibility-badge";
 import { Badge } from "@/components/ui/badge";
@@ -91,6 +92,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
 
   return (
     <div className="max-w-7xl space-y-4 motion-safe:animate-[fade-in_300ms_ease-out]">
+      <RememberApplicationsView />
       {/* Plain GET form: filters live in the URL, so they survive reloads and can be bookmarked. */}
       <form className="flex flex-wrap items-end gap-2" role="search">
         <label className="relative basis-full sm:min-w-48 sm:flex-1 sm:basis-auto">

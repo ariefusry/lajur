@@ -1,4 +1,5 @@
 import { Board } from "@/components/board/board";
+import { RememberApplicationsView } from "@/components/application/back-to-applications";
 import { BoardTip } from "@/components/onboarding/board-tip";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor } from "@/lib/dashboard";
@@ -56,6 +57,7 @@ export default async function BoardPage() {
 
   return (
     <div className="space-y-4 motion-safe:animate-[fade-in_300ms_ease-out]">
+      <RememberApplicationsView />
       {freshUser && applications.length > 0 && <BoardTip />}
       {applications.length === 0 && (
         <p className="text-muted-foreground text-sm">

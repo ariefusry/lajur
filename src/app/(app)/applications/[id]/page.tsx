@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarClock, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { CalendarClock, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { deleteRequirement, updateApplication } from "@/actions/applications";
 import { createEvent, deleteEvent, updateEvent, updateStageHistory } from "@/actions/events";
 import { AddToCalendar } from "@/components/add-to-calendar";
+import { BackToApplications } from "@/components/application/back-to-applications";
 import { ApplicationForm } from "@/components/application/application-form";
 import { DeleteApplicationButton } from "@/components/application/delete-button";
 import { EventForm } from "@/components/application/event-form";
@@ -113,12 +114,7 @@ export default async function ApplicationDetailPage({
   return (
     <div className="max-w-6xl space-y-5">
       <header className="space-y-3">
-        <Link
-          href="/applications"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
-        >
-          <ArrowLeft className="size-4" aria-hidden /> Semua lamaran
-        </Link>
+        <BackToApplications />
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight">{app.company}</h1>
