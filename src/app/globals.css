@@ -160,6 +160,9 @@
   }
   html {
     @apply font-sans;
+    /* Room for the scrollbar on every page, so switching between a short page (board) and a long one (list)
+       doesn't shift the layout sideways. */
+    scrollbar-gutter: stable;
   }
   /* Optical tracking: tighter as type grows. */
   h1,
