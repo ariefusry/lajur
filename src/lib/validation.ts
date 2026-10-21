@@ -18,6 +18,14 @@ const optionalDate = z
   .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "Tanggal tidak valid")
   .transform((v) => (v ? fromDateInput(v) : null));
 
+// For @db.Date columns (no time, no zone): UTC midnight of that day. Jakarta midnight would be 17:00 UTC the day
+// before, which the date column truncates to the wrong day.
+const optionalDay = z
+  .string()
+  .default("")
+  .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "Tanggal tidak valid")
+  .transform((v) => (v ? new Date(`${v}T00:00:00Z`) : null));
+
 export const JOB_SOURCE_LABELS: Record<JobSource, string> = {
   JOBSTREET: "JobStreet",
   KALIBRR: "Kalibrr",
@@ -66,7 +74,7 @@ export const profileSchema = z.object({
     .transform((v) => v.replace(",", "."))
     .refine((v) => v === "" || (/^\d(\.\d{1,2})?$/.test(v) && Number(v) <= 4), "IPK 0.00–4.00")
     .transform((v) => (v ? v : null)),
-  birthDate: optionalDate,
+  birthDate: optionalDay,
   major: optionalText(100),
   degree: z
     .union([z.literal(""), z.enum(Degree)])

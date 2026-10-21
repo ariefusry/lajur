@@ -37,6 +37,10 @@ describe("applicationSchema", () => {
 });
 
 describe("profileSchema", () => {
+  it("stores the birth date as UTC midnight of that day, so the @db.Date column keeps the same day", () => {
+    expect(profileSchema.parse({ birthDate: "2001-05-12" }).birthDate?.toISOString()).toBe("2001-05-12T00:00:00.000Z");
+    expect(profileSchema.parse({ birthDate: "" }).birthDate).toBeNull();
+  });
   it("accepts comma decimal GPA and rejects > 4", () => {
     expect(profileSchema.parse({ gpa: "3,45" }).gpa).toBe("3.45");
     expect(profileSchema.safeParse({ gpa: "4.5" }).success).toBe(false);
