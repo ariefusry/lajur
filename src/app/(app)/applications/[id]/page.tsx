@@ -19,7 +19,9 @@ import { EligibilityBadge } from "@/components/eligibility-badge";
 import { ViewResumeButton } from "@/components/resumes/resume-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Timeline, type TimelineStatus } from "@/components/ui/timeline";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
+import type { StageKind, StageResult } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, GHOSTED_DAYS } from "@/lib/dashboard";
 import { daysUntil, formatDate, formatEventWhen, toDateInput, toDateTimeInput } from "@/lib/dates";
@@ -39,6 +41,13 @@ const TABS = [
   { key: "data", label: "Ubah data", short: "Ubah" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
+
+/** Timeline dot for a stage-history row: failed or closed red, passed (or moved past) done, the latest still open. */
+function historyStatus(h: { result: StageResult | null; stage: { kind: StageKind } }, latest: boolean): TimelineStatus {
+  if (h.result === "FAILED" || h.stage.kind === "REJECTED" || h.stage.kind === "WITHDRAWN") return "error";
+  if (h.result === "PASSED" || h.stage.kind === "OFFER") return "completed";
+  return h.result === "PENDING" || latest ? "active" : "completed";
+}
 
 // "eFishery · Lajur": tells apart several applications open in tabs.
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -355,43 +364,34 @@ export default async function ApplicationDetailPage({
           title="Riwayat tahap"
           description="Setiap perpindahan tahap, dengan hasil dan catatan (pertanyaan wawancara, kesan, alasan gagal)."
         >
-          <ol className="relative space-y-6 border-l pl-6">
-            {app.history.map((h) => (
-              <li key={h.id} className="relative space-y-2">
-                <span
-                  aria-hidden
-                  className={cn(
-                    "border-background absolute top-1.5 -left-[1.95rem] size-3 rounded-full border-2",
-                    h.result === "PASSED"
-                      ? "bg-green-600"
-                      : h.result === "FAILED"
-                        ? "bg-destructive"
-                        : "bg-muted-foreground",
-                  )}
-                />
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-medium">{h.stage.name}</span>
-                  <span className="text-muted-foreground text-xs">{formatDate(h.enteredAt)}</span>
+          <Timeline
+            items={app.history.map((h, i) => ({
+              id: h.id,
+              title: (
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  {h.stage.name}
                   {h.result && <Badge variant="outline">{STAGE_RESULT_LABELS[h.result]}</Badge>}
-                </div>
-                {h.notes && <p className="text-muted-foreground text-sm whitespace-pre-line">{h.notes}</p>}
-                {!readOnly && (
-                  <details>
-                    <summary className="text-primary cursor-pointer text-xs font-medium">
-                      {h.notes || h.result ? "Ubah hasil & catatan" : "Tambah hasil & catatan"}
-                    </summary>
-                    <div className="pt-2">
-                      <StageHistoryForm
-                        id={h.id}
-                        action={updateStageHistory.bind(null, h.id)}
-                        defaults={{ result: h.result ?? "", notes: h.notes ?? "", enteredAt: toDateInput(h.enteredAt) }}
-                      />
-                    </div>
-                  </details>
-                )}
-              </li>
-            ))}
-          </ol>
+                </span>
+              ),
+              timestamp: formatDate(h.enteredAt),
+              status: historyStatus(h, i === app.history.length - 1),
+              description: h.notes || undefined,
+              content: !readOnly && (
+                <details>
+                  <summary className="text-primary cursor-pointer text-xs font-medium">
+                    {h.notes || h.result ? "Ubah hasil & catatan" : "Tambah hasil & catatan"}
+                  </summary>
+                  <div className="pt-2">
+                    <StageHistoryForm
+                      id={h.id}
+                      action={updateStageHistory.bind(null, h.id)}
+                      defaults={{ result: h.result ?? "", notes: h.notes ?? "", enteredAt: toDateInput(h.enteredAt) }}
+                    />
+                  </div>
+                </details>
+              ),
+            }))}
+          />
         </Card>
       )}
 
