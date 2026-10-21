@@ -1,4 +1,5 @@
 import { EmailUpdate } from "@/components/email-update/email-update";
+import { LamaranSubNav } from "@/components/nav-links";
 import { aiEnabled } from "@/lib/ai/provider";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -15,6 +16,7 @@ export default async function EmailUpdatePage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      <LamaranSubNav />
       <h1 className="text-2xl font-semibold tracking-tight">Update dari email</h1>
       <EmailUpdate
         consentedAt={row?.aiConsentAt?.toISOString() ?? null}
