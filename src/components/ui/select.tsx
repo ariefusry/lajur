@@ -92,7 +92,7 @@ export function Select({
           <SelectPrimitive.Content
             position="popper"
             sideOffset={4}
-            className="bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) origin-(--radix-select-content-transform-origin) overflow-hidden rounded-xl border p-1 shadow-lg"
+            className="bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 z-50 max-h-[min(var(--radix-select-content-available-height),14rem)] min-w-(--radix-select-trigger-width) origin-(--radix-select-content-transform-origin) overflow-hidden rounded-xl border p-1 shadow-lg"
           >
             <SelectPrimitive.Viewport>
               {options.map((o) => (

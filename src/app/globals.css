@@ -164,6 +164,11 @@
        doesn't shift the layout sideways. */
     scrollbar-gutter: stable;
   }
+  /* Radix menus lock scrolling and pad the body by the scrollbar's width; with the gutter above already
+     holding that space, the padding would push the page left instead. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+  }
   /* Optical tracking: tighter as type grows. */
   h1,
   h2 {
