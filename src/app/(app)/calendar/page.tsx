@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { Button } from "@/components/ui/button";
+import type { EventType } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatEventWhen, fromDateInput, toDateInput } from "@/lib/dates";
@@ -20,12 +21,37 @@ const shortCompany = (name: string) =>
     .replace(/\s*\(Persero\)|\s+Tbk\.?/gi, "")
     .trim() || name;
 
+// Colour says what kind of day it is, not which application (the chip already names the company).
+const KINDS = [
+  { label: "Deadline", types: ["DEADLINE"], chip: "bg-destructive/15 text-destructive", dot: "bg-destructive" },
+  {
+    label: "Tes",
+    types: ["ONLINE_TEST", "PSYCHOTEST", "LGD"],
+    chip: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    dot: "bg-amber-500",
+  },
+  {
+    label: "Interview",
+    types: ["INTERVIEW_HR", "INTERVIEW_USER"],
+    chip: "bg-primary/15 text-primary",
+    dot: "bg-primary",
+  },
+  {
+    label: "MCU & lainnya",
+    types: ["MCU", "OTHER"],
+    chip: "bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground",
+  },
+] satisfies { label: string; types: EventType[]; chip: string; dot: string }[];
+const kindOf = (type: EventType) => KINDS.find((k) => (k.types as EventType[]).includes(type))!;
+
 type Item = {
   key: string;
   at: Date;
   label: string;
   company: string;
   applicationId: string;
+  type: EventType;
   isDeadline: boolean;
   location?: string | null;
   allDay?: boolean;
@@ -72,6 +98,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       label: EVENT_TYPE_LABELS[e.type],
       company: e.application.company,
       applicationId: e.application.id,
+      type: e.type,
       isDeadline: e.type === "DEADLINE",
       location: e.locationOrUrl,
     })),
@@ -82,6 +109,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       allDay: true,
       company: a.company,
       applicationId: a.id,
+      type: "DEADLINE" as const,
       isDeadline: true,
     })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime());
@@ -98,6 +126,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       byDay.set(day, [...(byDay.get(day) ?? []), it]);
     }
   }
+  // Multi-day windows go first, oldest start first, so a bar keeps its row across the days it spans.
+  // ponytail: two overlapping windows can still swap rows; per-week lane assignment if that bites.
+  const span = (it: Item) => toDateInput(it.opensAt ?? it.at) !== toDateInput(it.at);
+  for (const list of byDay.values())
+    list.sort(
+      (a, b) => Number(span(b)) - Number(span(a)) || (a.opensAt ?? a.at).getTime() - (b.opensAt ?? b.at).getTime(),
+    );
   const title = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric", timeZone: "UTC" }).format(
     new Date(Date.UTC(year, month - 1, 1)),
   );
@@ -151,33 +186,52 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               >
                 {i + 1}
               </span>
-              {dayItems.slice(0, 3).map((it) => (
-                <Link
-                  key={it.key}
-                  href={`/applications/${it.applicationId}`}
-                  title={`${it.label} · ${it.company}`}
-                  className={cn(
-                    "block rounded px-1 py-0.5 text-[10px] leading-snug font-medium md:truncate md:text-xs",
-                    it.isDeadline ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary",
-                  )}
-                >
-                  {/* Phones: first word, then the rest, each line cut with "…" (never split inside a word). */}
-                  <span className="hidden md:inline">{shortCompany(it.company)}</span>
-                  {shortCompany(it.company)
-                    .split(/\s+(.*)/, 2)
-                    .filter(Boolean)
-                    .map((line, n) => (
-                      <span key={n} className="block truncate md:hidden">
-                        {line}
-                      </span>
-                    ))}
-                </Link>
-              ))}
+              {dayItems.slice(0, 3).map((it) => {
+                // A window is one bar: square, cell-bridging edges where it continues, label only where a row of it starts.
+                const opensHere = day === toDateInput(it.opensAt ?? it.at);
+                const endsHere = day === toDateInput(it.at);
+                const rowStart = opensHere || (leading + i) % 7 === 0 || i === 0;
+                return (
+                  <Link
+                    key={it.key}
+                    href={`/applications/${it.applicationId}`}
+                    title={`${it.label} · ${it.company}`}
+                    className={cn(
+                      "block rounded px-1 py-0.5 text-[10px] leading-snug font-medium md:truncate md:text-xs",
+                      kindOf(it.type).chip,
+                      !opensHere && "-ml-1 rounded-l-none",
+                      !endsHere && "-mr-1 rounded-r-none",
+                    )}
+                  >
+                    <span className={cn("contents", !rowStart && "[&>*]:invisible")}>
+                      {/* Phones: first word, then the rest, each line cut with "…" (never split inside a word). */}
+                      <span className="hidden md:inline">{shortCompany(it.company)}</span>
+                      {shortCompany(it.company)
+                        .split(/\s+(.*)/, 2)
+                        .filter(Boolean)
+                        .map((line, n) => (
+                          <span key={n} className="block truncate md:hidden">
+                            {line}
+                          </span>
+                        ))}
+                    </span>
+                  </Link>
+                );
+              })}
               {dayItems.length > 3 && <p className="text-muted-foreground px-1">+{dayItems.length - 3} lagi</p>}
             </div>
           );
         })}
       </div>
+
+      <ul className="text-muted-foreground -mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+        {KINDS.map((k) => (
+          <li key={k.label} className="flex items-center gap-1.5">
+            <span className={cn("size-2 rounded-full", k.dot)} />
+            {k.label}
+          </li>
+        ))}
+      </ul>
 
       <section className="space-y-2">
         <h2 className="font-medium">Agenda bulan ini</h2>
