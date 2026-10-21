@@ -49,7 +49,12 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   const [events, deadlines] = await Promise.all([
     db.event.findMany({
-      where: { application: { userId: user.id }, startsAt: { gte: from, lt: to } },
+      // A window (opensAt → startsAt) shows in every month it overlaps.
+      where: {
+        application: { userId: user.id },
+        startsAt: { gte: from },
+        OR: [{ opensAt: { lt: to } }, { opensAt: null, startsAt: { lt: to } }],
+      },
       include: { application: { select: { id: true, company: true } } },
       orderBy: { startsAt: "asc" },
     }),
@@ -81,7 +86,18 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
-  const byDay = Map.groupBy(items, (i) => toDateInput(i.at));
+  // A window fills every day it spans, clipped to this month.
+  const monthEnd = `${monthKey}-${pad(daysInMonth)}`;
+  const byDay = new Map<string, Item[]>();
+  for (const it of items) {
+    const first = toDateInput(it.opensAt ?? it.at);
+    const last = toDateInput(it.at);
+    const end = Date.parse(last < monthEnd ? last : monthEnd);
+    for (let t = Date.parse(first > `${monthKey}-01` ? first : `${monthKey}-01`); t <= end; t += 86_400_000) {
+      const day = new Date(t).toISOString().slice(0, 10);
+      byDay.set(day, [...(byDay.get(day) ?? []), it]);
+    }
+  }
   const title = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric", timeZone: "UTC" }).format(
     new Date(Date.UTC(year, month - 1, 1)),
   );
