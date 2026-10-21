@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, Stat, pct } from "@/components/dashboard/cards";
 import { Button } from "@/components/ui/button";
-import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
+import { SegmentedNav } from "@/components/ui/segmented-nav";
 import type { JobSource } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, computeDashboard, GHOSTED_DAYS, MIN_SAMPLE, rate, type PassRate } from "@/lib/dashboard";
@@ -59,18 +59,15 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             Strategi mana yang paling berhasil: sumber, versi CV, dan tahap.
           </p>
         </div>
-        <ButtonGroup role="navigation" aria-label="Periode" className="p-1">
-          {RANGES.map((x) => (
-            <Link
-              key={x.key}
-              href={x.key === "all" ? "/analytics" : `/analytics?range=${x.key}`}
-              aria-current={x.key === range.key ? "true" : undefined}
-              className={buttonGroupItemClass(x.key === range.key)}
-            >
-              {x.label}
-            </Link>
-          ))}
-        </ButtonGroup>
+        <SegmentedNav
+          items={RANGES.map((x) => ({
+            href: x.key === "all" ? "/analytics" : `/analytics?range=${x.key}`,
+            label: x.label,
+          }))}
+          active={RANGES.indexOf(range)}
+          label="Periode"
+          className="inline-grid"
+        />
       </div>
 
       {o.applied === 0 ? (

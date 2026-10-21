@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,8 @@ const GAP_REM = 0.25; // gap-1 between segments, and the tray's p-1
 /**
  * iOS-style segmented navigation: a raised pill slides to the chosen segment, and can be dragged with a finger
  * (or mouse) from the chosen segment to another. Taps still go through the links, so keyboard and screen
- * readers get plain links. A choice moves the pill right away; the pathname takes over once navigation lands.
+ * readers get plain links. A choice moves the pill right away; `active` takes over again whenever it changes
+ * (navigation landed, or the back button), so a stale choice never sticks.
  */
 export function SegmentedNav({
   items,
@@ -28,9 +29,13 @@ export function SegmentedNav({
   className?: string;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const [picked, setPicked] = useState<{ index: number; from: string } | null>(null);
-  const current = picked?.from === pathname ? picked.index : active;
+  const [picked, setPicked] = useState<number | null>(null);
+  const [lastActive, setLastActive] = useState(active);
+  if (active !== lastActive) {
+    setLastActive(active);
+    setPicked(null);
+  }
+  const current = picked ?? active;
   const [dragX, setDragX] = useState<number | null>(null);
   const pill = useRef<HTMLSpanElement>(null);
   const press = useRef<{ x: number; dragging: boolean } | null>(null);
@@ -43,7 +48,7 @@ export function SegmentedNav({
     return el.offsetWidth + parseFloat(getComputedStyle(el).fontSize) * GAP_REM;
   };
   const choose = (index: number) => {
-    setPicked({ index, from: pathname });
+    setPicked(index);
     if (index !== current) router.push(items[index].href);
   };
   const shown = dragX === null ? current : Math.round(dragX / step());
@@ -108,7 +113,7 @@ export function SegmentedNav({
               e.preventDefault();
               return;
             }
-            setPicked({ index: i, from: pathname });
+            setPicked(i);
           }}
           aria-current={i === current ? "page" : undefined}
           className={cn(
