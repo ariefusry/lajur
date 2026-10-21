@@ -5,6 +5,7 @@ import type { AiFeature } from "@/generated/prisma/enums";
 import { assertAiConsent } from "@/lib/ai/consent";
 import { extractJsonObject } from "@/lib/ai/json-text";
 import { modelChain, responseSchema, type ModelRef, type ProviderName } from "@/lib/ai/llm-config";
+import { POSTER_SYSTEM, stripThinking } from "@/lib/ai/poster";
 import { assertQuota, recordUsage } from "@/lib/ai/usage";
 
 /** AI features are optional: hidden when no usable provider key/model is configured. */
@@ -14,6 +15,15 @@ export function aiEnabled() {
   } catch (error) {
     console.error("AI disabled:", error instanceof Error ? error.message : error);
     return false;
+  }
+}
+
+/** Reading job posters needs an image-capable model on top of the text models. */
+export function visionEnabled() {
+  try {
+    return modelChain(process.env, "vision").length > 0;
+  } catch {
+    return false; // aiEnabled() already logs the misconfiguration
   }
 }
 
@@ -153,6 +163,64 @@ export async function generateStructured<T>(args: Args<T>): Promise<AiResult<T>>
         }
         break;
       }
+    }
+  }
+  throw new AiUnavailableError(attempts);
+}
+
+/**
+ * Poster image → its text, verbatim, for the normal extraction to read (and quote from). Tries each vision model
+ * once, in provider order; counts against the daily quota like any other call. Throws AiConsentRequiredError,
+ * QuotaExceededError or AiUnavailableError.
+ */
+export async function transcribeImage(args: {
+  image: Uint8Array;
+  mediaType: string;
+  userId: string;
+  onProgress?: (event: AiProgress) => void;
+}): Promise<string> {
+  const models = modelChain(process.env, "vision");
+  if (!models.length) throw new AiUnavailableError();
+  await assertAiConsent(args.userId);
+  await assertQuota(args.userId);
+
+  const attempts: AiAttempt[] = [];
+  for (const [index, ref] of models.entries()) {
+    const started = Date.now();
+    args.onProgress?.({
+      kind: "attempt",
+      provider: ref.provider,
+      model: ref.model,
+      thinking: false,
+      fallback: index > 0,
+    });
+    try {
+      const result = await generateText({
+        model: ref.languageModel,
+        system: POSTER_SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Salin teks di gambar ini." },
+              { type: "image", image: args.image, mediaType: args.mediaType },
+            ],
+          },
+        ],
+        temperature: 0,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      const { inputTokens, outputTokens, totalTokens } = result.usage;
+      log("EXTRACT_JOB", ref.label, false, Date.now() - started, "ok", { inputTokens, outputTokens, totalTokens });
+      await recordUsage(args.userId, "EXTRACT_JOB", ref.label);
+      return stripThinking(result.text);
+    } catch (error) {
+      const status = errorStatus(error);
+      log("EXTRACT_JOB", ref.label, false, Date.now() - started, status);
+      attempts.push({ provider: ref.provider, model: ref.model, status });
+      args.onProgress?.({ kind: "attempt_failed", provider: ref.provider, reason: progressReason(status) });
     }
   }
   throw new AiUnavailableError(attempts);

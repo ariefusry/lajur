@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { NewApplication } from "@/components/application/new-application";
 import { hasAiConsent } from "@/lib/ai/consent";
-import { aiEnabled } from "@/lib/ai/provider";
+import { aiEnabled, visionEnabled } from "@/lib/ai/provider";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isReadOnly } from "@/lib/demo";
@@ -44,6 +44,7 @@ export default async function NewApplicationPage({ searchParams }: { searchParam
       <h1 className="text-2xl font-semibold tracking-tight">Lamaran baru</h1>
       <NewApplication
         aiEnabled={aiEnabled() && !isReadOnly(user)}
+        visionEnabled={visionEnabled()}
         aiConsent={aiConsent}
         stages={stages}
         resumes={resumes}

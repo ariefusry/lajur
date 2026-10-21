@@ -91,9 +91,11 @@ LLM_FALLBACK=cloudflare
 GROQ_API_KEY=
 GROQ_MODEL=openai/gpt-oss-20b
 GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
+GROQ_VISION_MODEL=qwen/qwen3.8-27b
 CLOUDFLARE_ACCOUNT_ID=
 CLOUDFLARE_API_TOKEN=
 CLOUDFLARE_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast
+CLOUDFLARE_VISION_MODEL=@cf/meta/llama-4-scout-17b-16e-instruct
 # AI — batas pemakaian
 AI_DAILY_LIMIT_PER_USER=30
 AI_DAILY_LIMIT_DEMO=10
@@ -426,6 +428,8 @@ Aturan prompt:
 - `quote` harus berupa substring persis dari teks. Di server, buang item yang `quote`-nya tidak ditemukan di teks asli.
 - Hasilnya hanya mengisi form sebagai draf. User meninjau dan bisa mengedit sebelum menyimpan.
 
+**Gambar poster** (ditambahkan 2026-10-21): body `{ image: "data:image/jpeg;base64,…" }` (diutamakan di atas `text`/`url`). Browser memperkecil gambar ke ≤4 MP JPEG; server memeriksa tipe + magic bytes (JPG/PNG/WebP, ≤3 MB, `lib/ai/poster.ts`). `transcribeImage()` di `provider.ts` menyalin teks poster lewat model vision (`GROQ_VISION_MODEL`, lalu `CLOUDFLARE_VISION_MODEL`), lalu teks itu masuk ke alur di atas seperti teks tempelan (kutipan diverifikasi terhadap transkripsinya). Transkripsi dihitung 1 pemakaian kuota. Tanpa model vision, opsi gambar disembunyikan.
+
 ### 7.4 Cek kelayakan (deterministik, tanpa AI)
 `lib/eligibility/check.ts`, berupa fungsi murni `checkRequirement(req, profile, today) → { status, reason }`:
 - `MIN_GPA`: profil ≥ nilai → MEETS, kurang → FAILS. Profil kosong → UNKNOWN.
@@ -577,7 +581,6 @@ Tambahkan script-script ini ke `package.json` di Fase 1.
 
 ## 10. Di luar cakupan (jangan dikerjakan kecuali diminta)
 - Pengingat WhatsApp (Fonnte), simpan sebagai ide v2
-- Ekstraksi lowongan dari **gambar poster** (misalnya lowongan di Instagram). Model DeepSeek V4.1 Flash mendukung input gambar, jadi ini kandidat kuat untuk v2. Poster lowongan bersifat publik, jadi aman dikirim ke endpoint gratis.
 - Membaca email lamaran otomatis (Gmail API)
 - Aplikasi mobile native
 - Multi-bahasa

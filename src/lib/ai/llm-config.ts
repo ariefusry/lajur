@@ -9,6 +9,9 @@ import { z } from "zod";
  *
  *   LLM_PRIMARY=groq      GROQ_MODEL=openai/gpt-oss-20b    GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
  *   LLM_FALLBACK=cloudflare  CLOUDFLARE_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast
+ *
+ * Reading job posters (images) uses separate vision models, in the same provider order:
+ *   GROQ_VISION_MODEL=qwen/qwen3.8-27b    CLOUDFLARE_VISION_MODEL=@cf/meta/llama-4-scout-17b-16e-instruct
  */
 export const PROVIDER_NAMES = ["groq", "cloudflare", "nvidia", "openrouter"] as const;
 export type ProviderName = (typeof PROVIDER_NAMES)[number];
@@ -23,6 +26,8 @@ type ProviderConfig = {
   apiKey: string | undefined;
   baseURL: string | null; // null: misconfigured, provider disabled
   models: (string | undefined)[];
+  /** Image-capable models, for transcribing job posters. */
+  visionModels: (string | undefined)[];
   /** Sends response_format json_schema (strict). Without it the schema goes in the prompt instead. */
   structured: boolean;
   /** Provider options for the first try (retry=false) and for the retry after invalid output. */
@@ -46,6 +51,7 @@ export function providerConfig(name: ProviderName, rawEnv: Env = process.env): P
         apiKey: env.GROQ_API_KEY,
         baseURL: "https://api.groq.com/openai/v1",
         models: [env.GROQ_MODEL, env.GROQ_FALLBACK_MODEL],
+        visionModels: [env.GROQ_VISION_MODEL],
         structured: true,
         // gpt-oss reasoning can't be switched off; "low" keeps it fast and inside the free 8K tokens/minute.
         options: (retry) => ({ reasoningEffort: retry ? "medium" : "low" }),
@@ -57,6 +63,7 @@ export function providerConfig(name: ProviderName, rawEnv: Env = process.env): P
           ? `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(env.CLOUDFLARE_ACCOUNT_ID)}/ai/v1`
           : null,
         models: [env.CLOUDFLARE_MODEL],
+        visionModels: [env.CLOUDFLARE_VISION_MODEL],
         structured: true,
         options: () => ({}),
       };
@@ -65,6 +72,7 @@ export function providerConfig(name: ProviderName, rawEnv: Env = process.env): P
         apiKey: env.NVIDIA_API_KEY,
         baseURL: nvidiaBaseUrl(env.NVIDIA_BASE_URL),
         models: [env.NVIDIA_MODEL],
+        visionModels: [],
         structured: false,
         // Nemotron thinking switch on NVIDIA NIM.
         options: (retry) => ({ chat_template_kwargs: { enable_thinking: retry } }),
@@ -74,6 +82,7 @@ export function providerConfig(name: ProviderName, rawEnv: Env = process.env): P
         apiKey: env.OPENROUTER_API_KEY,
         baseURL: "https://openrouter.ai/api/v1",
         models: [env.OPENROUTER_MODEL],
+        visionModels: [],
         structured: false,
         options: (retry) => ({ reasoning: { enabled: retry } }),
       };
@@ -120,8 +129,9 @@ export function modelRef(provider: ProviderName, model: string, env: Env = proce
 /**
  * The models to try, in order: every model of LLM_PRIMARY, then those of LLM_FALLBACK. Providers without a key
  * are skipped. Throws LlmConfigError when production is pointed at a dev-only provider.
+ * `kind: "vision"` walks the same providers' image-capable models instead.
  */
-export function modelChain(rawEnv: Env = process.env): ModelRef[] {
+export function modelChain(rawEnv: Env = process.env, kind: "text" | "vision" = "text"): ModelRef[] {
   const env = clean(rawEnv);
   const refs: ModelRef[] = [];
   for (const raw of [env.LLM_PRIMARY, env.LLM_FALLBACK]) {
@@ -136,7 +146,8 @@ export function modelChain(rawEnv: Env = process.env): ModelRef[] {
         `LLM provider "${name}" hanya boleh dipakai untuk development. Di produksi pakai groq atau cloudflare.`,
       );
     }
-    for (const model of providerConfig(name, env).models) {
+    const config = providerConfig(name, env);
+    for (const model of kind === "vision" ? config.visionModels : config.models) {
       const ref = model ? modelRef(name, model, env) : null;
       if (ref && !refs.some((r) => r.label === ref.label)) refs.push(ref);
     }

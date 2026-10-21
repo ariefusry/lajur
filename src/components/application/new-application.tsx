@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   aiEnabled: boolean;
+  visionEnabled: boolean;
   aiConsent: boolean;
   stages: { id: string; name: string }[];
   resumes: { id: string; versionName: string }[];
@@ -34,7 +35,7 @@ function postingNotes(job: ExtractResult["job"]) {
   return line ? `Dari lowongan: ${line}` : "";
 }
 
-export function NewApplication({ aiEnabled, aiConsent, stages, resumes, defaults, profile }: Props) {
+export function NewApplication({ aiEnabled, visionEnabled, aiConsent, stages, resumes, defaults, profile }: Props) {
   const [draft, setDraft] = useState<ExtractResult | null>(null);
   const [version, setVersion] = useState(0);
   // With AI on, the long manual form stays folded until it is needed (or the AI filled a draft).
@@ -101,6 +102,7 @@ export function NewApplication({ aiEnabled, aiConsent, stages, resumes, defaults
               </section>
             ) : (
               <JobPastePanel
+                imageEnabled={visionEnabled}
                 onResult={(r) => {
                   setDraft(r);
                   setVersion((v) => v + 1); // remount the uncontrolled form (and the CV check) with the new draft

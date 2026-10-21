@@ -8,6 +8,7 @@ type Status = Extract<ExtractEvent, { type: "status" }>["status"];
 // Short enough for one line in the 26rem panel.
 const HEADLINE: Record<Status, string> = {
   fetching: "Mengambil halaman lowongan…",
+  transcribing: "AI sedang membaca gambar…",
   reading: "AI sedang membaca lowongan…",
   retrying: "AI membaca ulang lebih teliti…",
   fallback: "Mencoba model AI cadangan…",

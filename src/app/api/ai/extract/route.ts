@@ -4,17 +4,23 @@ import type { ExtractEvent } from "@/lib/ai/extract-events";
 import { normalizeJobText } from "@/lib/ai/extract-job";
 import { extractJob, NothingFoundError } from "@/lib/ai/extract-job.server";
 import { fetchJobPageText, FetchPageError } from "@/lib/ai/fetch-page";
-import { aiEnabled, AiUnavailableError } from "@/lib/ai/provider";
+import { parseImageDataUrl } from "@/lib/ai/poster";
+import { aiEnabled, AiUnavailableError, transcribeImage, visionEnabled } from "@/lib/ai/provider";
 import { QuotaExceededError } from "@/lib/ai/usage";
 import { auth } from "@/lib/auth";
 import { DEMO_READ_ONLY_MESSAGE, isReadOnly } from "@/lib/demo";
 
 export const runtime = "nodejs";
-export const maxDuration = 200; // per model: first try + retry (≤30 s each), up to 3 models
+// Per model: first try + retry (≤30 s each), up to 3 models; a poster adds one try per vision model first.
+export const maxDuration = 260;
 
 const Body = z
-  .object({ text: z.string().max(100_000).optional(), url: z.url().optional() })
-  .refine((b) => b.text?.trim() || b.url, "Tempel teks lowongan atau link-nya.");
+  .object({
+    text: z.string().max(100_000).optional(),
+    url: z.url().optional(),
+    image: z.string().max(4_100_000).optional(), // data URL of a poster; it wins over text and url
+  })
+  .refine((b) => b.image || b.text?.trim() || b.url, "Tempel teks lowongan, link, atau gambar posternya.");
 
 const fail = (error: string, status: number) => Response.json({ error }, { status });
 
@@ -31,7 +37,11 @@ export async function POST(request: Request) {
 
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return fail(body.error.issues[0]?.message ?? "Permintaan tidak valid.", 400);
-  const pasted = body.data.text?.trim() ?? "";
+  const image = body.data.image ? parseImageDataUrl(body.data.image) : null;
+  if (body.data.image && !image) return fail("Gambar harus JPG, PNG, atau WebP, maksimal 3 MB.", 422);
+  if (image && !visionEnabled())
+    return fail("Membaca gambar sedang tidak tersedia. Tempel teks lowongannya saja.", 503);
+  const pasted = image ? "" : (body.data.text?.trim() ?? "");
   if (pasted && normalizeJobText(pasted).length < 50) {
     return fail("Teks lowongan terlalu pendek. Salin isi lowongannya lengkap.", 422);
   }
@@ -42,7 +52,19 @@ export async function POST(request: Request) {
       const send = (event: ExtractEvent) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       try {
         let raw = pasted;
-        if (!raw) {
+        if (image) {
+          send({ type: "status", status: "transcribing" });
+          raw = await transcribeImage({ image: image.bytes, mediaType: image.mediaType, userId });
+          if (normalizeJobText(raw).length < 50) {
+            send({
+              type: "error",
+              status: 422,
+              error:
+                "Tidak ada teks lowongan yang terbaca di gambar ini. Coba gambar yang lebih jelas, atau tempel teksnya.",
+            });
+            return;
+          }
+        } else if (!raw) {
           send({ type: "status", status: "fetching" });
           raw = await fetchJobPageText(body.data.url!);
         }
@@ -65,9 +87,11 @@ export async function POST(request: Request) {
           send({
             type: "error",
             status: 422,
-            error: pasted
-              ? "AI tidak menemukan informasi lowongan di teks ini. Pastikan yang ditempel adalah isi lowongannya."
-              : "AI tidak menemukan informasi lowongan di halaman ini. Situsnya mungkin butuh JavaScript atau login, jadi salin teks lowongannya saja.",
+            error: image
+              ? "AI tidak menemukan informasi lowongan di gambar ini. Pastikan gambarnya poster lowongan."
+              : pasted
+                ? "AI tidak menemukan informasi lowongan di teks ini. Pastikan yang ditempel adalah isi lowongannya."
+                : "AI tidak menemukan informasi lowongan di halaman ini. Situsnya mungkin butuh JavaScript atau login, jadi salin teks lowongannya saja.",
           });
         } else {
           if (!(error instanceof AiUnavailableError))

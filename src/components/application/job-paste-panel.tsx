@@ -1,9 +1,10 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { ImagePlus, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ExtractProgress } from "@/components/application/extract-progress";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,8 +29,33 @@ async function* readEvents(res: Response): AsyncGenerator<ExtractEvent> {
   }
 }
 
-export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => void }) {
+/**
+ * Re-encodes a poster as JPEG of at most ~4 megapixels: small enough for Vercel's 4.5 MB request cap, sharp enough
+ * for small print, and a tall screenshot keeps its width instead of being squeezed by a longest-side cap.
+ */
+async function posterDataUrl(file: File) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, Math.sqrt(4_000_000 / (bitmap.width * bitmap.height)));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#fff"; // transparent PNGs would turn black in JPEG
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+export function JobPastePanel({
+  onResult,
+  imageEnabled,
+}: {
+  onResult: (r: ExtractResult) => void;
+  imageEnabled: boolean;
+}) {
   const [text, setText] = useState("");
+  const [image, setImage] = useState<{ name: string; dataUrl: string } | null>(null);
   const [url, setUrl] = useState("");
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -41,16 +67,26 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
     return () => clearInterval(t);
   }, [startedAt]);
 
+  async function pickImage(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast.error("Pilih file gambar (JPG, PNG, atau WebP).");
+    try {
+      setImage({ name: file.name || "Gambar dari clipboard", dataUrl: await posterDataUrl(file) });
+    } catch {
+      toast.error("Gambar ini tidak bisa dibuka. Coba simpan ulang sebagai JPG atau PNG.");
+    }
+  }
+
   async function extract() {
-    if (!text.trim() && !url.trim()) return toast.error("Tempel teks lowongan atau link-nya dulu.");
+    if (!image && !text.trim() && !url.trim()) return toast.error("Tempel teks lowongan, link, atau gambarnya dulu.");
     setStartedAt(Date.now());
     setElapsed(0);
-    setStatus(text.trim() ? "reading" : "fetching");
+    setStatus(image ? "transcribing" : text.trim() ? "reading" : "fetching");
     try {
       const res = await fetch("/api/ai/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(text.trim() ? { text } : { url: url.trim() }),
+        body: JSON.stringify(image ? { image: image.dataUrl } : text.trim() ? { text } : { url: url.trim() }),
       });
       if (!res.ok || !res.body) {
         const body = await res.json().catch(() => ({}));
@@ -87,17 +123,68 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
           AI mengisi form di bawah sebagai draf, lengkap dengan kutipan buktinya. Kamu tetap bisa mengubah semuanya.
         </p>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="job-text">Teks lowongan</Label>
-        <Textarea
-          id="job-text"
-          rows={6}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Salin seluruh isi lowongan (posisi, persyaratan, deadline…) lalu tempel di sini."
-          disabled={pending}
-        />
-      </div>
+      {image ? (
+        <div className="space-y-1.5">
+          <Label>Gambar poster</Label>
+          <div className="bg-card flex items-start gap-3 rounded-xl border p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element -- local data URL preview */}
+            <img src={image.dataUrl} alt="Pratinjau poster lowongan" className="max-h-40 w-auto rounded-md border" />
+            <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs">{image.name}</p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Hapus gambar"
+              onClick={() => setImage(null)}
+              disabled={pending}
+            >
+              <X />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <Label htmlFor="job-text">Teks lowongan</Label>
+          <Textarea
+            id="job-text"
+            rows={6}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onPaste={(e) => {
+              const file = imageEnabled
+                ? [...e.clipboardData.files].find((f) => f.type.startsWith("image/"))
+                : undefined;
+              if (file) {
+                e.preventDefault();
+                void pickImage(file);
+              }
+            }}
+            placeholder={
+              imageEnabled
+                ? "Salin seluruh isi lowongan lalu tempel di sini, atau tempel screenshot posternya (Ctrl+V)."
+                : "Salin seluruh isi lowongan (posisi, persyaratan, deadline…) lalu tempel di sini."
+            }
+            disabled={pending}
+          />
+          {imageEnabled && (
+            <Button type="button" variant="outline" size="sm" asChild disabled={pending}>
+              <label className="cursor-pointer">
+                <ImagePlus /> atau pilih gambar poster
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  disabled={pending}
+                  onChange={(e) => {
+                    void pickImage(e.target.files?.[0]);
+                    e.target.value = ""; // picking the same file again still fires
+                  }}
+                />
+              </label>
+            </Button>
+          )}
+        </div>
+      )}
       <div className="space-y-1.5">
         <Label htmlFor="job-url">atau link lowongan</Label>
         <Input
@@ -109,9 +196,11 @@ export function JobPastePanel({ onResult }: { onResult: (r: ExtractResult) => vo
           disabled={pending}
         />
         <p className="text-muted-foreground text-xs">
-          {text.trim()
-            ? "Teks lowongan di atas yang dibaca AI. Link (kalau diisi) hanya disimpan ke kolom Link lowongan."
-            : "Beberapa situs (LinkedIn, JobStreet) menolak diambil otomatis. Kalau gagal, salin teksnya saja."}
+          {image
+            ? "Gambar di atas yang dibaca AI. Link (kalau diisi) hanya disimpan ke kolom Link lowongan."
+            : text.trim()
+              ? "Teks lowongan di atas yang dibaca AI. Link (kalau diisi) hanya disimpan ke kolom Link lowongan."
+              : "Beberapa situs (LinkedIn, JobStreet) menolak diambil otomatis. Kalau gagal, salin teksnya saja."}
         </p>
       </div>
       <ShinyButton onClick={extract} disabled={pending}>
