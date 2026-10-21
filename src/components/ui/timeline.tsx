@@ -19,7 +19,8 @@ export interface TimelineItem {
   content?: React.ReactNode;
 }
 
-const connectorVariants = cva("absolute top-8 left-3 h-[calc(100%-1.5rem)] w-px", {
+// From just under this icon to just above the next one (the li gap is 1rem).
+const connectorVariants = cva("absolute top-7 left-3 h-[calc(100%-1rem)] w-px", {
   variants: {
     status: {
       default: "bg-border",
