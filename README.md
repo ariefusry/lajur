@@ -8,12 +8,14 @@ Coba di https://lajur.vercel.app, lalu pilih **Masuk sebagai demo**. Akun demo b
 
 ## Fitur
 
-- Board kanban dengan tahap seleksi yang umum di sini: Administrasi, Tes Online/TPA, Psikotes, LGD, Interview HR/User, MCU, Offering. Riwayat tahap tercatat setiap kali kartu digeser. Ada template BUMN/Bank, Startup, dan Umum, serta tampilan daftar dengan pencarian dan filter.
-- Tambah dengan AI: tempel teks atau link lowongan, dan form terisi sebagai draf (perusahaan, posisi, lokasi, deadline, skill, syarat). Setiap isian disertai kutipan dari lowongan sebagai bukti.
+- Board kanban dengan tahap seleksi yang umum di sini: Administrasi, Tes Online/TPA, Psikotes, LGD, Interview HR/User, MCU, Offering. Riwayat tahap tercatat setiap kali kartu digeser. Ada template BUMN/Bank, Umum, Retail/Pabrik, CPNS/Instansi Pemerintah, dan Startup, serta tampilan daftar dengan pencarian dan filter.
+- Mulai pakai: pengguna baru dipandu langkah demi langkah (profil, jenis lowongan, CV, lamaran pertama) sebelum masuk ke aplikasi.
+- Tambah dengan AI: tempel teks, link, atau gambar poster lowongan (screenshot Instagram, Ctrl+V), dan form terisi sebagai draf (perusahaan, posisi, lokasi, deadline, skill, syarat). Setiap isian disertai kutipan dari lowongan sebagai bukti.
+- Update dari email: tempel email dari rekruter (hasil seleksi, undangan tes), dan AI mengusulkan perpindahan tahap dan jadwal untuk lamaran yang cocok. Nama, kontak, dan info login disamarkan sebelum dikirim, dan semua usulan ditinjau dulu.
 - Cek kelayakan tanpa AI: IPK minimal, batas usia (termasuk "per tanggal X" dan lahir 29 Februari), jurusan dengan sinonim, jenjang, penempatan, dan ikatan dinas dibandingkan dengan profilmu.
 - Versi CV: unggah PDF, tautkan ke lamaran, buka lewat tautan sementara 60 detik.
 - Cek CV: skill lowongan yang sudah dan belum terlihat di CV, plus saran perbaikan yang tidak mengarang pengalaman. Bisa dipakai sebelum menyimpan lamaran.
-- Kalender, pengingat email H-3 dan H-1 untuk tes dan interview, dan pengingat follow-up.
+- Kalender (jadwal berentang tampil sebagai satu bar, warna per jenis: deadline, tes, interview, lainnya), pengingat email H-3 dan H-1 untuk tes dan interview, dan pengingat follow-up.
 - Dashboard untuk hari ini (jadwal 7 hari, lamaran yang perlu di-follow-up, pipeline) dan halaman Analytics (funnel, tahap yang paling sering gagal, respons per sumber lowongan dan per versi CV).
 - Ekspor semua data ke CSV, dan hapus akun beserta isinya.
 
@@ -47,7 +49,7 @@ flowchart LR
   app -->|Prisma, pooled| pg
   api -->|S3 API, presigned URL| s3
   app -->|Auth.js| google[Google OAuth]
-  api -->|teks lowongan /<br/>CV yang sudah disamarkan| llm{{Groq gpt-oss →<br/>Cloudflare Llama 3.3}}
+  api -->|teks/gambar lowongan /<br/>CV yang sudah disamarkan| llm{{Groq gpt-oss →<br/>Cloudflare Llama 3.3<br/>vision: Groq Qwen → Cloudflare Llama 4 Scout}}
   api -->|email pengingat| resend[Resend]
 ```
 
@@ -74,6 +76,7 @@ erDiagram
     string major
     enum degree
     datetime aiConsentAt
+    datetime onboardedAt
   }
   Stage {
     string name
@@ -182,6 +185,7 @@ Variabel lainnya ada di [`.env.example`](.env.example): Google OAuth, provider A
 
 - Auth.js v5 dengan Google dan session database, jadi session bisa dicabut dengan menghapus barisnya.
 - Guard login ada di `src/app/(app)/layout.tsx`, dan setiap server action serta halaman memanggil `requireUser()`.
+- Layout yang sama mengarahkan pengguna dengan `onboardedAt` kosong ke wizard `/mulai` (`src/app/mulai/page.tsx`). Profil dan jenis lowongan wajib; CV dan lamaran pertama boleh dilewati. Langkahnya memakai ulang form yang sama dengan Pengaturan, CV, dan Lamaran baru. Pengguna yang mendaftar sebelum wizard ada dan akun demo tidak melewatinya.
 - "Masuk sebagai demo" (`src/actions/demo.ts`) membuat session database untuk akun demo, hanya kalau `DEMO_LOGIN_ENABLED=true`.
 
 ### Pengingat
@@ -194,8 +198,15 @@ Vercel Cron memanggil `/api/cron/reminders` setiap hari pukul 07.00 WIB dengan `
 - Jawaban AI tidak di-stream, karena structured output Groq dan Cloudflare tidak mendukungnya. `/api/ai/extract` hanya mengirim status tahapannya ke browser (NDJSON).
 - Teks lowongan dipotong 12.000 karakter dan CV teredaksi 6.000 karakter, supaya muat di batas gratis Groq 8K token per menit.
 - Hasil ekstraksi di-cache per `sha256` teks lowongan, jadi lowongan yang sama tidak memakai kuota lagi. Item yang kutipannya tidak ada di lowongan dibuang. Skill yang kutipannya disusun ulang oleh model tetap dipakai kalau nama skill-nya memang tertulis.
+- Gambar poster diperkecil di browser (JPEG ≤ 4 MP, di bawah batas body Vercel 4,5 MB), dicek tipe dan magic bytes-nya di server, lalu disalin teksnya oleh model vision (`GROQ_VISION_MODEL`, lalu `CLOUDFLARE_VISION_MODEL`). Teks itu masuk ke alur ekstraksi yang sama dengan teks tempelan, jadi kutipan diverifikasi terhadap transkripsinya. Satu gambar memakai dua kuota: menyalin dan mengekstrak.
 - Link lowongan diambil di server dengan pengaman SSRF. Data `JobPosting` JSON-LD dibaca lebih dulu; di halaman panjang, dipilih bagian dengan kata kunci lowongan paling beragam.
 - Cek CV (`src/lib/ai/cv-check.ts`) mencocokkan skill dengan alias lebih dulu, lalu satu panggilan AI mengecek sisanya dan memberi maks. 8 saran. Saran "tulis ulang" hanya memoles teks yang ada di CV; saran "lengkapi" berupa instruksi. Server membuang saran yang menulis ulang teks yang tidak ada di CV, memuat angka baru, mengklaim skill yang tidak dimiliki, atau menyodorkan contoh kalimat CV.
+
+### Tanggal dan tampilan
+
+- Semua jam ditampilkan dan diisi dalam WIB (`src/lib/dates.ts`), apa pun zona waktu perangkatnya, karena pengingat email juga dihitung dalam WIB. Kolom tanpa jam (`@db.Date`, misalnya `birthDate`) disimpan sebagai tengah malam UTC; tengah malam WIB akan terpotong menjadi hari sebelumnya.
+- Dropdown (`Select`) dan pemilih tanggal (`DatePicker`, react-day-picker) digambar oleh halaman, bukan oleh browser: daftar pilihan dan kalender bawaan browser tidak bisa memakai font, warna, dan bahasa aplikasi. Nilainya sama dengan input bawaan (`YYYY-MM-DD` / `YYYY-MM-DDTHH:mm`), jadi parsing di server tidak berubah.
+- `scrollbar-gutter: stable` menyisakan ruang scrollbar di semua halaman, supaya pindah dari board (pendek) ke daftar (panjang) tidak menggeser tampilan.
 
 ### Cek kelayakan
 
