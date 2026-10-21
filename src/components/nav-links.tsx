@@ -3,7 +3,7 @@
 import { BarChart3, CalendarDays, FileText, KanbanSquare, LayoutDashboard, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
+import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -107,21 +107,15 @@ export function LamaranSubNav() {
   const pathname = usePathname();
   const sub = LINKS.find((l) => l.sub)!.sub!;
   return (
-    <ButtonGroup role="navigation" aria-label="Menu lamaran" className="grid w-full grid-cols-2 p-1 md:hidden">
-      {sub.map((s) => {
-        const active = isSubActive(pathname, s.href);
-        return (
-          <Link
-            key={s.href}
-            href={s.href}
-            aria-current={active ? "page" : undefined}
-            className={buttonGroupItemClass(active)}
-          >
-            {s.label}
-          </Link>
-        );
-      })}
-    </ButtonGroup>
+    <SegmentedNav
+      items={sub}
+      active={Math.max(
+        0,
+        sub.findIndex((s) => isSubActive(pathname, s.href)),
+      )}
+      label="Menu lamaran"
+      className="w-full md:hidden"
+    />
   );
 }
 
