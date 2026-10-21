@@ -3,29 +3,36 @@
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
 import { cn } from "@/lib/utils";
 
-type Item = { href: string; label: string; icon?: LucideIcon };
-
-const GAP_REM = 0.25; // gap-1 between segments, and the tray's p-1
+type Item = { href: string; label: string; icon?: LucideIcon; badge?: number };
+type Box = { left: number; width: number };
 
 /**
  * iOS-style segmented navigation: a raised pill slides to the chosen segment, and can be dragged with a finger
  * (or mouse) from the chosen segment to another. Taps still go through the links, so keyboard and screen
- * readers get plain links. A choice moves the pill right away; `active` takes over again whenever it changes
- * (navigation landed, or the back button), so a stale choice never sticks.
+ * readers get plain links. The pill is measured from the segments, so they can differ in width and the tray can
+ * scroll sideways (only a press on the chosen segment blocks that scroll, to drag instead).
+ * A choice moves the pill right away; `active` takes over again whenever it changes (navigation landed, or the
+ * back button), so a stale choice never sticks.
  */
 export function SegmentedNav({
   items,
   active,
   label,
+  fill,
+  scroll,
   className,
 }: {
   items: Item[];
   active: number;
   label: string;
+  /** Segments share the full width equally. */
+  fill?: boolean;
+  /** Passed to the links (false keeps the scroll position, e.g. for tabs). */
+  scroll?: boolean;
   className?: string;
 }) {
   const router = useRouter();
@@ -36,76 +43,98 @@ export function SegmentedNav({
     setPicked(null);
   }
   const current = picked ?? active;
-  const [dragX, setDragX] = useState<number | null>(null);
-  const pill = useRef<HTMLSpanElement>(null);
-  const press = useRef<{ x: number; dragging: boolean } | null>(null);
-  const swallowClick = useRef(false);
-  const n = items.length;
 
-  // One step = pill width + gap, in px (the pill's width is a share of the tray).
-  const step = () => {
-    const el = pill.current!;
-    return el.offsetWidth + parseFloat(getComputedStyle(el).fontSize) * GAP_REM;
+  const tray = useRef<HTMLDivElement>(null);
+  const links = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [box, setBox] = useState<Box | null>(null); // null until measured: the chosen link draws itself raised
+  const [dragLeft, setDragLeft] = useState<number | null>(null);
+  const press = useRef<{ x: number; left: number; dragging: boolean } | null>(null);
+  const swallowClick = useRef(false);
+
+  const boxOf = (i: number): Box => {
+    const el = links.current[i]!;
+    return { left: el.offsetLeft, width: el.offsetWidth };
   };
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = links.current[current]!;
+      setBox({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(tray.current!);
+    return () => ro.disconnect();
+  }, [current]);
+
+  // While dragging, the segment under the pill's centre is the one it will land on.
+  const nearest = (centre: number) => {
+    const dist = (i: number) => Math.abs(boxOf(i).left + boxOf(i).width / 2 - centre);
+    return items.reduce((best, _, i) => (dist(i) < dist(best) ? i : best), 0);
+  };
+  const shown = dragLeft !== null && box ? nearest(dragLeft + box.width / 2) : current;
+
   const choose = (index: number) => {
     setPicked(index);
-    if (index !== current) router.push(items[index].href);
+    if (index !== current) router.push(items[index].href, { scroll: scroll ?? true });
   };
-  const shown = dragX === null ? current : Math.round(dragX / step());
 
   return (
     <ButtonGroup
+      ref={tray}
       role="navigation"
       aria-label={label}
-      className={cn("relative grid touch-pan-y p-1 select-none", className)}
-      style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
+      className={cn("relative flex p-1 select-none", className)}
       onPointerDown={(e) => {
-        // Only a press on the chosen segment can drag the pill, like iOS; elsewhere it's a tap.
-        const r = pill.current!.getBoundingClientRect();
-        if (e.clientX < r.left || e.clientX > r.right) return;
-        press.current = { x: e.clientX, dragging: false };
+        swallowClick.current = false;
+        if (!box || !links.current[current]?.contains(e.target as Node)) return;
+        press.current = { x: e.clientX, left: box.left, dragging: false };
       }}
       onPointerMove={(e) => {
         const p = press.current;
-        if (!p) return;
+        if (!p || !box) return;
         const dx = e.clientX - p.x;
         if (!p.dragging && Math.abs(dx) < 6) return;
         if (!p.dragging) {
           p.dragging = true;
           e.currentTarget.setPointerCapture(e.pointerId);
         }
-        setDragX(Math.min(Math.max(current * step() + dx, 0), (n - 1) * step()));
+        const first = boxOf(0);
+        const last = boxOf(items.length - 1);
+        // ponytail: the tray doesn't auto-scroll while dragging past its visible edge; add if tabs get many more
+        setDragLeft(Math.min(Math.max(p.left + dx, first.left), last.left + last.width - box.width));
       }}
       onPointerUp={() => {
         const p = press.current;
         press.current = null;
         if (!p?.dragging) return;
-        swallowClick.current = true; // the release would otherwise click the link under the finger
-        setDragX(null);
+        // The release can click the link under the finger; ignore that one (reset on the next press).
+        swallowClick.current = true;
+        setDragLeft(null);
         choose(shown);
       }}
       onPointerCancel={() => {
         press.current = null;
-        setDragX(null);
+        setDragLeft(null);
       }}
     >
-      <span
-        ref={pill}
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-y-1 left-1 bg-[var(--bjork-field)] shadow-[var(--bjork-shadow-raised)] motion-reduce:transition-none",
-          dragX === null ? "transition-transform duration-300 ease-out" : "scale-[0.97]",
-        )}
-        style={{
-          width: `calc((100% - ${2 * GAP_REM}rem - ${(n - 1) * GAP_REM}rem) / ${n})`,
-          transform:
-            dragX === null ? `translateX(calc(${current} * (100% + ${GAP_REM}rem)))` : `translateX(${dragX}px)`,
-        }}
-      />
-      {items.map(({ href, label, icon: Icon }, i) => (
+      {box && (
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-y-1 left-0 bg-[var(--bjork-field)] shadow-[var(--bjork-shadow-raised)] motion-reduce:transition-none",
+            dragLeft === null ? "transition-[transform,width] duration-300 ease-out" : "scale-[0.97]",
+          )}
+          style={{ width: box.width, transform: `translateX(${dragLeft ?? box.left}px)` }}
+        />
+      )}
+      {items.map(({ href, label, icon: Icon, badge }, i) => (
         <Link
           key={href}
+          ref={(el) => {
+            links.current[i] = el;
+          }}
           href={href}
+          scroll={scroll}
           draggable={false}
           onClick={(e) => {
             if (swallowClick.current) {
@@ -117,12 +146,17 @@ export function SegmentedNav({
           }}
           aria-current={i === current ? "page" : undefined}
           className={cn(
-            buttonGroupItemClass(false),
-            "relative",
-            i === shown && "text-[color:var(--bjork-text)] hover:bg-transparent",
+            buttonGroupItemClass(!box && i === current),
+            "relative shrink-0",
+            fill && "flex-1",
+            i === current && "touch-pan-y", // a sideways press here drags the pill, not the tray
+            box && i === shown && "text-[color:var(--bjork-text)] hover:bg-transparent",
           )}
         >
           {Icon && <Icon aria-hidden />} {label}
+          {!!badge && (
+            <span className="bg-primary/15 text-primary rounded-full px-1.5 text-[11px] tabular-nums">{badge}</span>
+          )}
         </Link>
       ))}
     </ButtonGroup>

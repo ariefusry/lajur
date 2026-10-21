@@ -114,6 +114,7 @@ export function LamaranSubNav() {
         sub.findIndex((s) => isSubActive(pathname, s.href)),
       )}
       label="Menu lamaran"
+      fill
       className="w-full md:hidden"
     />
   );

@@ -18,7 +18,7 @@ import { EligibilityBadge } from "@/components/eligibility-badge";
 import { ViewResumeButton } from "@/components/resumes/resume-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import ButtonGroup, { buttonGroupItemClass } from "@/components/ui/primitive-button-group";
+import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, GHOSTED_DAYS } from "@/lib/dashboard";
 import { daysUntil, formatDate, formatEventWhen, toDateInput, toDateTimeInput } from "@/lib/dates";
@@ -218,28 +218,17 @@ export default async function ApplicationDetailPage({
         </ol>
       </header>
 
-      <ButtonGroup
-        role="navigation"
-        aria-label="Bagian lamaran"
-        className="max-w-full [scrollbar-width:none] overflow-x-auto p-1 [&::-webkit-scrollbar]:hidden"
-      >
-        {TABS.map((t) => (
-          <Link
-            key={t.key}
-            href={tabHref(t.key)}
-            scroll={false}
-            aria-current={t.key === tab ? "page" : undefined}
-            className={buttonGroupItemClass(t.key === tab, "shrink-0")}
-          >
-            {t.label}
-            {t.key === "jadwal" && upcomingEvents.length > 0 && (
-              <span className="bg-primary/15 text-primary rounded-full px-1.5 text-[11px] tabular-nums">
-                {upcomingEvents.length}
-              </span>
-            )}
-          </Link>
-        ))}
-      </ButtonGroup>
+      <SegmentedNav
+        items={TABS.map((t) => ({
+          href: tabHref(t.key),
+          label: t.label,
+          badge: t.key === "jadwal" ? upcomingEvents.length : undefined,
+        }))}
+        active={TABS.findIndex((t) => t.key === tab)}
+        label="Bagian lamaran"
+        scroll={false}
+        className="max-w-full [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+      />
 
       {tab === "ringkasan" && (
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
