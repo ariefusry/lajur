@@ -89,6 +89,7 @@ AUTH_GOOGLE_SECRET=
 LLM_PRIMARY=groq
 LLM_FALLBACK=cloudflare
 GROQ_API_KEY=
+GROQ_API_KEY_2=            # opsional, key Groq kedua
 GROQ_MODEL=openai/gpt-oss-20b
 GROQ_FALLBACK_MODEL=openai/gpt-oss-120b
 GROQ_VISION_MODEL=qwen/qwen3.8-27b
@@ -473,12 +474,12 @@ Input berupa daftar skill hasil ekstraksi + `extractedText` dari CV yang dipilih
 
 | Provider | Base URL | Env | Dipakai di |
 |---|---|---|---|
-| Groq | `https://api.groq.com/openai/v1` | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_FALLBACK_MODEL` | produksi (utama) |
+| Groq | `https://api.groq.com/openai/v1` | `GROQ_API_KEY`, `GROQ_API_KEY_2` (opsional), `GROQ_MODEL`, `GROQ_FALLBACK_MODEL` | produksi (utama) |
 | Cloudflare Workers AI | `https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1` | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_MODEL` | produksi (cadangan) |
 | NVIDIA API Catalog | `NVIDIA_BASE_URL` (harus `integrate.api.nvidia.com`) | `NVIDIA_API_KEY`, `NVIDIA_MODEL` | **khusus dev** |
 | OpenRouter | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | **khusus dev** |
 
-`LLM_PRIMARY` dan `LLM_FALLBACK` memilih provider. Urutan model: semua model provider utama, lalu provider cadangan. Kalau `NODE_ENV=production` dan salah satunya `nvidia`/`openrouter`, `LlmConfigError` dilempar dan AI dinonaktifkan (ToS trial NVIDIA melarang produksi, dan tier gratis keduanya boleh memakai input untuk training).
+`LLM_PRIMARY` dan `LLM_FALLBACK` memilih provider. Urutan model: semua model provider utama, lalu provider cadangan. Kalau `GROQ_API_KEY_2` diisi (ditambahkan 2026-10-23), semua model Groq dicoba lagi dengan key kedua sebelum pindah ke Cloudflare, dan dicatat di `AiUsage` sebagai `groq-2:<model>`. Batas gratis Groq berlaku per akun/organisasi, jadi key kedua dari akun yang sama tidak menambah kuota. Kalau `NODE_ENV=production` dan salah satunya `nvidia`/`openrouter`, `LlmConfigError` dilempar dan AI dinonaktifkan (ToS trial NVIDIA melarang produksi, dan tier gratis keduanya boleh memakai input untuk training).
 
 Perilaku (diputuskan 2026-10-19):
 - `temperature: 0`, `maxOutputTokens: 3000`, timeout 30 detik. **Tanpa streaming**: Groq `response_format: json_schema` (strict) dan JSON mode Cloudflare tidak bisa digabung dengan streaming. Skema dikirim lewat `response_format` (kata kunci `format`/`pattern` dibuang, Zod tetap memvalidasinya). Provider dev tanpa structured output mendapat skema di prompt.

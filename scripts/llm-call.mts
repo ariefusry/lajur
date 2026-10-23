@@ -13,7 +13,7 @@ export function configuredRefs(only?: readonly string[]) {
     if (only && !only.includes(name)) continue;
     const p = providerConfig(name);
     const models = p.models.filter((m): m is string => !!m);
-    const missing = [!p.apiKey && "API key", !p.baseURL && "base URL/account ID", !models.length && "model"].filter(
+    const missing = [!p.apiKeys[0] && "API key", !p.baseURL && "base URL/account ID", !models.length && "model"].filter(
       Boolean,
     );
     if (missing.length) {
