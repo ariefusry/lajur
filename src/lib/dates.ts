@@ -66,6 +66,15 @@ export function formatShortDateTime(date: Date): string {
   }).format(date);
 }
 
+/** "09.00 WIB". */
+export function formatTime(date: Date): string {
+  return (
+    new Intl.DateTimeFormat("id-ID", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(
+      date,
+    ) + " WIB"
+  );
+}
+
 type EventWindow = { startsAt: Date; opensAt: Date | null };
 
 /** "open – close" for events with an open time, otherwise just the time. */

@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import type { EventType } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatEventWhen, fromDateInput, toDateInput } from "@/lib/dates";
+import { formatEventWhenShort, formatTime, fromDateInput, toDateInput } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS } from "@/lib/validation";
 
 export const metadata = { title: "Kalender · Lajur" };
 
 const WEEKDAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const pad = (n: number) => String(n).padStart(2, "0");
 
 // Phone cells fit ~6 characters: drop legal-form noise so the recognisable part shows ("PT Bank Mandiri (Persero) Tbk" → "Bank Mandiri").
@@ -241,34 +242,50 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           </p>
         ) : (
           <ul className="glass max-w-2xl divide-y rounded-2xl border">
-            {items.map((it) => (
-              <li key={it.key} className="flex items-center gap-1 pr-2">
-                <Link
-                  href={`/applications/${it.applicationId}`}
-                  className="hover:bg-muted/50 grid min-w-0 flex-1 gap-x-3 gap-y-0.5 p-3 text-sm sm:grid-cols-[10rem_1fr_auto] sm:items-center"
-                >
-                  <span className="min-w-0 truncate font-medium sm:order-2">{it.company}</span>
-                  <span
-                    className={cn(
-                      "text-xs sm:order-1 sm:text-sm",
-                      it.isDeadline ? "text-destructive" : "text-muted-foreground sm:text-foreground",
-                    )}
+            {items.map((it) => {
+              const start = toDateInput(it.opensAt ?? it.at);
+              const kind = kindOf(it.type);
+              return (
+                <li key={it.key} className="flex items-center gap-1 pr-2">
+                  <Link
+                    href={`/applications/${it.applicationId}`}
+                    className="hover:bg-muted/50 flex min-w-0 flex-1 items-center gap-3 p-3"
                   >
-                    {it.label}
-                  </span>
-                  <span className="text-muted-foreground text-xs sm:order-3 sm:text-sm">
-                    {formatEventWhen({ startsAt: it.at, opensAt: it.opensAt ?? null })}
-                  </span>
-                </Link>
-                <AddToCalendar
-                  title={`${it.label} · ${it.company}`}
-                  start={it.opensAt ?? it.at}
-                  end={it.opensAt ? it.at : undefined}
-                  allDay={it.allDay}
-                  location={it.location}
-                />
-              </li>
-            ))}
+                    {/* Date tile in the kind's colour: the day is readable at a glance, the line beside it says what. */}
+                    <span
+                      className={cn(
+                        "flex size-11 shrink-0 flex-col items-center justify-center rounded-xl leading-none",
+                        kind.chip,
+                      )}
+                    >
+                      <span className="text-base font-semibold tabular-nums">{Number(start.slice(8))}</span>
+                      <span className="mt-0.5 text-[10px] font-medium uppercase">
+                        {MONTHS_SHORT[Number(start.slice(5, 7)) - 1]}
+                      </span>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{it.company}</span>
+                      <span className="text-muted-foreground block truncate text-xs">
+                        {it.label}
+                        {!it.allDay &&
+                          ` · ${
+                            it.opensAt
+                              ? `${formatEventWhenShort({ startsAt: it.at, opensAt: it.opensAt })} WIB`
+                              : formatTime(it.at)
+                          }`}
+                      </span>
+                    </span>
+                  </Link>
+                  <AddToCalendar
+                    title={`${it.label} · ${it.company}`}
+                    start={it.opensAt ?? it.at}
+                    end={it.opensAt ? it.at : undefined}
+                    allDay={it.allDay}
+                    location={it.location}
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
