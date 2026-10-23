@@ -385,6 +385,13 @@
     transform: scaleX(0);
   }
 }
+/* Page enter (app/(app)/template.tsx): `translate` only in the "from" frame, so it's gone when the animation ends. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
 /* Opacity only: tw-animate's fade-in also sets a transform, which throws off dnd-kit's drag position. */
 @keyframes fade-in {
   from {

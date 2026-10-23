@@ -151,10 +151,13 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
     };
     fit();
     window.addEventListener("resize", fit);
+    // The page enter animation (app/(app)/template.tsx) shifts the board while it runs; measure again after.
+    window.addEventListener("animationend", fit);
     const ro = new ResizeObserver(fit); // the header above can wrap (demo banner, narrow screens)
     ro.observe(main);
     return () => {
       window.removeEventListener("resize", fit);
+      window.removeEventListener("animationend", fit);
       ro.disconnect();
     };
   }, []);
