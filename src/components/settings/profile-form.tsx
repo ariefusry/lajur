@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { updateProfile } from "@/actions/settings";
+import { DomicilePicker } from "@/components/settings/domicile-picker";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,11 +88,7 @@ export function ProfileForm({ defaults, onSaved }: { defaults: Defaults; onSaved
           required={studyRequired}
         />,
       )}
-      {row(
-        "domicile",
-        "Domisili",
-        <Input id="domicile" name="domicile" placeholder="Bekasi" defaultValue={defaults.domicile} />,
-      )}
+      {row("domicile", "Domisili", <DomicilePicker id="domicile" name="domicile" defaultValue={defaults.domicile} />)}
       <div className="sm:col-span-2">
         <Button type="submit" disabled={pending}>
           {pending ? "Menyimpan…" : onSaved ? "Lanjut" : "Simpan profil"}

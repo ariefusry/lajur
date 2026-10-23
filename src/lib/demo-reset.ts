@@ -52,7 +52,7 @@ const PROFILE = {
   birthDate: new Date("2001-05-14"),
   major: "Manajemen",
   degree: "S1",
-  domicile: "Bekasi",
+  domicile: "Kota Bekasi",
 } as const;
 
 /** Minimal valid one-page PDF with a text layer, so pdf-parse-style extraction works on it. */

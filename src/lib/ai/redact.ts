@@ -100,9 +100,12 @@ export function redactPII(text: string, known: KnownPii = {}): { text: string; m
     return placeholder;
   };
 
-  // Every word of the name (3+ letters): "Rina Kartika Sari" → rina|kartika|sari. The address as a whole.
+  // Every word of the name (3+ letters): "Rina Kartika Sari" → rina|kartika|sari. The address as a whole, and
+  // without its "Kota"/"Kabupaten" prefix (the profile picks "Kota Bekasi", a CV just says "Bekasi").
   const NAME = wordsRegExp((known.name ?? "").split(/[\s.,]+/).filter((w) => w.length >= 3));
-  const ADDRESS = wordsRegExp(known.address?.trim() ? [known.address.trim()] : []);
+  const address = known.address?.trim() ?? "";
+  const bareAddress = address.replace(/^(kota|kabupaten|kab\.)\s+/i, "");
+  const ADDRESS = wordsRegExp([address, bareAddress].filter(Boolean));
 
   // Credentials first, so a password that looks like a URL or long number still becomes CRED.
   const cred = swap("CRED");

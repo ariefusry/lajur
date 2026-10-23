@@ -107,6 +107,11 @@ describe("redactPII", () => {
     expect(text).toBe("[NAME_1] [NAME_2] tinggal di [ADDRESS_1]. [NAME_1] suka SQL.");
   });
 
+  it("matches a picked regency with or without its Kota/Kabupaten prefix", () => {
+    const { text } = redactPII("Domisili Bekasi, dekat Kota Bekasi.", { address: "Kota Bekasi" });
+    expect(text).toBe("Domisili [ADDRESS_1], dekat [ADDRESS_2].");
+  });
+
   it("round-trips: rehydrate(redactPII(x)) gives x back", () => {
     const input = `Halo, saya Rina Kartika (rina.k@contoh.com, ${phones[0]}), domisili Bekasi, NIK 3275012345678901.`;
     const { text, map } = redactPII(input, { name: "Rina Kartika", address: "Bekasi" });
