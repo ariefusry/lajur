@@ -241,12 +241,12 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             Tidak ada jadwal. Tambahkan jadwal tes atau interview dari halaman detail lamaran.
           </p>
         ) : (
-          <ul className="glass max-w-2xl divide-y rounded-2xl border">
+          <ul className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
             {items.map((it) => {
               const start = toDateInput(it.opensAt ?? it.at);
               const kind = kindOf(it.type);
               return (
-                <li key={it.key} className="flex items-center gap-1 pr-2">
+                <li key={it.key} className="glass flex items-center gap-1 overflow-hidden rounded-2xl border pr-2">
                   <Link
                     href={`/applications/${it.applicationId}`}
                     className="hover:bg-muted/50 flex min-w-0 flex-1 items-center gap-3 p-3"
