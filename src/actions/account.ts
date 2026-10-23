@@ -52,20 +52,20 @@ export async function exportApplicationsCsv(): Promise<{ filename: string; csv: 
       JOB_SOURCE_LABELS[a.source],
       a.location,
       a.url,
-      toDateInput(a.appliedAt),
-      toDateInput(a.deadline),
+      a.appliedAt ? formatDate(a.appliedAt) : "",
+      a.deadline ? formatDate(a.deadline) : "",
       a.expectedSalary,
       a.resume?.versionName,
-      toDateInput(a.nextActionAt),
-      toDateInput(a.lastFollowUpAt),
+      a.nextActionAt ? formatDate(a.nextActionAt) : "",
+      a.lastFollowUpAt ? formatDate(a.lastFollowUpAt) : "",
       a.history
         .map(
           (h) => `${h.stage.name} (${formatDate(h.enteredAt)}${h.result ? `, ${STAGE_RESULT_LABELS[h.result]}` : ""})`,
         )
-        .join(" → "),
+        .join(" -> "),
       a.events.map((e) => `${EVENT_TYPE_LABELS[e.type]}: ${formatEventWhen(e)}`).join("; "),
       a.notes,
-      toDateInput(a.createdAt),
+      formatDate(a.createdAt),
     ]),
   );
   return { filename: `lajur-lamaran-${toDateInput(new Date())}.csv`, csv };
