@@ -6,7 +6,10 @@ import { PrismaClient } from "@/generated/prisma/client";
 
 // Runtime uses Neon's pooled URL over node-postgres (Neon skill: pg on Vercel Fluid compute).
 const createClient = () => {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // Neon's URL says sslmode=require, which pg already treats as verify-full but warns about on every cold start
+  // (logged as an error on Vercel). Spelling out what it does silences that; the connection doesn't change.
+  const connectionString = process.env.DATABASE_URL?.replace(/([?&]sslmode=)require\b/, "$1verify-full");
+  const pool = new Pool({ connectionString });
   // Lets Vercel close idle connections before suspending the function instance.
   attachDatabasePool(pool);
   return new PrismaClient({ adapter: new PrismaPg(pool) });
