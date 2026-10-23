@@ -7,7 +7,13 @@ const cell = (v: Cell) => {
   return /[",\n\r]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 };
 
-/** RFC 4180 CSV with a UTF-8 BOM, so Excel shows Indonesian text (and "–") correctly. */
+/**
+ * RFC 4180 CSV with a UTF-8 BOM and `sep=,` hint on the first line.
+ * The BOM makes Excel show Indonesian characters correctly; `sep=,` tells
+ * Excel to use comma as delimiter regardless of the Windows locale (Indonesia
+ * uses semicolons by default, which causes all data to appear in column A).
+ * Google Sheets ignores the `sep=,` line and handles comma-CSVs fine anyway.
+ */
 export function toCsv(header: string[], rows: Cell[][]) {
-  return "﻿" + [header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n") + "\r\n";
+  return "\uFEFFsep=,\r\n" + [header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n") + "\r\n";
 }

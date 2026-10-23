@@ -10,10 +10,10 @@ describe("toCsv", () => {
         ["baris\nbaru", null],
       ],
     );
-    expect(csv).toBe('﻿a,b\r\n"PT A, Tbk","kata ""kunci"""\r\n"baris\nbaru",\r\n');
+    expect(csv).toBe('\uFEFFsep=,\r\na,b\r\n"PT A, Tbk","kata ""kunci"""\r\n"baris\nbaru",\r\n');
   });
 
   it("neutralises spreadsheet formulas", () => {
-    expect(toCsv(["x"], [["=HYPERLINK(1)"], ["-5"], ["@cmd"]])).toBe("﻿x\r\n'=HYPERLINK(1)\r\n'-5\r\n'@cmd\r\n");
+    expect(toCsv(["x"], [["=HYPERLINK(1)"], ["-5"], ["@cmd"]])).toBe("\uFEFFsep=,\r\nx\r\n'=HYPERLINK(1)\r\n'-5\r\n'@cmd\r\n");
   });
 });
