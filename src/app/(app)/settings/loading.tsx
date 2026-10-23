@@ -23,6 +23,9 @@ export default function Loading() {
             </div>
             <Skeleton className="h-9 w-28 rounded-lg" />
           </SkeletonCard>
+          <SkeletonCard>
+            <Skeleton className="h-10 rounded-lg" />
+          </SkeletonCard>
         </div>
         <SkeletonCard>
           <Skeleton className="h-3 w-80 max-w-full" />
