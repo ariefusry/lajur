@@ -30,7 +30,7 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="max-w-7xl space-y-5">
       <h1 className="text-2xl font-semibold tracking-tight">Pengaturan</h1>
 
       {/* Desktop: Profil + Data & akun stacked on the left, the (long) stage list on the right.

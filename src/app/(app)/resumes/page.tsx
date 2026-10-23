@@ -21,7 +21,7 @@ export default async function ResumesPage() {
   });
 
   return (
-    <div className="max-w-6xl space-y-8">
+    <div className="max-w-7xl space-y-8">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Versi CV</h1>
         <p className="text-muted-foreground text-sm">

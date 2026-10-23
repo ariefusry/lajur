@@ -121,7 +121,7 @@ export default async function ApplicationDetailPage({
   const currentIndex = steps.findIndex((s) => s.id === app.currentStageId);
 
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="max-w-7xl space-y-5">
       <header className="space-y-3">
         <BackToApplications />
         <div className="flex flex-wrap items-start justify-between gap-3">
