@@ -15,19 +15,12 @@ import {
 } from "@dnd-kit/core";
 import { ArrowRightLeft, CalendarClock } from "lucide-react";
 import Link from "next/link";
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  useTransition,
-  type RefObject,
-} from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition, type RefObject } from "react";
 import { toast } from "sonner";
 import { moveApplication } from "@/actions/applications";
 import { EligibilityBadge } from "@/components/eligibility-badge";
 import { Badge } from "@/components/ui/badge";
+import { BOARD_CARD, BOARD_COLUMN, BOARD_SCROLLER, useBoardHeight } from "@/components/board/board-layout";
 import { Select } from "@/components/ui/select";
 import type { EligibilityStatus, EventType, JobSource, StageKind } from "@/generated/prisma/enums";
 import { daysUntil, formatDate, formatEventWhenShort } from "@/lib/dates";
@@ -132,35 +125,7 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
 
   const scroller = useRef<HTMLDivElement>(null);
 
-  // Trello-style: the board is exactly one screen tall, so columns run to the bottom edge, the horizontal
-  // scrollbar stays in view, and a long column scrolls inside itself instead of stretching the page.
-  useLayoutEffect(() => {
-    const el = scroller.current;
-    const main = el?.closest("main");
-    if (!el || !main) return;
-    const fit = () => {
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      const pad = parseFloat(getComputedStyle(main).paddingBottom);
-      // Phones: down to just above the tab bar. main's tall bottom padding (room for the floating + button on
-      // pages that scroll) isn't needed here, so the margin takes it back.
-      const bar = document.querySelector("[data-tab-bar]")?.getBoundingClientRect();
-      const below = bar?.height ? window.innerHeight - bar.top + 12 : pad;
-      el.style.marginBottom = `${below - pad}px`;
-      // 320px floor: on a short landscape phone the page scrolls instead of the board shrinking to a sliver.
-      el.style.height = `${Math.max(320, window.innerHeight - top - below)}px`;
-    };
-    fit();
-    window.addEventListener("resize", fit);
-    // The page enter animation (app/(app)/template.tsx) shifts the board while it runs; measure again after.
-    window.addEventListener("animationend", fit);
-    const ro = new ResizeObserver(fit); // the header above can wrap (demo banner, narrow screens)
-    ro.observe(main);
-    return () => {
-      window.removeEventListener("resize", fit);
-      window.removeEventListener("animationend", fit);
-      ro.disconnect();
-    };
-  }, []);
+  useBoardHeight(scroller);
   // Fade the right edge while more columns are scrolled out of view.
   const [moreRight, setMoreRight] = useState(false);
   useEffect(() => {
@@ -190,7 +155,7 @@ export function Board({ stages, initialApplications }: { stages: Stage[]; initia
     >
       <div
         ref={scroller}
-        className="-mx-4 -mt-1 flex snap-x gap-3 overflow-x-auto px-4 pt-1 pb-4 md:-mx-1 md:snap-none md:px-1"
+        className={BOARD_SCROLLER}
         style={moreRight ? { maskImage: "linear-gradient(to right, #000 calc(100% - 3rem), transparent)" } : undefined}
       >
         {stages.map((stage) => (
@@ -225,10 +190,7 @@ function Column({ stage, cards, ...props }: MoveProps & { stage: Stage; cards: C
     <section
       ref={setNodeRef}
       aria-label={stage.name}
-      className={cn(
-        "bg-foreground/[0.04] flex w-[min(17rem,82vw)] shrink-0 snap-start flex-col gap-2.5 rounded-2xl p-2.5 transition-colors",
-        isOver && "bg-primary/10 ring-primary/30 ring-2",
-      )}
+      className={cn(BOARD_COLUMN, isOver && "bg-primary/10 ring-primary/30 ring-2")}
     >
       <h2 className="flex items-center justify-between px-1.5 pt-0.5 text-sm font-semibold">
         {stage.name}
@@ -260,7 +222,8 @@ function ApplicationCard({ card, stages, justDragged, onMove }: MoveProps & { ca
         if (justDragged.current) e.preventDefault();
       }}
       className={cn(
-        "glass group relative cursor-grab rounded-xl border p-3.5 text-sm transition-shadow select-none [-webkit-touch-callout:none] hover:shadow-md",
+        BOARD_CARD,
+        "group relative cursor-grab transition-shadow select-none [-webkit-touch-callout:none] hover:shadow-md",
         // The original stays in place as a faint placeholder while its lifted copy moves.
         isDragging && "opacity-40 shadow-none",
       )}
