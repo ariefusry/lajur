@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { ShinyButton } from "@/components/ui/shiny-button";
 import type { CvProfile } from "@/lib/ai/cv-profile";
 import { buildSearchLinks, searchKeywords } from "@/lib/jobs/search-links";
 import { cn } from "@/lib/utils";
@@ -105,10 +106,10 @@ export function JobSearch({
                 />
               </div>
               {canGenerate && aiConsented && (
-                <Button type="button" variant="outline" onClick={generate} disabled={pending}>
+                <ShinyButton onClick={generate} disabled={pending}>
                   {pending ? <LoaderCircle className="animate-spin motion-reduce:animate-none" /> : <Sparkles />}
-                  {pending ? "Membaca CV…" : profile ? "Baca ulang CV" : "Saran dari CV"}
-                </Button>
+                  {pending ? "AI sedang membaca…" : profile ? "Baca ulang dengan AI" : "Saran peran dengan AI"}
+                </ShinyButton>
               )}
             </div>
           )}
