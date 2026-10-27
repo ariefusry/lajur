@@ -1,14 +1,4 @@
-import {
-  ArrowRight,
-  BellRing,
-  ChartColumn,
-  CircleCheck,
-  FileText,
-  KanbanSquare,
-  LockKeyhole,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, CircleCheck, LockKeyhole } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,32 +31,30 @@ const STAGES = [
 
 const FEATURES = [
   {
-    icon: Sparkles,
     title: "Tambah dengan AI, form terisi",
     text: "AI membaca teks lowongan: perusahaan, posisi, deadline, dan syaratnya, lengkap dengan kutipan bukti. Kamu cek dulu sebelum disimpan.",
   },
   {
-    icon: ShieldCheck,
     title: "Cek syarat otomatis",
     text: "IPK minimal, batas usia, jurusan, jenjang, penempatan, ikatan dinas: langsung dicocokkan dengan profilmu, tanpa AI.",
   },
   {
-    icon: KanbanSquare,
+    title: "Cari lowongan dari CV",
+    text: "Pilih CV, dan Lajur membuka pencarian di Jobstreet, Glints, LinkedIn, dan Kalibrr dengan kata kunci dari CV-mu. Lowongannya tetap tampil di portal asalnya.",
+  },
+  {
     title: "Board tahap seleksi",
     text: "Geser kartu dari Administrasi sampai Offering. Riwayat tiap tahap tercatat, lengkap dengan catatan pertanyaan wawancara.",
   },
   {
-    icon: BellRing,
     title: "Tidak ada yang terlewat",
     text: "Pengingat email H-3 dan H-1 untuk tes dan interview, follow-up yang jatuh tempo, dan sekali klik ke Google Calendar.",
   },
   {
-    icon: FileText,
     title: "Versi CV dan gap skill",
     text: "Simpan beberapa versi CV, tandai mana yang dikirim ke mana, dan lihat skill lowongan yang belum ada di CV-mu.",
   },
   {
-    icon: ChartColumn,
     title: "Tahu strategi mana yang berhasil",
     text: "Response rate per sumber lowongan dan versi CV, tahap yang paling sering membuat gagal, dan lamaran yang mulai ghosting.",
   },
@@ -133,9 +121,6 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
 
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-4 pt-16 pb-10 text-center md:pt-24">
-          <p className="text-primary mb-4 text-sm font-medium">
-            Tracker lamaran kerja untuk pencari kerja di Indonesia
-          </p>
           <h1 className="mx-auto max-w-3xl text-4xl leading-[1.08] font-semibold tracking-tight text-balance md:text-6xl">
             Semua lamaran kerjamu, rapi di satu tempat.
           </h1>
@@ -145,9 +130,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg">
-              <Link href="/login">
-                Mulai gratis <ArrowRight />
-              </Link>
+              <Link href="/login">Mulai gratis</Link>
             </Button>
             {demo && (
               <form action={signInAsDemo}>
@@ -214,17 +197,14 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
               Bukan spreadsheet lagi. Dibuat untuk dipakai setiap hari, di laptop maupun HP.
             </p>
           </div>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="glass rounded-2xl border p-5">
-                <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-xl">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                <h3 className="mt-4 font-semibold tracking-tight">{title}</h3>
-                <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">{text}</p>
-              </li>
+          <dl className="divide-y border-y">
+            {FEATURES.map(({ title, text }) => (
+              <div key={title} className="grid gap-1.5 py-5 md:grid-cols-[16rem_1fr] md:gap-10">
+                <dt className="font-semibold tracking-tight">{title}</dt>
+                <dd className="text-muted-foreground max-w-2xl text-sm leading-relaxed">{text}</dd>
+              </div>
             ))}
-          </ul>
+          </dl>
         </section>
 
         {/* Board screenshot + how it works */}
@@ -280,9 +260,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
           </h2>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg">
-              <Link href="/login">
-                Mulai gratis <ArrowRight />
-              </Link>
+              <Link href="/login">Mulai gratis</Link>
             </Button>
             {demo && (
               <form action={signInAsDemo}>
