@@ -1,5 +1,6 @@
 export type SearchProfile = { role: string; skill: string | null; city: string };
-export type SearchLink = { id: string; portal: string; url: string; note: string | null };
+/** `logo` is a file in public/portals (vector, or 512px for Kalibrr: the screens show it up to ~120px). */
+export type SearchLink = { id: string; portal: string; logo: string; url: string; note: string | null };
 
 /** The search words: the role plus at most one skill (more makes portals return almost nothing). */
 export function searchKeywords({ role, skill }: Pick<SearchProfile, "role" | "skill">) {
@@ -33,12 +34,14 @@ export function buildSearchLinks(profile: SearchProfile): SearchLink[] {
   return [
     {
       id: "jobstreet",
+      logo: "/portals/jobstreet.svg",
       portal: "Jobstreet",
       url: `https://id.jobstreet.com/id/${slug(keywords)}-jobs${city ? `/in-${encodeURIComponent(city)}` : ""}`,
       note: null,
     },
     {
       id: "glints",
+      logo: "/portals/glints.svg",
       portal: "Glints",
       url: `https://glints.com/id/opportunities/jobs/explore?keyword=${q.replace(/%20/g, "+")}&country=ID${
         city ? `&locationName=${encodeURIComponent(city)}` : ""
@@ -47,6 +50,7 @@ export function buildSearchLinks(profile: SearchProfile): SearchLink[] {
     },
     {
       id: "linkedin",
+      logo: "/portals/linkedin.svg",
       portal: "LinkedIn",
       url: `https://www.linkedin.com/jobs/search/?keywords=${q}&location=${encodeURIComponent(
         city ? `${city}, Indonesia` : "Indonesia",
@@ -55,6 +59,7 @@ export function buildSearchLinks(profile: SearchProfile): SearchLink[] {
     },
     {
       id: "kalibrr",
+      logo: "/portals/kalibrr.png",
       portal: "Kalibrr",
       url: `https://www.kalibrr.com/id-ID/job-board/te/${slug(keywords)}/1`,
       note: "tanpa filter kota",

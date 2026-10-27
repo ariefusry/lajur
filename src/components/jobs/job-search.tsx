@@ -206,10 +206,11 @@ export function JobSearch({
                   <a href={l.url} target="_blank" rel="noopener noreferrer">
                     <span className="flex items-center gap-3">
                       <Image
-                        src={`/portals/${l.id}.png`}
+                        src={l.logo}
                         alt=""
-                        width={28}
-                        height={28}
+                        width={56}
+                        height={56}
+                        unoptimized
                         className="size-7 rounded-md object-contain"
                       />
                       <span className="flex flex-col items-start leading-tight">
