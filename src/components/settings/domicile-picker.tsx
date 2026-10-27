@@ -84,9 +84,12 @@ export function DomicilePicker({
       <input type="hidden" name={name} value={value} />
       <Popover.Portal>
         <Popover.Content
+          side="bottom"
           align="start"
           sideOffset={4}
-          collisionPadding={8}
+          // Always opens downward (flipping above the field was confusing on short windows); the list shrinks
+          // to the room left below instead, but never under ~5rem so a few options stay reachable.
+          avoidCollisions={false}
           className="bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=open]:fade-in-0 z-50 w-[var(--radix-popover-trigger-width)] min-w-64 overflow-hidden rounded-xl border shadow-lg"
           onOpenAutoFocus={(e) => {
             e.preventDefault();
@@ -118,7 +121,12 @@ export function DomicilePicker({
               className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none"
             />
           </div>
-          <div ref={list} id={listId} role="listbox" className="max-h-64 overflow-y-auto overscroll-contain p-1">
+          <div
+            ref={list}
+            id={listId}
+            role="listbox"
+            className="max-h-[clamp(5rem,calc(var(--radix-popover-content-available-height)_-_5rem),16rem)] overflow-y-auto overscroll-contain p-1"
+          >
             {matches.length === 0 && (
               <p className="text-muted-foreground px-3 py-6 text-center text-sm">Tidak ditemukan</p>
             )}
