@@ -93,6 +93,8 @@ model Resume {
   versionName   String
   filePath      String // key di bucket, BUKAN URL publik
   extractedText String?       @db.Text
+  // Search words for the job portals ({ roles, skills }, lib/ai/cv-profile.ts); no personal data.
+  profile       Json?
   createdAt     DateTime      @default(now())
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications  Application[]
@@ -260,6 +262,7 @@ enum AiFeature {
   CV_TWEAKS
   FOLLOW_UP
   EMAIL_UPDATE
+  CV_PROFILE // roles/skills from a CV for the job-portal search links
   READ_POSTER // copying a poster's text (vision model); recorded, but not counted against the daily quota
 }
 
