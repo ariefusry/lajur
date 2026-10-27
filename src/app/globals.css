@@ -417,3 +417,63 @@
     background-color: var(--background);
   }
 }
+
+/* Landing page only (src/app/page.tsx), tokens and motion from DESIGN.md. Scoped, so the app keeps its own tokens. */
+.landing {
+  --background: #f1f3f5;
+  --foreground: #0b0d12;
+  --card: #ffffff;
+  --card-foreground: #0b0d12;
+  --primary: #0b0d12;
+  --primary-foreground: #ffffff;
+  --muted: #e6e9ed;
+  --muted-foreground: #4a515e;
+  --border: #dde1e6;
+  --ring: #1f5fd8;
+  --brand: #1f5fd8;
+  --radius: 0.75rem;
+}
+.dark .landing {
+  --background: #0e1014;
+  --foreground: #eceef1;
+  --card: #171a20;
+  --card-foreground: #eceef1;
+  --primary: #eceef1;
+  --primary-foreground: #0e1014;
+  --muted: #1d2128;
+  --muted-foreground: #a3a9b5;
+  --border: #2a2f38;
+  --ring: #6ea2ff;
+  --brand: #6ea2ff;
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes landing-blur-in {
+    from {
+      opacity: 0;
+      filter: blur(10px);
+      transform: translateY(10px);
+    }
+  }
+  @keyframes landing-rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+  .landing-blur {
+    animation: landing-blur-in 0.9s ease-out both;
+  }
+  @keyframes landing-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .landing-fade {
+    animation: landing-fade-in 0.8s ease-out 0.5s backwards;
+  }
+  .landing-tile {
+    /* backwards, not both: once it ends, GSAP can move the tile while scrolling. */
+    animation: landing-rise 0.7s ease-out backwards;
+    animation-delay: var(--d, 0ms);
+  }
+}
