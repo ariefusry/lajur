@@ -12,11 +12,12 @@ const LINKS = [
     href: "/board",
     label: "Lamaran",
     icon: KanbanSquare,
-    also: "/applications",
-    // Desktop sub-menu; on phones the same two entries sit atop the section's pages (LamaranSubNav).
+    also: ["/applications", "/jobs"],
+    // Desktop sub-menu; on phones the same entries sit atop the section's pages (LamaranSubNav).
     sub: [
       { href: "/board", label: "Lihat lamaran" },
       { href: "/applications/update", label: "Update dari email" },
+      { href: "/jobs", label: "Cari lowongan" },
     ],
   },
   { href: "/applications/new", label: "Lamaran baru", icon: Plus },
@@ -26,7 +27,7 @@ const LINKS = [
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
-const LINK_ALSO: Record<string, string | undefined> = Object.fromEntries(LINKS.map((l) => [l.href, l.also]));
+const LINK_ALSO: Record<string, string[] | undefined> = Object.fromEntries(LINKS.map((l) => [l.href, l.also]));
 
 const isActive = (pathname: string, href: string) => {
   if (pathname === "/applications/new") return href === "/applications/new";
@@ -34,13 +35,14 @@ const isActive = (pathname: string, href: string) => {
   return (
     pathname === href ||
     pathname.startsWith(`${href}/`) ||
-    (!!also && (pathname === also || pathname.startsWith(`${also}/`)))
+    !!also?.some((a) => pathname === a || pathname.startsWith(`${a}/`))
   );
 };
 
-// "Update dari email" lives under /applications but has its own sub-menu entry.
+// "Update dari email" and "Cari lowongan" have their own sub-menu entries; "Lihat lamaran" is everything else.
+const OWN_SUB_PAGES = ["/applications/update", "/jobs"];
 const isSubActive = (pathname: string, href: string) =>
-  href === "/applications/update" ? pathname === href : pathname !== "/applications/update" && isActive(pathname, href);
+  OWN_SUB_PAGES.includes(href) ? pathname === href : !OWN_SUB_PAGES.includes(pathname) && isActive(pathname, href);
 
 const linkClass = (active: boolean) =>
   cn(
@@ -102,7 +104,7 @@ export function NavLinks() {
   );
 }
 
-/** Phone version of the "Lamaran" sub-menu: two segments at the top of the board, list and email-update pages. */
+/** Phone version of the "Lamaran" sub-menu: segments at the top of the board, list, email-update and job-search pages. */
 export function LamaranSubNav() {
   const pathname = usePathname();
   const sub = LINKS.find((l) => l.sub)!.sub!;

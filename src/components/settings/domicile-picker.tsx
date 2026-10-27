@@ -16,7 +16,17 @@ const bare = (s: string) => s.toLowerCase().replace(/^(kota|kabupaten)\s+/, "");
  * Domicile as one of the 514 kabupaten/kota, picked from a searchable list (a plain dropdown that long can't be
  * scrolled through). A value saved before the list existed still shows and submits as it was.
  */
-export function DomicilePicker({ id, name, defaultValue = "" }: { id?: string; name: string; defaultValue?: string }) {
+export function DomicilePicker({
+  id,
+  name,
+  defaultValue = "",
+  onValueChange,
+}: {
+  id?: string;
+  name: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+}) {
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -34,6 +44,7 @@ export function DomicilePicker({ id, name, defaultValue = "" }: { id?: string; n
 
   function pick(v: string) {
     setValue(v);
+    onValueChange?.(v);
     setOpen(false);
   }
   function move(to: number) {
