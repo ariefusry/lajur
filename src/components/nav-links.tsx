@@ -15,9 +15,9 @@ const LINKS = [
     also: ["/applications", "/jobs"],
     // Desktop sub-menu; on phones the same entries sit atop the section's pages (LamaranSubNav).
     sub: [
-      { href: "/board", label: "Lihat lamaran" },
-      { href: "/applications/update", label: "Update dari email" },
-      { href: "/jobs", label: "Cari lowongan" },
+      { href: "/board", label: "Lihat lamaran", short: "Lamaran" },
+      { href: "/applications/update", label: "Update dari email", short: "Update email" },
+      { href: "/jobs", label: "Cari lowongan", short: "Lowongan" },
     ],
   },
   { href: "/applications/new", label: "Lamaran baru", icon: Plus },
