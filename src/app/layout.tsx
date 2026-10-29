@@ -24,7 +24,9 @@ export const metadata: Metadata = {
 };
 
 // Browser/status bar colour of the installed app, matching the page background in each theme.
+// viewportFit "cover" makes env(safe-area-inset-*) non-zero on iOS, so the bottom tab bar clears the home indicator.
 export const viewport: Viewport = {
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f6f6f8" },
     { media: "(prefers-color-scheme: dark)", color: "#121212" },
