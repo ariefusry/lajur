@@ -26,6 +26,12 @@ Aksen hanya untuk simpul tengah di hero, ikon kecil di ubin tahap seleksi (nada 
 
 Garis jalur: simpul tengah tersambung ke ubin tahap seleksi. Ubin miring sedikit. Kata "Lajur" raksasa terpotong di dasar halaman.
 
+## Latar
+
+Dua kolam gradien biru Lajur (`.landing-glow` di `globals.css`) melayang pelan di bawah halaman, tetap di tempat sementara bagian-bagian di-scroll di atasnya. Alasan: dasar `#F1F3F5` / `#0E1014` yang rata terasa polos, dan satu-satunya warna yang boleh menambah kedalaman adalah aksen biru merek, jadi gradiennya hanya biru itu pada opacity rendah (18% dan 12%), bukan biru-ungu atau warna baru. Hanya `transform` yang bergerak (26 dan 32 detik, bolak-balik), kontras teks sekunder tetap di atas 4,5:1 di titik terpekat, dan dengan `prefers-reduced-motion` kolamnya diam. Ini loop kedua di halaman, di samping carousel portal.
+
+Di HP hero memakai hub yang sama dengan desktop: simpul di tengah, tiga tahap di tiap sisi, ubin ditumpuk (ikon di atas label) supaya muat.
+
 ## Gerak
 
 GSAP + ScrollTrigger (`src/components/landing/landing-motion.tsx`), dibaca dari atribut `data-lm` di `page.tsx`. Dial MOTION 3, mengikuti rekaman referensi:
@@ -34,7 +40,7 @@ GSAP + ScrollTrigger (`src/components/landing/landing-motion.tsx`), dibaca dari 
 - Judul bagian: kata muncul satu per satu dari blur.
 - Kartu UI melayang naik bergantian, lalu menyebar dengan kecepatan berbeda saat scroll (desktop).
 - Kartu "untuk siapa" dan kartu langkah naik saat masuk; batang contoh tergambar dari kiri.
-- Panel portal membesar dari 92% ke penuh; ubin naik; ubin yang terangkat berpindah tiap 1,7 detik (satu-satunya loop).
+- Panel portal membesar dari 92% ke penuh; ubin naik; ubin yang terangkat berpindah tiap 1,7 detik (loop kedua setelah latar).
 - Kata raksasa di footer naik dari blur.
 
 Semua tampil utuh tanpa JS dan saat `prefers-reduced-motion` (tidak ada efek GSAP yang jalan). Loop portal berhenti saat panelnya keluar layar.

@@ -43,15 +43,15 @@ const displayFont = Plus_Jakarta_Sans({
 const DISPLAY = "font-[family-name:var(--font-display)]";
 const H2 = cn(DISPLAY, "text-3xl leading-[1.1] font-bold tracking-[-0.03em] text-balance md:text-5xl");
 
-// Six of the eight stages of the BUMN template (not numbered: two do not fit, so a number would show a gap). x/y are percent of the hero box (mx/my on phones, where
-// only the `m` ones show and no lines are drawn).
+// Six of the eight stages of the BUMN template (not numbered: two do not fit, so a number would show a gap). x/y are percent of the hero box
+// (mx/my on phones: the same hub, but two narrow columns of stacked tiles).
 const NODES = [
-  { label: "Administrasi", Icon: FileText, x: 10, y: 50, mx: 27, my: 14, m: true },
-  { label: "Tes Online/TPA", Icon: MonitorCheck, x: 20, y: 21, mx: 27, my: 14, m: false },
-  { label: "Psikotes", Icon: Brain, x: 20, y: 79, mx: 27, my: 86, m: true },
-  { label: "LGD", Icon: Users, x: 80, y: 21, mx: 73, my: 14, m: false },
-  { label: "Interview", Icon: MessagesSquare, x: 90, y: 50, mx: 73, my: 14, m: true },
-  { label: "MCU", Icon: Stethoscope, x: 80, y: 79, mx: 73, my: 86, m: true },
+  { label: "Administrasi", Icon: FileText, x: 10, y: 50, mx: 14, my: 50 },
+  { label: "Tes Online/TPA", Icon: MonitorCheck, x: 20, y: 21, mx: 14, my: 22 },
+  { label: "Psikotes", Icon: Brain, x: 20, y: 79, mx: 14, my: 78 },
+  { label: "LGD", Icon: Users, x: 80, y: 21, mx: 86, my: 22 },
+  { label: "Interview", Icon: MessagesSquare, x: 90, y: 50, mx: 86, my: 50 },
+  { label: "MCU", Icon: Stethoscope, x: 80, y: 79, mx: 86, my: 78 },
 ];
 
 // App pieces floating around the second heading: left/top in percent of the box, rotation in degrees.
@@ -114,7 +114,9 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
   const demo = demoLoginEnabled();
 
   return (
-    <div className={cn("landing bg-background text-foreground min-h-svh", displayFont.variable)}>
+    // isolate: the moving glow sits at -z-10, above this background but under every section.
+    <div className={cn("landing bg-background text-foreground isolate min-h-svh", displayFont.variable)}>
+      <div aria-hidden className="landing-glow" />
       {/* Floating nav: one opaque pill that sits over the content while scrolling */}
       <header className="sticky top-3 z-30 px-4 pt-3">
         <div
@@ -164,12 +166,8 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
 
         {/* Hero: the Lajur node, joined by thin lines to the stages of a selection process */}
         <section data-lm="hero" className="mx-auto max-w-6xl px-4 pt-8 pb-10 text-center md:pt-12">
-          <div data-lm="hero-box" className="relative mx-auto h-72 max-w-5xl sm:h-80 md:h-96" aria-hidden>
-            <svg
-              data-lm="hero-fade"
-              className="text-foreground absolute inset-0 hidden size-full overflow-visible md:block"
-              fill="none"
-            />
+          <div data-lm="hero-box" className="relative mx-auto h-80 max-w-5xl md:h-[clamp(18rem,40svh,24rem)]" aria-hidden>
+            <svg data-lm="hero-fade" className="text-foreground absolute inset-0 size-full overflow-visible" fill="none" />
             {/* GSAP moves the zero-size anchors; the centring lives on the child, where GSAP never reads it. */}
             <div data-lm="hero-tile" data-speed="20" className="absolute top-1/2 left-1/2 size-0">
               <div
@@ -195,24 +193,19 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
                     "--d": `${200 + i * 90}ms`,
                   } as CSSProperties
                 }
-                className={cn(
-                  "absolute top-[var(--my)] left-[var(--mx)] size-0 md:top-[var(--y)] md:left-[var(--x)]",
-                  !n.m && "hidden md:block",
-                )}
+                className="absolute top-[var(--my)] left-[var(--mx)] size-0 md:top-[var(--y)] md:left-[var(--x)]"
               >
                 <div
                   className={cn(
-                    "landing-tile bg-card absolute top-0 left-0 w-max -translate-x-1/2 -translate-y-1/2 rounded-xl border px-3 py-2 text-left md:px-4 md:py-2.5",
+                    "landing-tile bg-card absolute top-0 left-0 w-[5.5rem] -translate-x-1/2 -translate-y-1/2 rounded-xl border px-1.5 py-2 text-center md:w-max md:px-4 md:py-2.5 md:text-left",
                     FLOAT_SHADOW,
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] text-[var(--brand)] sm:size-9">
-                      <n.Icon className="size-4 sm:size-[1.15rem]" strokeWidth={2} />
+                  <div className="flex flex-col items-center gap-1.5 md:flex-row md:gap-2.5">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] text-[var(--brand)] md:size-9">
+                      <n.Icon className="size-4 md:size-[1.15rem]" strokeWidth={2} />
                     </span>
-                    <div>
-                      <p className="text-sm font-semibold whitespace-nowrap">{n.label}</p>
-                    </div>
+                    <p className="text-[11px] leading-tight font-semibold md:text-sm md:whitespace-nowrap">{n.label}</p>
                   </div>
                 </div>
               </div>

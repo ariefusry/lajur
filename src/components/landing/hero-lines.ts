@@ -24,11 +24,14 @@ export function drawHeroLines(box: HTMLElement) {
     return { x: r.left + r.width / 2 - b.left, y: r.top + r.height / 2 - b.top, half: r.width / 2 };
   };
   const n = center(node);
+  // A phone's hero is narrow: the fork sits closer to the node so the stages still have room beside it.
+  const forkGap = Math.min(FORK_GAP, b.width * 0.05);
 
   stages.forEach((tile, i) => {
     let path = svg.querySelector<SVGPathElement>(`path[data-route="${i}"]`);
     let dot = svg.querySelector<SVGCircleElement>(`circle[data-route="${i}"]`);
-    if (!path || !dot) {
+    let pulse = svg.querySelector<SVGPathElement>(`path[data-pulse="${i}"]`);
+    if (!path || !dot || !pulse) {
       path = document.createElementNS(SVG_NS, "path");
       path.setAttribute("data-route", String(i));
       path.setAttribute("fill", "none");
@@ -41,13 +44,23 @@ export function drawHeroLines(box: HTMLElement) {
       dot.setAttribute("data-route", String(i));
       dot.style.fill = "var(--brand)";
       dot.classList.add("landing-fade");
-      svg.append(path, dot);
+      // A short bright stretch that runs from the stage into the Lajur node (.landing-pulse in globals.css).
+      pulse = document.createElementNS(SVG_NS, "path");
+      pulse.setAttribute("data-pulse", String(i));
+      pulse.setAttribute("fill", "none");
+      pulse.setAttribute("pathLength", "1");
+      pulse.setAttribute("stroke-linejoin", "round");
+      pulse.classList.add("landing-pulse");
+      // The lines fade in over 0.5s to 1.3s (.landing-fade); the first dash leaves only once they are all there.
+      pulse.style.animationDelay = `${1.4 + i * 0.55}s`;
+      svg.append(path, dot, pulse);
     }
 
     const t = center(tile);
     if (!t.half) {
       // display: none on small screens
       path.removeAttribute("d");
+      pulse.removeAttribute("d");
       dot.setAttribute("r", "0");
       return;
     }
@@ -60,14 +73,16 @@ export function drawHeroLines(box: HTMLElement) {
     if (rise < 6) {
       d = `M${n.x} ${n.y}H${endX}`;
     } else {
-      const forkX = n.x + dir * (n.half + FORK_GAP);
-      // The slope is 45 degrees when there is room for it, and steeper when the tile sits close in.
-      const room = Math.max(0, dir * (endX - forkX) - RUN);
-      const slope = Math.min(rise, Math.max(MIN_SLOPE_RUN, room));
+      const forkX = n.x + dir * (n.half + forkGap);
+      // The slope is 45 degrees when there is room for it, and steeper when the tile sits close in (never past the dot).
+      const avail = Math.max(0, dir * (endX - forkX));
+      const room = Math.max(0, avail - RUN);
+      const slope = Math.min(rise, Math.max(MIN_SLOPE_RUN, room), avail);
       const slopeEndX = forkX + dir * slope;
       d = `M${n.x} ${n.y}H${forkX}L${slopeEndX} ${t.y}H${endX}`;
     }
     path.setAttribute("d", d);
+    pulse.setAttribute("d", d);
     dot.setAttribute("cx", String(endX));
     dot.setAttribute("cy", String(t.y));
   });

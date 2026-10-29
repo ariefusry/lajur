@@ -446,6 +446,77 @@
   --ring: #6ea2ff;
   --brand: #6ea2ff;
 }
+/* Moving background (DESIGN.md, "Latar"): two soft pools of the brand blue under the page. Fixed, so it stays while the sections scroll over it. */
+.landing-glow {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+}
+.landing-glow::before,
+.landing-glow::after {
+  content: "";
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+}
+.landing-glow::before {
+  top: -25vmax;
+  left: -20vmax;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--brand) 18%, transparent), transparent);
+}
+.landing-glow::after {
+  right: -25vmax;
+  bottom: -30vmax;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--brand) 12%, transparent), transparent);
+}
+/* Hero route pulses (hero-lines.ts): a glowing dash runs along each line into the Lajur node, so the lines read as stages flowing into one place. */
+.landing-pulse {
+  display: none;
+  stroke: var(--brand);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 0.14 2;
+  /* Resting place, and where the dash waits out its animation delay: just past the start, under the Lajur node. */
+  stroke-dashoffset: 0.14;
+  filter: drop-shadow(0 0 3px var(--brand));
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes landing-pulse-run {
+    from {
+      stroke-dashoffset: -1;
+    }
+    65%,
+    to {
+      stroke-dashoffset: 0.14;
+    }
+  }
+  .landing-pulse {
+    display: inline;
+    animation: landing-pulse-run 3.6s ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Transform only, so the drift costs no layout or paint. */
+  @keyframes landing-drift-a {
+    to {
+      transform: translate3d(45vmax, 30vmax, 0) scale(1.15);
+    }
+  }
+  @keyframes landing-drift-b {
+    to {
+      transform: translate3d(-40vmax, -35vmax, 0) scale(0.9);
+    }
+  }
+  .landing-glow::before {
+    animation: landing-drift-a 26s ease-in-out infinite alternate;
+  }
+  .landing-glow::after {
+    animation: landing-drift-b 32s ease-in-out infinite alternate;
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   @keyframes landing-blur-in {
     from {
