@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { toCsv } from "@/lib/csv";
-import { formatDate, formatEventWhen, toDateInput } from "@/lib/dates";
+import { toDateInput, toDateTimeInput } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { isDemoEmail } from "@/lib/demo";
 import { deleteObject } from "@/lib/storage";
@@ -26,47 +26,61 @@ export async function exportApplicationsCsv(): Promise<{ filename: string; csv: 
       events: { orderBy: { startsAt: "asc" } },
     },
   });
+  // Short columns first and free text last, so the sheet reads without scrolling sideways. Dates are YYYY-MM-DD
+  // (Jakarta time), which Excel and Sheets treat as real dates and sort correctly.
+  const when = (d: Date) => toDateTimeInput(d).replace("T", " ");
+  const now = new Date();
   const csv = toCsv(
     [
+      "No",
       "Perusahaan",
       "Posisi",
       "Tahap sekarang",
       "Sumber",
       "Lokasi",
-      "Link lowongan",
       "Tanggal melamar",
       "Deadline",
       "Gaji diharapkan (Rp/bulan)",
       "CV",
+      "Jadwal berikutnya",
       "Follow-up berikutnya",
       "Terakhir follow-up",
-      "Riwayat tahap",
-      "Jadwal",
-      "Catatan",
       "Dibuat",
+      "Riwayat tahap",
+      "Semua jadwal",
+      "Catatan",
+      "Link lowongan",
     ],
-    apps.map((a) => [
-      a.company,
-      a.position,
-      a.currentStage.name,
-      JOB_SOURCE_LABELS[a.source],
-      a.location,
-      a.url,
-      a.appliedAt ? formatDate(a.appliedAt) : "",
-      a.deadline ? formatDate(a.deadline) : "",
-      a.expectedSalary,
-      a.resume?.versionName,
-      a.nextActionAt ? formatDate(a.nextActionAt) : "",
-      a.lastFollowUpAt ? formatDate(a.lastFollowUpAt) : "",
-      a.history
-        .map(
-          (h) => `${h.stage.name} (${formatDate(h.enteredAt)}${h.result ? `, ${STAGE_RESULT_LABELS[h.result]}` : ""})`,
-        )
-        .join(" -> "),
-      a.events.map((e) => `${EVENT_TYPE_LABELS[e.type]}: ${formatEventWhen(e)}`).join("; "),
-      a.notes,
-      formatDate(a.createdAt),
-    ]),
+    apps.map((a, i) => {
+      const next = a.events.find((e) => e.startsAt >= now);
+      return [
+        i + 1,
+        a.company,
+        a.position,
+        a.currentStage.name,
+        JOB_SOURCE_LABELS[a.source],
+        a.location,
+        toDateInput(a.appliedAt),
+        toDateInput(a.deadline),
+        a.expectedSalary,
+        a.resume?.versionName,
+        next ? `${EVENT_TYPE_LABELS[next.type]}, ${when(next.startsAt)}` : "",
+        toDateInput(a.nextActionAt),
+        toDateInput(a.lastFollowUpAt),
+        toDateInput(a.createdAt),
+        a.history
+          .map(
+            (h) =>
+              `${toDateInput(h.enteredAt)} ${h.stage.name}${h.result ? ` (${STAGE_RESULT_LABELS[h.result]})` : ""}`,
+          )
+          .join("; "),
+        a.events
+          .map((e) => `${EVENT_TYPE_LABELS[e.type]}, ${e.opensAt ? `${when(e.opensAt)} s/d ` : ""}${when(e.startsAt)}`)
+          .join("; "),
+        a.notes,
+        a.url,
+      ];
+    }),
   );
   return { filename: `lajur-lamaran-${toDateInput(new Date())}.csv`, csv };
 }
