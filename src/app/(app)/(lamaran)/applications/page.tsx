@@ -1,10 +1,9 @@
-import { CalendarClock, Search } from "lucide-react";
+import { CalendarClock } from "lucide-react";
+import { ApplicationFilters } from "@/components/application/application-filters";
 import { RememberApplicationsView } from "@/components/application/back-to-applications";
 import Link from "next/link";
 import { EligibilityBadge } from "@/components/eligibility-badge";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { Prisma } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/auth";
 import { appFactsFor, GHOSTED_DAYS } from "@/lib/dashboard";
@@ -14,7 +13,6 @@ import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
 import { cn } from "@/lib/utils";
 import { JOB_SOURCE_LABELS } from "@/lib/validation";
-import { Select } from "@/components/ui/select";
 
 export const metadata = { title: "Daftar lamaran · Lajur" };
 
@@ -93,44 +91,18 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
   return (
     <div className="max-w-7xl space-y-4 motion-safe:animate-[fade-in_300ms_ease-out]">
       <RememberApplicationsView />
-      {/* Plain GET form: filters live in the URL, so they survive reloads and can be bookmarked. */}
-      <form className="flex flex-wrap items-end gap-2" role="search">
-        <label className="relative basis-full sm:min-w-48 sm:flex-1 sm:basis-auto">
-          <span className="sr-only">Cari</span>
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input name="q" defaultValue={query} placeholder="Cari perusahaan, posisi, atau lokasi" className="pl-9" />
-        </label>
-        <label className="relative flex-1 sm:flex-none">
-          <span className="sr-only">Tahap</span>
-          <Select
-            name="stage"
-            defaultValue={stage}
-            className="w-full sm:w-44"
-            options={[
-              { value: "", label: "Semua tahap" },
-              ...stages.map((s) => ({ value: s.id, label: s.name })),
-              { value: GHOSTED, label: "Ghosted" },
-            ]}
-          />
-        </label>
-        <label className="relative flex-1 sm:flex-none">
-          <span className="sr-only">Urutkan</span>
-          <Select
-            name="sort"
-            defaultValue={sortKey}
-            className="w-full sm:w-44"
-            options={Object.entries(SORTS).map(([value, s]) => ({ value, label: s.label }))}
-          />
-        </label>
-        <Button type="submit" variant="outline" className="h-10 pointer-coarse:h-11">
-          Terapkan
-        </Button>
-        {filtered && (
-          <Button asChild variant="ghost" className="h-10 pointer-coarse:h-11">
-            <Link href="/applications">Reset</Link>
-          </Button>
-        )}
-      </form>
+      <ApplicationFilters
+        query={query}
+        stage={stage}
+        sort={sortKey}
+        stageOptions={[
+          { value: "", label: "Semua tahap" },
+          ...stages.map((s) => ({ value: s.id, label: s.name })),
+          { value: GHOSTED, label: "Ghosted" },
+        ]}
+        sortOptions={Object.entries(SORTS).map(([value, s]) => ({ value, label: s.label }))}
+        filtered={filtered}
+      />
 
       <p className="text-muted-foreground text-sm">
         {filtered ? `${rows.length} dari ${total} lamaran` : `${total} lamaran`}
