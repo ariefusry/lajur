@@ -142,6 +142,15 @@ function PrepList({ prep }: { prep: StoredInterviewPrep }) {
                     </p>
                   )}
                 </div>
+                {q.sampleAnswer && (
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-xs font-medium">Contoh jawaban</p>
+                    <p className="bg-muted/50 rounded-xl px-3 py-2 whitespace-pre-line">{q.sampleAnswer}</p>
+                    <p className="text-muted-foreground text-xs">
+                      Draf, bukan untuk dihafal. Ganti bagian [dalam kurung] dengan pengalamanmu sendiri.
+                    </p>
+                  </div>
+                )}
                 {q.answerPoints.length > 0 && (
                   <div className="space-y-1">
                     <p className="text-muted-foreground text-xs font-medium">Kerangka jawaban</p>

@@ -37,6 +37,7 @@ const q = (over: Partial<InterviewQuestion> = {}): InterviewQuestion => ({
   question: "Ceritakan pengalamanmu dengan SQL.",
   why: "Lowongan meminta SQL.",
   quote: "Menguasai SQL dan Excel",
+  sampleAnswer: "Saya membuat laporan penjualan dengan SQL selama 2 tahun. [Sebutkan hasil yang bisa diukur].",
   answerPoints: ["Ceritakan proyek SQL terbesarmu."],
   cvQuote: "Membuat laporan penjualan dengan SQL",
   tip: "Sebutkan hasilnya.",
@@ -73,6 +74,16 @@ describe("verifyInterviewPrep", () => {
     expect(out.answerPoints).toEqual(["Ceritakan laporan yang kamu buat selama 2 tahun."]);
   });
 
+  it("empties a sample answer that carries an invented number, keeps one that only uses numbers from the inputs", () => {
+    const out = verifyInterviewPrep(
+      answer([q(), q({ question: "Lain", sampleAnswer: "Saya menaikkan penjualan 40% di [nama perusahaan]." })]),
+      input,
+      {},
+    ).questions;
+    expect(out[0].sampleAnswer).toContain("2 tahun");
+    expect(out[1].sampleAnswer).toBe("");
+  });
+
   it("drops duplicate questions, caps the lists, and puts personal data back", () => {
     const many = Array.from({ length: 12 }, (_, i) => q({ question: `Pertanyaan ${i}` }));
     const out = verifyInterviewPrep(
@@ -80,9 +91,9 @@ describe("verifyInterviewPrep", () => {
       input,
       { "[NAME_1]": "Rina" },
     );
-    expect(out.questions).toHaveLength(8);
+    expect(out.questions).toHaveLength(6);
     expect(out.questions[0].tip).toBe("Ingat Rina.");
-    expect(new Set(out.questions.map((x) => x.question)).size).toBe(8);
+    expect(new Set(out.questions.map((x) => x.question)).size).toBe(6);
     expect(out.questionsToAsk).toEqual(["a", "b", "c"]);
   });
 });
@@ -98,7 +109,12 @@ describe("readInterviewPrep", () => {
       questions: [q()],
       questionsToAsk: [],
     };
+    // Saved before sampleAnswer existed.
+    const oldQuestion: Partial<InterviewQuestion> = q();
+    delete oldQuestion.sampleAnswer;
+    const old = { ...good, questions: [oldQuestion] };
     expect(Object.keys(readInterviewPrep({ s1: good, s2: { nope: 1 } }))).toEqual(["s1"]);
+    expect(readInterviewPrep({ s1: old }).s1.questions[0].sampleAnswer).toBe("");
     expect(readInterviewPrep(null)).toEqual({});
     expect(readInterviewPrep([good])).toEqual({});
   });

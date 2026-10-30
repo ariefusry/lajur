@@ -33,6 +33,8 @@ questions: ${MAX_QUESTIONS} pertanyaan, urut dari yang paling mungkin ditanyakan
 - question: satu pertanyaan, seperti yang diucapkan pewawancara.
 - why: satu kalimat, mengapa pewawancara menanyakannya, dikaitkan dengan isi lowongan.
 - quote: potongan teks yang disalin persis dari lowongan yang mendasari "why". null kalau tidak ada.
+- sampleAnswer: contoh jawaban siap dipakai, 3 sampai 5 kalimat, sudut pandang orang pertama ("saya"), bahasa lisan yang natural dan sopan, berpola STAR. Untuk LGD: contoh kalimat yang bisa diucapkan saat berdiskusi.
+  Fakta pengalaman user HANYA boleh berasal dari CV. Bagian yang butuh pengalaman, angka, atau nama yang tidak ada di CV ditulis sebagai isian dalam kurung siku, contoh "[sebutkan proyek yang kamu kerjakan]" atau "[hasil yang bisa diukur]". Jangan mengarang pengalaman, angka, atau pencapaian.
 - answerPoints: 2 sampai 4 poin kerangka jawaban berpola STAR (situasi, tugas, aksi, hasil) dalam bentuk arahan, contoh "Ceritakan proyek di mana kamu ... dan hasil yang bisa diukur". Kamu tidak tahu pengalaman user selain isi CV, jadi jangan menulis seolah-olah user sudah mengalaminya.
 - cvQuote: potongan teks yang disalin persis dari CV yang bisa jadi bahan jawaban. null kalau CV tidak ada atau tidak relevan.
 - tip: satu kalimat saran menjawab atau hal yang perlu dihindari.
@@ -86,6 +88,7 @@ export async function generateInterviewPrep(
     prompt: interviewPrepPrompt(input, posting, redactedCv),
     feature: "INTERVIEW_PREP",
     userId: input.userId,
+    maxOutputTokens: 3500,
   });
   const known = [
     input.company,

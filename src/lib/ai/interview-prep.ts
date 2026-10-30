@@ -3,7 +3,8 @@ import { numbers } from "@/lib/ai/cv-tweaks";
 import { rehydrate, type PiiMap } from "@/lib/ai/redact";
 import { fold } from "@/lib/text";
 
-export const MAX_QUESTIONS = 8;
+export const MAX_QUESTIONS = 6;
+const MAX_STORED_QUESTIONS = 10;
 export const MAX_QUESTIONS_TO_ASK = 3;
 const MAX_POINTS = 5;
 
@@ -21,6 +22,7 @@ export const InterviewQuestion = z.object({
   question: z.string(),
   why: z.string(), // why an interviewer asks this, tied to the posting
   quote: z.string().nullable(), // exact snippet of the posting that backs `why`
+  sampleAnswer: z.string(), // a first-person draft; facts only from the CV, [brackets] where the user must fill in
   answerPoints: z.array(z.string()), // what to cover, STAR-shaped; directions, not claims about the user
   cvQuote: z.string().nullable(), // exact snippet of the redacted CV the answer can build on
   tip: z.string(),
@@ -49,9 +51,9 @@ export function interviewKindFor(stage: { name: string; kind: string }): Intervi
 }
 
 /**
- * The model must not invent the user's story or the company's facts. An answer point is dropped when it carries
- * a number (percentage, year, amount) that is in none of the inputs, and a quote becomes null when it isn't in the
- * text the model saw. Duplicate questions go; at most 8 questions and 3 questions to ask remain. Personal data goes back in.
+ * The model must not invent the user's story or the company's facts. An answer point is dropped, and a sample answer
+ * emptied, when it carries a number (percentage, year, amount) that is in none of the inputs. A quote becomes null
+ * when it isn't in the text the model saw. Duplicate questions go; at most 8 questions and 3 questions to ask remain. Personal data goes back in.
  */
 export function verifyInterviewPrep(
   answer: InterviewPrepAnswer,
@@ -79,6 +81,7 @@ export function verifyInterviewPrep(
       question: rehydrate(q.question.trim(), map),
       why: rehydrate(q.why.trim(), map),
       quote: inside(q.quote, posting) && rehydrate(q.quote!.trim(), map),
+      sampleAnswer: numbers(q.sampleAnswer).every((n) => allowed.has(n)) ? rehydrate(q.sampleAnswer.trim(), map) : "",
       answerPoints: q.answerPoints
         .map((p) => p.trim())
         .filter((p) => p && numbers(p).every((n) => allowed.has(n)))
@@ -111,12 +114,13 @@ export const StoredInterviewPrep = z.object({
         question: z.string().max(1000),
         why: z.string().max(1000),
         quote: z.string().max(2000).nullable(),
+        sampleAnswer: z.string().max(2500).default(""), // absent in preparations saved before it existed
         answerPoints: z.array(z.string().max(1000)).max(MAX_POINTS),
         cvQuote: z.string().max(2000).nullable(),
         tip: z.string().max(1000),
       }),
     )
-    .max(MAX_QUESTIONS),
+    .max(MAX_STORED_QUESTIONS),
   questionsToAsk: z.array(z.string().max(1000)).max(MAX_QUESTIONS_TO_ASK),
 });
 export type StoredInterviewPrep = z.infer<typeof StoredInterviewPrep>;
