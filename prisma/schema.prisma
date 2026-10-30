@@ -144,6 +144,8 @@ model Application {
   followUpRemindedAt DateTime?
   // Saran perbaikan CV dari "Cek CV" (CvTweak[], lib/ai/cv-tweaks.ts). Hasil skill-nya ada di SkillGap.
   cvTweaks           Json?
+  // Persiapan interview per tahap ({ [stageId]: StoredInterviewPrep }, lib/ai/interview-prep.ts).
+  interviewPrep      Json?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -264,6 +266,7 @@ enum AiFeature {
   EMAIL_UPDATE
   CV_PROFILE // roles/skills from a CV for the job-portal search links
   READ_POSTER // copying a poster's text (vision model); recorded, but not counted against the daily quota
+  INTERVIEW_PREP // interview questions and answer outlines for one application and stage
 }
 
 model ExtractionCache {

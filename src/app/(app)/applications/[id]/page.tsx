@@ -12,7 +12,9 @@ import { DeleteApplicationButton } from "@/components/application/delete-button"
 import { EventForm } from "@/components/application/event-form";
 import { FollowUpPanel } from "@/components/application/follow-up-panel";
 import { CvCheckSection } from "@/components/application/cv-check-section";
+import { InterviewPrepSection, type PrepView } from "@/components/application/interview-prep-section";
 import { readCvTweaks } from "@/lib/ai/cv-tweaks";
+import { interviewKindFor, readInterviewPrep } from "@/lib/ai/interview-prep";
 import { StageHistoryForm } from "@/components/application/stage-history-form";
 import { Card } from "@/components/dashboard/cards";
 import { EligibilityBadge } from "@/components/eligibility-badge";
@@ -38,6 +40,7 @@ const TABS = [
   { key: "riwayat", label: "Riwayat tahap", short: "Riwayat" },
   { key: "jadwal", label: "Jadwal" },
   { key: "skill", label: "Cek CV" },
+  { key: "interview", label: "Interview" },
   { key: "data", label: "Ubah data", short: "Ubah" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
@@ -107,6 +110,18 @@ export default async function ApplicationDetailPage({
   const base = `/applications/${app.id}`;
   const tabHref = (key: TabKey) => (key === "ringkasan" ? base : `${base}?tab=${key}`);
   const upcomingEvents = app.events.filter((e) => e.startsAt >= now);
+
+  const interviewKind = interviewKindFor(app.currentStage);
+  const interviewBlocker = interviewKind
+    ? null
+    : app.currentStage.kind === "REJECTED" || app.currentStage.kind === "WITHDRAWN"
+      ? "Lamaran ini sudah ditutup, jadi tidak ada interview yang perlu disiapkan."
+      : `Tahap ${app.currentStage.name} bukan interview. Persiapan tersedia saat lamaran ada di tahap interview, LGD, atau tahap umum seperti Melamar.`;
+  const prepViews: PrepView[] = Object.entries(readInterviewPrep(app.interviewPrep)).map(([stageId, p]) => ({
+    ...p,
+    stageId,
+    whenLabel: formatDate(new Date(p.generatedAt)),
+  }));
 
   // Progress: the open stages in order, marked done / current / ahead; a closing stage (Ditolak) is shown at the end.
   const reached = new Set(app.history.map((h) => h.stageId));
@@ -233,10 +248,10 @@ export default async function ApplicationDetailPage({
         active={TABS.findIndex((t) => t.key === tab)}
         label="Bagian lamaran"
         scroll={false}
-        // Phones: short labels and tighter segments, so all five fit and the pill drags across them like iOS
+        // Phones: short labels and tighter segments, so all six fit and the pill drags across them like iOS
         // (the row still scrolls as a fallback on very narrow screens).
         fill
-        itemClassName="gap-1 px-[5px] text-[13px] sm:gap-1.5 sm:px-3 sm:text-sm"
+        itemClassName="gap-1 px-[2px] text-[12px] tracking-tight sm:gap-1.5 sm:px-3 sm:text-sm sm:tracking-normal"
         className="w-full max-w-full [scrollbar-width:none] gap-0 overflow-x-auto sm:w-auto sm:gap-1 [&::-webkit-scrollbar]:hidden"
       />
 
@@ -474,6 +489,20 @@ export default async function ApplicationDetailPage({
                     ? "Teks CV ini tidak terbaca (mungkin hasil scan). Unggah versi PDF yang teksnya bisa disalin."
                     : null
             }
+          />
+        </div>
+      )}
+
+      {tab === "interview" && (
+        <div className="glass rounded-2xl border p-5">
+          <InterviewPrepSection
+            applicationId={app.id}
+            stageName={app.currentStage.name}
+            blocker={interviewBlocker}
+            hasPosting={!!app.jobPostingText}
+            current={prepViews.find((p) => p.stageId === app.currentStageId) ?? null}
+            others={prepViews.filter((p) => p.stageId !== app.currentStageId)}
+            readOnly={readOnly}
           />
         </div>
       )}

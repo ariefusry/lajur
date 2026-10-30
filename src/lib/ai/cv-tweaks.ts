@@ -33,7 +33,7 @@ export function readCvTweaks(value: unknown): CvTweak[] {
   return StoredCvTweaks.safeParse(value).data ?? [];
 }
 
-const numbers = (s: string) => s.replace(PLACEHOLDER, "").match(/\d+(?:[.,]\d+)*/g) ?? [];
+export const numbers = (s: string) => s.replace(PLACEHOLDER, "").match(/\d+(?:[.,]\d+)*/g) ?? [];
 // An "add" tip carrying a ready-made CV sentence in quotes ("misalnya: \"Frontend developer dengan pengalaman …\"").
 const QUOTED_SAMPLE = /["“'‘][^"”'’]{30,}["”'’]/;
 
