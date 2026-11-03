@@ -14,7 +14,7 @@ import { getEligibilityProfile } from "@/lib/eligibility/profile";
 import { cn } from "@/lib/utils";
 import { JOB_SOURCE_LABELS } from "@/lib/validation";
 
-export const metadata = { title: "Daftar lamaran · Lajur" };
+export const metadata = { title: "Daftar lamaran" };
 
 const SORTS = {
   updated: { label: "Terbaru diubah", orderBy: { updatedAt: "desc" } },

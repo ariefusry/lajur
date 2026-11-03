@@ -52,14 +52,14 @@ function historyStatus(h: { result: StageResult | null; stage: { kind: StageKind
   return h.result === "PENDING" || latest ? "active" : "completed";
 }
 
-// "eFishery · Lajur": tells apart several applications open in tabs.
+// "eFishery · Lajur" (root title template): tells apart several applications open in tabs.
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const user = await requireUser();
   const app = await db.application.findFirst({
     where: { id: (await params).id, userId: user.id },
     select: { company: true },
   });
-  return { title: `${app?.company ?? "Lamaran"} · Lajur` };
+  return { title: app?.company ?? "Lamaran" };
 }
 
 /**

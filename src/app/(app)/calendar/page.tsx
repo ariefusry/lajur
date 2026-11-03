@@ -9,7 +9,7 @@ import { formatEventWhenShort, formatTime, fromDateInput, toDateInput } from "@/
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS } from "@/lib/validation";
 
-export const metadata = { title: "Kalender · Lajur" };
+export const metadata = { title: "Kalender" };
 
 const WEEKDAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];

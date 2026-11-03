@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { ServiceWorker } from "@/components/service-worker";
 import { Toaster } from "@/components/ui/sonner";
+import { OPEN_GRAPH_BASE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,8 +18,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lajur",
-  description: "Tracker lamaran kerja untuk pencari kerja di Indonesia",
+  metadataBase: new URL(SITE_URL),
+  title: { default: `${SITE_NAME} · Tracker lamaran kerja`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "tracker lamaran kerja",
+    "lowongan kerja",
+    "lamaran kerja",
+    "pencari kerja",
+    "BUMN",
+    "rekrutmen bank",
+    "psikotes",
+    "tes online TPA",
+    "interview kerja",
+    "CV",
+    "deadline lowongan",
+  ],
+  openGraph: {
+    ...OPEN_GRAPH_BASE,
+    title: `${SITE_NAME} · Tracker lamaran kerja`,
+    description: SITE_DESCRIPTION,
+  },
+  // Title and description come from og:* (X falls back to them), so pages only override openGraph.
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
   // Installed from Safari's "Add to Home Screen": open full screen with this name.
   appleWebApp: { capable: true, title: "Lajur", statusBarStyle: "default" },
 };

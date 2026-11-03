@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isReadOnly } from "@/lib/demo";
 
-export const metadata = { title: "Update dari email · Lajur" };
+export const metadata = { title: "Update dari email" };
 
 export default async function EmailUpdatePage() {
   const user = await requireUser();

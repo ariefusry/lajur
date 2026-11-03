@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { checkRequirement, overallStatus } from "@/lib/eligibility/check";
 import { getEligibilityProfile } from "@/lib/eligibility/profile";
 
-export const metadata = { title: "Board · Lajur" };
+export const metadata = { title: "Board" };
 
 export default async function BoardPage() {
   const user = await requireUser();

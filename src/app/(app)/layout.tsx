@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Heart, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -8,6 +9,10 @@ import { redirect } from "next/navigation";
 import { requireUser, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isDemoEmail, isReadOnly } from "@/lib/demo";
+import { NO_INDEX } from "@/lib/site";
+
+// Everything in the app is private: keep it out of search results (robots.ts also disallows these paths).
+export const metadata: Metadata = { robots: NO_INDEX };
 
 async function signOutAction() {
   "use server";

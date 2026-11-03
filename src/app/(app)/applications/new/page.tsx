@@ -1,6 +1,6 @@
 import { NewApplicationSection } from "@/components/application/new-application-section";
 
-export const metadata = { title: "Lamaran baru · Lajur" };
+export const metadata = { title: "Lamaran baru" };
 
 export default function NewApplicationPage() {
   return (

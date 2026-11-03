@@ -26,13 +26,32 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { demoLoginEnabled } from "@/lib/demo";
+import { absoluteUrl, OPEN_GRAPH_BASE, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
+const TITLE = "Lajur · Tracker lamaran kerja gratis untuk pencari kerja Indonesia";
+const DESCRIPTION =
+  "Catat semua lamaran kerja, deadline, dan tahap seleksi khas Indonesia (administrasi, psikotes, LGD, interview, MCU) di satu tempat. Pengingat jadwal tes, cek syarat IPK dan usia otomatis, dan lihat CV mana yang paling sering lolos.";
+
 export const metadata: Metadata = {
-  title: "Lajur · Tracker lamaran kerja",
-  description:
-    "Catat semua lamaran kerja, deadline, dan tahap seleksi khas Indonesia di satu tempat. Pengingat jadwal tes, cek syarat otomatis, dan analisis CV mana yang paling sering lolos.",
+  title: { absolute: TITLE },
+  description: DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: { ...OPEN_GRAPH_BASE, url: "/", title: TITLE, description: DESCRIPTION },
 };
+
+// Structured data for search engines. "<" is escaped so the text can never close the <script> tag.
+const JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: SITE_NAME,
+  url: absoluteUrl("/"),
+  description: SITE_DESCRIPTION,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  inLanguage: "id",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "IDR" },
+}).replace(/</g, "\\u003c");
 
 // Designed in Jakarta for Indonesian readers, and firm at large sizes (DESIGN.md). Body text stays in the app's Geist.
 const displayFont = Plus_Jakarta_Sans({
@@ -117,6 +136,7 @@ export default async function Landing({ searchParams }: { searchParams: Promise<
     // isolate: the moving glow sits at -z-10, above this background but under every section.
     <div className={cn("landing bg-background text-foreground isolate min-h-svh", displayFont.variable)}>
       <div aria-hidden className="landing-glow" />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} />
       {/* Floating nav: one opaque pill that sits over the content while scrolling */}
       <header className="sticky top-3 z-30 px-4 pt-3">
         <div

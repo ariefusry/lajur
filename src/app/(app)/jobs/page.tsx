@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isReadOnly } from "@/lib/demo";
 
-export const metadata = { title: "Cari lowongan · Lajur" };
+export const metadata = { title: "Cari lowongan" };
 
 export default async function JobsPage() {
   const user = await requireUser();

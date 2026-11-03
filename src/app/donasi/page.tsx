@@ -6,10 +6,17 @@ import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
+import { OPEN_GRAPH_BASE } from "@/lib/site";
+
+const TITLE = "Donasi untuk Lajur · Dukung tracker lamaran kerja gratis";
+const DESCRIPTION =
+  "Lajur gratis dan tanpa iklan untuk semua pencari kerja di Indonesia. Kalau Lajur membantu, dukung biaya servernya lewat donasi QRIS dengan nominal sesukamu.";
 
 export const metadata: Metadata = {
-  title: "Dukung Lajur · Donasi",
-  description: "Lajur gratis untuk semua pencari kerja. Dukung lewat donasi QRIS.",
+  title: { absolute: TITLE },
+  description: DESCRIPTION,
+  alternates: { canonical: "/donasi" },
+  openGraph: { ...OPEN_GRAPH_BASE, url: "/donasi", title: TITLE, description: DESCRIPTION },
 };
 
 const STEPS = [

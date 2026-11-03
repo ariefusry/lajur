@@ -16,7 +16,7 @@ import { isDemoEmail, isReadOnly } from "@/lib/demo";
 import { optionsFrom } from "@/lib/utils";
 import { STAGE_KIND_LABELS } from "@/lib/validation";
 
-export const metadata = { title: "Pengaturan · Lajur" };
+export const metadata = { title: "Pengaturan" };
 
 export default async function SettingsPage() {
   const { id: userId, email } = await requireUser();

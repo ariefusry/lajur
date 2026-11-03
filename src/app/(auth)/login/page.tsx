@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { CalendarClock, FileText, KanbanSquare, ShieldCheck } from "lucide-react";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
@@ -10,7 +11,11 @@ import { auth, signIn } from "@/lib/auth";
 import { demoLoginEnabled } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Masuk · Lajur" };
+export const metadata: Metadata = {
+  title: "Masuk",
+  description: "Masuk ke Lajur dengan akun Google untuk mencatat lamaran kerja, jadwal tes, dan versi CV-mu.",
+  alternates: { canonical: "/login" },
+};
 
 // Same look as the landing page (DESIGN.md): its tokens (.landing), display font and moving background.
 const displayFont = Plus_Jakarta_Sans({

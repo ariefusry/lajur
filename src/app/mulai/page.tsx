@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ArrowLeft, BellRing, CircleCheck, KanbanSquare } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -9,9 +10,10 @@ import { requireUser } from "@/lib/auth";
 import { toDateInput } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { isDemoEmail } from "@/lib/demo";
+import { NO_INDEX } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Mulai · Lajur" };
+export const metadata: Metadata = { title: "Mulai", robots: NO_INDEX };
 
 const STEPS = [
   { title: "Selamat datang di Lajur", hint: "" },
