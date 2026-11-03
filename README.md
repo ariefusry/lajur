@@ -1,32 +1,91 @@
-# Lajur
+<div align="center">
 
-Tracker lamaran kerja untuk pencari kerja di Indonesia yang melamar ke banyak tempat sekaligus: BUMN, bank, startup, atau perusahaan di bidang apa pun.
+<a href="https://lajur.vercel.app">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/horizontal/lajur-horizontal-white.svg">
+    <img src="docs/brand/horizontal/lajur-horizontal-mono-0069e8.svg" alt="Lajur" width="300">
+  </picture>
+</a>
 
-Coba di https://lajur.vercel.app, lalu pilih **Masuk sebagai demo**. Akun demo berisi 15 lamaran contoh dan hanya bisa dilihat.
+### Semua lamaran kerjamu, dari administrasi sampai offering, di satu board.
 
-![Dashboard](docs/screenshots/dashboard.png)
+Tracker lamaran kerja gratis untuk pencari kerja di Indonesia yang melamar ke banyak tempat sekaligus: BUMN, bank, startup, CPNS, atau perusahaan di bidang apa pun.
+
+[![Buka Lajur](https://img.shields.io/badge/Buka_Lajur-lajur.vercel.app-0069E8?style=for-the-badge)](https://lajur.vercel.app)
+[![Coba akun demo](https://img.shields.io/badge/Coba_akun_demo-tanpa_daftar-1f2937?style=for-the-badge)](https://lajur.vercel.app/login)
+
+[![CI](https://github.com/ariefusry/lajur/actions/workflows/ci.yml/badge.svg)](https://github.com/ariefusry/lajur/actions/workflows/ci.yml)
+![Next.js 15](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Neon Postgres](https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white)
+![Bahasa Indonesia](https://img.shields.io/badge/UI-Bahasa_Indonesia-0069E8)
+
+</div>
+
+<br>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/landing/dashboard-dark.png">
+    <img src="public/landing/dashboard.png" alt="Dashboard Lajur: jadwal 7 hari, lamaran yang perlu di-follow-up, dan pipeline" width="900">
+  </picture>
+</p>
+
+Buka https://lajur.vercel.app lalu pilih **Masuk sebagai demo**. Akun demo berisi 15 lamaran contoh, hanya bisa dilihat, dan di-reset setiap hari.
+
+## Kenapa Lajur
+
+Melamar ke dua puluh tempat sekaligus berarti dua puluh deadline, jadwal psikotes yang bentrok, dan syarat lowongan yang harus dibaca ulang terus. Lajur dibuat untuk masalah yang khas di sini:
+
+| Masalahnya | Yang dilakukan Lajur |
+|---|---|
+| Deadline dan jadwal tes terlupa | Kalender plus email pengingat H-3 dan H-1 untuk tes dan interview |
+| Lupa CV versi mana yang dikirim ke mana | Setiap lamaran ditautkan ke versi CV-nya |
+| Tidak tahu tahap mana yang paling sering bikin gagal | Funnel per tahap, per sumber lowongan, dan per versi CV |
+| Syarat panjang: IPK, batas usia, jurusan, ikatan dinas | Cek kelayakan otomatis terhadap profilmu, tanpa AI |
+| Tahap seleksi lokal tidak ada di tracker luar | Administrasi, TPA, psikotes, LGD, interview HR/User, MCU, offering |
 
 ## Fitur
 
-- Board kanban dengan tahap seleksi yang umum di sini: Administrasi, Tes Online/TPA, Psikotes, LGD, Interview HR/User, MCU, Offering. Riwayat tahap tercatat setiap kali kartu digeser. Ada template BUMN/Bank, Umum, Retail/Pabrik, CPNS/Instansi Pemerintah, dan Startup, serta tampilan daftar dengan pencarian dan filter.
-- Mulai pakai: pengguna baru dipandu langkah demi langkah (profil, jenis lowongan, CV, lamaran pertama) sebelum masuk ke aplikasi.
-- Tambah dengan AI: tempel teks, link, atau gambar poster lowongan (screenshot Instagram, Ctrl+V), dan form terisi sebagai draf (perusahaan, posisi, lokasi, deadline, skill, syarat). Setiap isian disertai kutipan dari lowongan sebagai bukti.
-- Update dari email: tempel email dari rekruter (hasil seleksi, undangan tes), dan AI mengusulkan perpindahan tahap dan jadwal untuk lamaran yang cocok. Nama, kontak, dan info login disamarkan sebelum dikirim, dan semua usulan ditinjau dulu.
-- Cek kelayakan tanpa AI: IPK minimal, batas usia (termasuk "per tanggal X" dan lahir 29 Februari), jurusan dengan sinonim, jenjang, penempatan, dan ikatan dinas dibandingkan dengan profilmu.
-- Versi CV: unggah PDF, tautkan ke lamaran, buka lewat tautan sementara 60 detik.
-- Cek CV: skill lowongan yang sudah dan belum terlihat di CV, plus saran perbaikan yang tidak mengarang pengalaman. Bisa dipakai sebelum menyimpan lamaran.
-- Kalender (jadwal berentang tampil sebagai satu bar, warna per jenis: deadline, tes, interview, lainnya), pengingat email H-3 dan H-1 untuk tes dan interview, dan pengingat follow-up.
-- Dashboard untuk hari ini (jadwal 7 hari, lamaran yang perlu di-follow-up, pipeline) dan halaman Analytics (funnel, tahap yang paling sering gagal, respons per sumber lowongan dan per versi CV).
-- Ekspor semua data ke CSV, dan hapus akun beserta isinya.
-- Bisa dipasang di layar utama HP atau laptop (PWA, lewat Pengaturan → Pasang aplikasi), dengan halaman "tidak ada koneksi" saat offline. Tema mengikuti perangkat, atau dipilih terang/gelap.
+### Lacak
+
+- **Board kanban** dengan tahap seleksi yang umum di sini: Administrasi, Tes Online/TPA, Psikotes, LGD, Interview HR/User, MCU, Offering. Riwayat tahap tercatat setiap kali kartu digeser. Ada template BUMN/Bank, Umum, Retail/Pabrik, CPNS/Instansi Pemerintah, dan Startup, serta tampilan daftar dengan pencarian dan filter.
+- **Kalender** (jadwal berentang tampil sebagai satu bar, warna per jenis: deadline, tes, interview, lainnya), **pengingat email H-3 dan H-1** untuk tes dan interview, dan pengingat follow-up.
+- **Dashboard** untuk hari ini (jadwal 7 hari, lamaran yang perlu di-follow-up, pipeline) dan halaman **Analytics** (funnel, tahap yang paling sering gagal, respons per sumber lowongan dan per versi CV).
+
+### Isi lebih cepat dengan AI
+
+- **Tambah dengan AI:** tempel teks, link, atau gambar poster lowongan (screenshot Instagram, Ctrl+V), dan form terisi sebagai draf (perusahaan, posisi, lokasi, deadline, skill, syarat). Setiap isian disertai kutipan dari lowongan sebagai bukti.
+- **Update dari email:** tempel email dari rekruter (hasil seleksi, undangan tes), dan AI mengusulkan perpindahan tahap dan jadwal untuk lamaran yang cocok. Nama, kontak, dan info login disamarkan sebelum dikirim, dan semua usulan ditinjau dulu.
+- **Cek CV:** skill lowongan yang sudah dan belum terlihat di CV, plus saran perbaikan yang tidak mengarang pengalaman. Bisa dipakai sebelum menyimpan lamaran.
+- **Persiapan interview:** pertanyaan dan kerangka jawaban per tahap.
+
+AI bersifat opsional. Tanpa key AI, tombolnya disembunyikan dan semua form tetap bisa diisi manual.
+
+### Putuskan dengan data
+
+- **Cek kelayakan tanpa AI:** IPK minimal, batas usia (termasuk "per tanggal X" dan lahir 29 Februari), jurusan dengan sinonim, jenjang, penempatan, dan ikatan dinas dibandingkan dengan profilmu.
+- **Versi CV:** unggah PDF, tautkan ke lamaran, buka lewat tautan sementara 60 detik.
+
+### Nyaman dipakai tiap hari
+
+- **Mulai pakai:** pengguna baru dipandu langkah demi langkah (profil, jenis lowongan, CV, lamaran pertama) sebelum masuk ke aplikasi.
+- **Bisa dipasang** di layar utama HP atau laptop (PWA, lewat Pengaturan → Pasang aplikasi), dengan halaman "tidak ada koneksi" saat offline. Tema mengikuti perangkat, atau dipilih terang/gelap.
+- **Datamu milikmu:** ekspor semua data ke CSV, dan hapus akun beserta isinya.
+
+## Tampilan
 
 | Board | Detail lamaran |
 |---|---|
-| ![Board](docs/screenshots/board.png) | ![Detail](docs/screenshots/detail.png) |
+| ![Board kanban dengan kolom tahap seleksi](docs/screenshots/board.png) | ![Detail lamaran dengan timeline tahap](docs/screenshots/detail.png) |
 
 | AI membaca lowongan | Draf dengan kutipan bukti dan cek kelayakan |
 |---|---|
-| ![Progres AI](docs/screenshots/ai-progress.png) | ![Draf AI](docs/screenshots/ai-draft.png) |
+| ![Progres AI membaca lowongan](docs/screenshots/ai-progress.png) | ![Draf hasil AI dengan kutipan dan cek kelayakan](docs/screenshots/ai-draft.png) |
+
+## Daftar isi
+
+- [Arsitektur](#arsitektur) · [Model data](#model-data) · [Setup lokal](#setup-lokal) · [Test dan CI](#test-dan-ci) · [Deploy](#deploy) · [Keamanan dan privasi](#keamanan-dan-privasi) · [Catatan desain](#catatan-desain)
 
 ## Arsitektur
 
@@ -222,3 +281,11 @@ Semua angka dihitung di server oleh `computeDashboard` (`src/lib/dashboard.ts`) 
 - Waktu respons: median hari dari tanggal melamar sampai perpindahan tahap berikutnya.
 - Ghosted dihitung, tidak disimpan: masih di tahap seleksi tanpa kabar 30 hari atau lebih (14–29 hari tampil sebagai "mulai tanpa kabar"). Badge-nya hilang begitu kartu digeser.
 - Persentase baru tampil kalau ada minimal 5 lamaran di belakangnya.
+
+## Dukung Lajur
+
+Lajur gratis untuk semua pencari kerja. Kalau terbantu, dukung lewat [donasi QRIS](https://lajur.vercel.app/donasi).
+
+<p align="center">
+  <a href="https://lajur.vercel.app"><img src="docs/brand/symbol/lajur-symbol-mono-0069e8.svg" alt="Lajur" width="40"></a>
+</p>
