@@ -10,11 +10,15 @@ import { Button } from "@/components/ui/button";
 import { auth, signIn } from "@/lib/auth";
 import { demoLoginEnabled } from "@/lib/demo";
 import { cn } from "@/lib/utils";
+import { OG_IMAGE, OPEN_GRAPH_BASE } from "@/lib/site";
+
+const DESCRIPTION = "Masuk ke Lajur dengan akun Google untuk mencatat lamaran kerja, jadwal tes, dan versi CV-mu.";
 
 export const metadata: Metadata = {
   title: "Masuk",
-  description: "Masuk ke Lajur dengan akun Google untuk mencatat lamaran kerja, jadwal tes, dan versi CV-mu.",
+  description: DESCRIPTION,
   alternates: { canonical: "/login" },
+  openGraph: { ...OPEN_GRAPH_BASE, url: "/login", title: "Masuk · Lajur", description: DESCRIPTION, images: [OG_IMAGE] },
 };
 
 // Same look as the landing page (DESIGN.md): its tokens (.landing), display font and moving background.

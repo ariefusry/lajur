@@ -6,7 +6,7 @@ import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
-import { OPEN_GRAPH_BASE } from "@/lib/site";
+import { OG_IMAGE, OPEN_GRAPH_BASE } from "@/lib/site";
 
 const TITLE = "Donasi untuk Lajur · Dukung tracker lamaran kerja gratis";
 const DESCRIPTION =
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: "/donasi" },
-  openGraph: { ...OPEN_GRAPH_BASE, url: "/donasi", title: TITLE, description: DESCRIPTION },
+  openGraph: { ...OPEN_GRAPH_BASE, url: "/donasi", title: TITLE, description: DESCRIPTION, images: [OG_IMAGE] },
 };
 
 const STEPS = [

@@ -1,9 +1,9 @@
 import { ImageResponse } from "next/og";
-import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
+import { OG_IMAGE, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
 // Rendered at build time with next/og's bundled font, so the build never fetches fonts from the network.
-export const alt = `${SITE_NAME}: ${SITE_TAGLINE}`;
-export const size = { width: 1200, height: 630 };
+export const alt = OG_IMAGE.alt;
+export const size = { width: OG_IMAGE.width, height: OG_IMAGE.height };
 export const contentType = "image/png";
 
 // Landing colours (globals.css): grouped background, brand blue, near-black text.
@@ -12,7 +12,7 @@ const BRAND = "#1f5fd8";
 const TEXT = "#111111";
 const MUTED = "#5b5f6b";
 
-const STAGES = ["Administrasi", "Tes Online/TPA", "Psikotes", "LGD", "Interview", "MCU", "Offering"];
+const STAGES = ["Administrasi", "Tes Online/TPA", "Psikotes", "LGD", "Interview", "MCU"];
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -25,7 +25,8 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "72px 80px",
-          background: `radial-gradient(circle at 85% 10%, rgba(31, 95, 216, 0.18), transparent 55%), ${BACKGROUND}`,
+          backgroundColor: BACKGROUND,
+          backgroundImage: "radial-gradient(circle at 85% 10%, rgba(31, 95, 216, 0.18), transparent 55%)",
           color: TEXT,
         }}
       >
